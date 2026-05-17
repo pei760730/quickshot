@@ -8,86 +8,11 @@
 ## 對話開頭（掃描五項，無則不顯示，不阻塞）
 
 1. **回填到期**：pipeline.json 已上線 + backfill 為空 + backfill_due_date ≤ 今天 → `📊 VID-XXX 上線 N 天，回填到期`
-2. **待辦逾期**：`data/[operator]/todos.json` 中 `state=pending` 且 `due` ≤ 今天 → `📋 ⚠️「title」逾期 N 天（T-NNNN）` (v4.39+)
+2. **待辦逾期**：`data/default/todos.json` 中 `state=pending` 且 `due` ≤ 今天 → `📋 ⚠️「title」逾期 N 天（T-NNNN）` (v4.39+)
 3. **大腦新鮮度**：brand.md 任一 section `last_updated` > 30 天 → `🧠 [section] 已 N 天未更新`
 4. **Transcripts 沉澱門檻**（v2.5+）：`01-data-brain/transcripts/` 計數 ≥ 5 → `📚 觸發批次沉澱`；3-4 篇顯示距離門檻
-5. **Engine lag**（v2.7+、對應 v4.58 sync-engine v2）：engine remote 有新版 → `🔄 engine 落後 v{local} → v{remote}（說「同步」拉）`；engine remote 未設 silent skip
 
 Kai 忽略就不重複催促（同一對話只提醒一次）。
-
-## Adoption-gate（v2.19+、v2.24 加 owner 分流、對應 CLAUDE.md 禁令 #9 + #11）
-
-> **為什麼**：過去 Top 3（metadata-completer / brand-keeper / harden-guide）都失敗於「工具建得比用得快、警告印了沒人動」。hook 每 session 印 5+ 警告、Claude 看完直接進下個任務、同一批警告累積數週。v2.19 把 warning 升級為 **action gate**。**v2.24（Phase 6 落地、配 Codex `adoption_gate.py`）加 owner 分流** — 把員工 / Kai / 自動三類分開、避免 Kai 被員工事卡住。
-
-### 觸發
-
-`.claude/hooks/session-start.sh` 印出「⏰ 對話開頭檢查」區段時、**依 owner 分組**：
-
-```
-⏰ 對話開頭檢查
-
-[員工待辦]（資訊、不擋）
-  📊 VID-NNN 回填到期 ...
-  📋 待辦逾期 ...
-  🧠 brand.md N sections 過期 ...
-
-[Kai 決策]（待你回覆）
-  [T1] ...
-  [E1] ...
-
-─── Adoption gate ───
-N 項需決定（員工類不算）
-```
-
-### Owner 分流規範（v2.24）
-
-每個 hook 項目有 `owner` 欄位（per `scripts/utils/lib/adoption_gate.py`）、決定行為：
-
-| owner | 例子 | 行為 |
-|-------|------|------|
-| `kai` | 架構決策 / 跨領土授權 / 引擎落差 / IG vs pipeline 對表 | **入 adoption gate**、擋新任務、Kai 必回覆 |
-| `employee` | 回填截圖（B1-B5）/ 員工待辦（部分 T*）/ brand 過期等待新事實（M1+） | **純 info-only**、印但不入 gate、Kai 可忽略 |
-| `auto` | 系統可自修（todo auto-close 已回填的 related_vid / transcripts 沉澱觸發）| **stage 2 自動處理**、成功不印、失敗才升 employee |
-
-**判定邏輯**：在 `adoption_gate.py:build_items()`、每個 GateItem 構造時指定 owner。Codex 領土維護、Claude 文件層對齊。
-
-### Claude 必須做
-
-進 **任何新任務** 前、**只看 Kai 決策類項目**（owner=kai）的 Kai 回覆。員工類項目不參與 gate 計數。合法回覆 4 種（針對 Kai 類）：
-
-| Kai 說 | Claude 動作 |
-|-------|------------|
-| `處理 <codes>`（例：`處理 T1,E1`） | 依序驅動執行（todo 問關閉原因、引擎落差跑 /sync）、完成一項劃掉一項、失敗停下報告 |
-| `defer <codes> until YYYY-MM-DD` | 呼叫 `video-ops.py todo add --title "defer: {原 warning}" --due YYYY-MM-DD`、該日前不再於 hook 顯示 |
-| `defer all until YYYY-MM-DD` | 上述對所有 gated code 批次執行 |
-| `skip adoption gate` | 本輪 session bypass、但**自動記 lesson**（origin=mistake、pattern="Kai 要求 skip adoption gate、觀察過度 skip 模式"）—— 偶爾 OK、連續 3 次會 surface |
-
-**員工類項目（owner=employee）的處理**：
-- Kai 不需回覆、純資訊呈現
-- 若 Kai 主動說「處理 B1」、Claude 仍可驅動（手動觸發、不入 gate 計數）
-- 員工類項目逾期時間長、Claude 可主動提「這幾項員工任務累積 N 週、要 ping 員工嗎？」（升級討論、不擋）
-
-### Claude 絕對不可做
-
-- ❌ 看到 Kai 決策類項目後、不等 Kai 回覆就動新任務
-- ❌ 把員工類項目當 Kai 必處理（這是 v2.24 之前的錯）
-- ❌ 自行判斷「Kai 應該會 skip」然後跳過
-- ❌ 把 Adoption gate 當「提示」忽略
-- ❌ 每 turn 都重印 gate（hook 只在 session 開頭跑一次、不重複）
-
-### 邊界
-
-- Gate **只擋新任務**、不擋 Kai 的資訊性問題（如「看清單」「查 stat」）
-- 員工類項目（owner=employee）不參與 gate、純資訊
-- Kai 明確用 `處理 XY` 觸發的動作本身、完成後可直接進 Kai 下一個指令、不需重 gate（gate 一 session 一次）
-
-### 過度 skip 處理
-
-Claude 累積觀察到 3 次以上 `skip adoption gate` → 主動提：「最近 N 次 skip、是否警告本身設計有問題？要不要調整 threshold 或重新分 owner？」升級討論、不是默默放棄。
-
-> 實作於 `.claude/hooks/session-start.sh` + `scripts/utils/lib/adoption_gate.py` + `scripts/utils/adoption_gate_scan.py`（v2.24 / Phase 6 / Codex PR #310 落地）。v2.12：移除舊 step 5 Hardening Queue pending。v2.8：移除舊 step 4 Brand ↔ Summary 漂移。**v2.24（2026-04-26）**：加 owner 分流、解 L-0016（B1-B5/T1/M1 持續 skip 根因）。
-
----
 
 ## 對話期間的進化提案（v2.2 新增、取代固定門檻為主驅動）
 
@@ -357,8 +282,7 @@ contract.active_rules (預測) vs 實際 (觸發 / 被 Kai 修正)
 | 規則 | 接口 |
 |------|------|
 | CLAUDE.md 禁令 #3 / #3.5 | Plan 級 contract 觸發 Plan mode、不取代 |
-| CLAUDE.md 禁令 #9（adoption-gate）| gate 在 session 開頭、contract 在 task 開頭、互補 |
-| CLAUDE.md 禁令 #10 / #11 | 對應 active_rules 內列 |
+| CLAUDE.md 禁令 #8 / #9 | 對應 active_rules 內列 |
 | brain-loading.md | context.auto + context.on_demand 包含其載入清單 |
 
 ### 退役後再評估
@@ -396,134 +320,6 @@ contract.active_rules (預測) vs 實際 (觸發 / 被 Kai 修正)
 
 ---
 
-## Dispatch（Mode A、v1.0+、對應 `docs/contracts/agent-dispatch.md`）
-
-> Codex CLI 已在本機（PR #397）+ 共享 working tree。Claude 是 Kai 唯一入口、用 `codex exec` 派遣 Codex 跑 worker 任務。完整契約見 `docs/contracts/agent-dispatch.md` v1.1（含 §10 環境前提 + Mode B-plus fallback、網頁版 Claude 必讀）。
-
-### 環境檢測（每 session 第一次 dispatch 前必跑、v1.1+）
-
-```bash
-which codex 2>/dev/null && codex --version 2>/dev/null
-```
-
-- exit 0 + 有版本 → Mode A 可用、繼續走決策樹
-- exit ≠ 0 → **不嘗試 Mode A、改建議 Codex Desktop**（v1.2+）：
-  1. Claude 寫完整 prompt（純內容、不含 bash 包裝）
-  2. 對話中告訴 Kai：「Mode A 不可用、請開 Codex Desktop / chatgpt.com/codex、確認 repo + branch 後貼以下 prompt」
-  3. Kai 在 GUI 操作、Codex 自動開 PR、貼 PR 連結回
-  4. Claude 看 PR 合成
-
-典型不可用情境：claude.ai/code 網頁版沙箱（與本機隔離、看不到本機 codex CLI）。
-**為什麼 Desktop 優先 over CLI heredoc**：Kai 不用碰 cmd / npm install codex CLI、Codex Desktop 直接讀 GitHub repo + AGENTS.md。實證：2026-05-03 PR #401 用 Desktop 5 分鐘、CLI 路線卡 30 分鐘。
-
-完整 fallback 規範（含 Mode B-plus CLI 備案）見 `docs/contracts/agent-dispatch.md` §10。
-
-### 決策樹（拆 vs 不拆）
-
-```
-Kai 給任務
-  ↓
-有明確兩塊獨立產出？（schema + code / 設計 + 探針 / code-heavy 重構 + 測試）
-  ├─ 是 → 拆、Claude 派遣 codex
-  └─ 否 → 不拆、Claude 自己做
-       └─ 但需要客觀資料？→ Bash 直接撈、不 dispatch（overhead 不值）
-```
-
-**紅燈**（不拆、即使有 routing block 也覆蓋）：
-- 單一架構判斷 / 反省 / 設計
-- 品牌 / 創作判斷（Codex 不讀 `brand.md`）
-- skill 設計
-- ≤30 字純資訊查
-
-### Claude 派遣 bash template
-
-```bash
-codex exec --skip-git-repo-check --output-last-message /tmp/codex-out-<task>.txt "$(cat <<'EOF'
-你在 KaiOS-ContentSystem repo、已讀 AGENTS.md。
-# Task
-<一句話、不歧義>
-# Mode
-read-only          # or write-readonly-output / write-repo
-# PR_BRANCH        # write-repo 時必填：codex/<task-name>
-# Output format
-## Findings
-- ...
-# Constraints
-- 找不到 → "N/A: <原因>"
-- 超出 → STOP + "out-of-scope: <什麼>"
-- 違反領土 → STOP
-完成後 stdout 結尾固定 `<<DISPATCH_DONE>>`。
-EOF
-)"
-```
-
-### 對話內 audit trail（每次 dispatch 後必印）
-
-```
-🤖 dispatched to codex: <task name>
-   mode: read-only
-   exit: 0
-   output: <stdout 摘要 / /tmp 路徑>
-```
-
-### 失敗處理
-
-| 失敗 | 動作 |
-|------|------|
-| exit ≠ 0 | 回報 Kai、不靜默 retry |
-| 格式不符 | 重派遣**一次**、明寫「上次格式錯」+ 第二次仍錯 → 回報 Kai |
-| timeout（30 分） | 取消 + 回報 Kai |
-
-### 演化觸發
-
-- Kai 連續 3 次手動拆窗（用 Mode B）→ 提案「為什麼沒用 dispatch」分析
-- 同 dispatch pattern ≥ 5 次 → 升級成 slash command 或 skill（per CLAUDE.md 禁令 #13）
-
-> 完整契約：`docs/contracts/agent-dispatch.md` v1.2
-
----
-
-## 平行任務（git worktree、本機 CLI 場景）
-
-> 對應 `docs/references/worktree-guide.md` v1.0。Boris team tip #1：「Run 3–5 Claude sessions at once, single biggest productivity unlock」。
-
-### 何時用
-
-| 情境 | 用 worktree | 不用 |
-|------|-----------|------|
-| 派遣 Codex 後等 PR 回的 5-30 分鐘空檔 | ✓（Claude 開 worktree 做別的） | — |
-| 同時開 3 個獨立 feature（互不依賴） | ✓ | — |
-| Codex / Claude 領土同 PR 想分開做 | ✓ | — |
-| 單一 task / 修一行 / 純資訊查 | — | ✗（overhead 不值） |
-| 網頁版 Claude（沙箱）| — | ✗（沙箱單機、無法 worktree） |
-
-### 常用指令
-
-```bash
-# 主目錄：/home/user/KaiOS-ContentSystem
-git worktree add ../KaiOS-feat-X -b claude/feat-X origin/main
-cd ../KaiOS-feat-X
-# ... 工作 / commit / push ...
-
-git worktree list                               # 列現有
-git worktree remove ../KaiOS-feat-X            # 移除（保留分支）
-```
-
-### Claude 自驅原則
-
-- Kai 給多 task 的指令時、Claude 評估能否平行（依 §Dispatch 決策樹）、能就建議「開 worktree 同時跑」
-- 派遣 Codex 後、Claude 主動開 worktree 處理 Claude 領土的事、不空等
-- 單一 session 內不切 worktree（避免 context confusion）— 平行需要平行 Claude session、Boris 原則
-
-### 限制（必明示）
-
-- 只在本機 `claude` CLI 可用
-- 網頁版 Claude / Codex Desktop 用戶 → 跳過此節、走順序執行
-- worktree 數量超過 5 → context 管理成本反而上升、降回順序
-
-詳見 `docs/references/worktree-guide.md` v1.0。
-
----
 
 ## 生產線
 
@@ -583,7 +379,7 @@ git worktree remove ../KaiOS-feat-X            # 移除（保留分支）
 | `上線：VID-NNN` | 狀態改已上線 |
 | `看靈感箱` / `i` | 列出靈感 |
 | `看影片清單` / `q` | 列出影片 |
-| `看待辦` / `t` | **v4.39+**：讀 `data/[operator]/todos.json` 過濾 `state in (pending, in_progress)`、按 priority + due 排序 |
+| `看待辦` / `t` | **v4.39+**：讀 `data/default/todos.json` 過濾 `state in (pending, in_progress)`、按 priority + due 排序 |
 | `待辦：XXX` | **v4.39+**：呼叫 `video-ops.py todo add --title "XXX"`、自動給 `T-NNNN` id + state=pending（schema 見 `docs/contracts/todos-schema.md`）|
 | `關閉 T-XXXX` / `完成 T-XXXX` | **v4.39+**：Claude 詢問 closed_reason、呼叫 `video-ops.py todo close T-XXXX --reason "..."` |
 | `擱置 T-XXXX` | **v4.39+**：`video-ops.py todo archive T-XXXX --reason "..."` |
@@ -594,13 +390,12 @@ git worktree remove ../KaiOS-feat-X            # 移除（保留分支）
 | `複製贏家：VID-NNN` | 高表現公式複製（→ `production-details.md`） |
 | `週報` | weekly-report |
 | `看漏斗` | pipeline-stats |
-| `記錯：XXX` | 錯誤記憶（→ `system-maintenance.md`）→ 寫入 `data/[operator]/lessons.json`（origin=`mistake`） |
+| `記錯：XXX` | 錯誤記憶（→ `system-maintenance.md`）→ 寫入 `data/default/lessons.json`（origin=`mistake`） |
 | `看偏差` | analyze-deviations |
 | `看 lessons` / `lessons 統計` | `video-ops.py lessons stats`（按 stage 分組：soft / hardened / archived）|
 | `提硬化` | `video-ops.py lessons propose-hardening`（列 soft + 有 counter_pattern 的候選、v4.63+ 不靠 hit_count 門檻）|
 | `掃描` / `/scan` | 責任區掃描 |
 | `/harden` / `升 L-XXXX 為 <path>` / `硬化 L-XXXX` | **v4.64+**：對話內一站式硬化（見 `02-skill-factory/harden/SKILL.md` v1.2）— soft lesson → test / lint / CLAUDE.md 禁令 / workflow.md 規則 / brand.md section。當場寫 artifact + validator + 升 stage=hardened |
-| `/sync` / `/sync-engine` / `同步` | **v4.58+**：sync-engine v2 auto 模式（無人介入、一訊息做完）；子命令 `/sync dry` `/sync pause` `/sync cleanup`、見 `.claude/commands/sync-engine.md` |
 | `同步全部` | sync-to-sheets all |
 | `填大腦` | 載入填充引導手冊 |
 

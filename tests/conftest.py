@@ -52,11 +52,10 @@ def _operator_registry_payload(operator, data_dir):
 
 @pytest.fixture
 def patch_operator_registry(tmp_path, operator_fixture):
-    """Register ``operator_fixture`` in ``lib.config`` / adoption_gate registries
-    for tests that build their own ``tmp_path`` layout (no ``tmp_project``
-    needed). Lets ``get_operator_paths(operator_fixture)`` succeed on client
-    forks whose real ``data/.operators.json`` doesn't include the fixture's
-    operator.
+    """Register ``operator_fixture`` in ``lib.config`` registries for tests that
+    build their own ``tmp_path`` layout (no ``tmp_project`` needed). Lets
+    ``get_operator_paths(operator_fixture)`` succeed on client forks whose real
+    ``data/.operators.json`` doesn't include the fixture's operator.
 
     ``scripts/ops/lib/config.py`` is importable via two distinct module names
     (``lib.config`` and ``scripts.ops.lib.config`` — both roots are on
@@ -75,7 +74,6 @@ def patch_operator_registry(tmp_path, operator_fixture):
         patch("scripts.ops.lib.config.DEFAULT_OPERATOR", operator_fixture),
         patch("scripts.ops.lib.config.VALID_OPERATORS", {operator_fixture}),
         patch("scripts.ops.lib.config.OPERATORS", registry),
-        patch("scripts.utils.lib.adoption_gate.DEFAULT_OPERATOR", operator_fixture),
     ):
         yield
 
@@ -131,10 +129,10 @@ def patch_paths(tmp_project, operator_fixture):
     """Patch all config paths to point to tmp_project.
 
     Must patch in EVERY module that imported the constant via 'from .config import X',
-    because Python copies the reference at import time. DEFAULT_OPERATOR is also
-    patched at every consumer (lib.config + scripts.utils.lib.adoption_gate) so
-    client forks whose real `data/.operators.json` lacks `operator_fixture` still
-    resolve owner / path lookups against the fixture's operator.
+    because Python copies the reference at import time. DEFAULT_OPERATOR is patched
+    at lib.config so client forks whose real `data/.operators.json` lacks
+    `operator_fixture` still resolve owner / path lookups against the fixture's
+    operator.
     """
     data_dir = tmp_project / "data" / operator_fixture
     pipeline = data_dir / "pipeline.json"
@@ -172,7 +170,6 @@ def patch_paths(tmp_project, operator_fixture):
             "scripts.ops.lib.config.OPERATORS",
             _operator_registry_payload(operator_fixture, data_dir),
         ),
-        patch("scripts.utils.lib.adoption_gate.DEFAULT_OPERATOR", operator_fixture),
         patch("lib.pipeline.PROJECT_ROOT", tmp_project),
         patch("lib.validate.PROJECT_ROOT", tmp_project),
         patch("lib.auto_extract.PROJECT_ROOT", tmp_project),

@@ -33,7 +33,7 @@
     "掃描",
     "q", "i", "t",
     "分析Reel", "梗", "trend", "加盟主拍",
-    "提硬化", "硬化", "/harden", "/scan", "/sync", "/sync-engine", "同步"
+    "提硬化", "硬化", "/harden", "/scan"
   ],
 
   "valid_skills": [
