@@ -1,7 +1,9 @@
 # performance-patterns.json Schema Contract
 
-> version: 1.0 | last_updated: 2026-04-11
+> version: 1.1 | last_updated: 2026-05-17
 > 角色：Claude (reader/injector) × CLI 層 (writer/computer)
+>
+> **v1.1**：執行者欄位從「Codex」改稱「CLI 層」(雙 agent 拆分退役後、概念合併、IO 契約不變)
 
 SSoT 檔案：`data/[operator]/performance-patterns.json`
 
