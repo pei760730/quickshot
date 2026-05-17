@@ -34,7 +34,7 @@ def test_missing_file_checker_accepts_bare_filename_elsewhere_in_repo(tmp_path):
     repo_root = tmp_path
     wf = repo_root / ".claude" / "rules" / "workflow.md"
     wf.parent.mkdir(parents=True)
-    wf.write_text("Codex 不讀 `brand.md`\n", encoding="utf-8")
+    wf.write_text("placeholder fixture references `brand.md`\n", encoding="utf-8")
 
     brand = repo_root / "01-data-brain" / "brand.md"
     brand.parent.mkdir(parents=True)

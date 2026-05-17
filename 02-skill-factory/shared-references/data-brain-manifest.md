@@ -127,4 +127,4 @@ v3.0 lint-driven：
 ## 版本歷史
 
 - **v2.x**（2026-04 之前）：手寫 skill × brand section 矩陣、14 個舊 skill 名
-- **v3.0**（2026-04-26）：Phase 5b 落地 — 改為 lint-driven、矩陣由 `brand_ref_lint.py --manifest` 自動推導、本檔降為設計說明 + 怎麼查 manifest。對應 T-0017、配對 PR #319（Codex `brand_ref_lint.py` 落地）+ 本 PR（5 核心 SKILL.md frontmatter 加 brand-refs）
+- **v3.0**（2026-04-26）：改為 lint-driven、矩陣由 `brand_ref_lint.py --manifest` 自動推導、本檔降為設計說明 + 怎麼查 manifest。對應 5 核心 SKILL.md frontmatter 加 `brand-refs`。

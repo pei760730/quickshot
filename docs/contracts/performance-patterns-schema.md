@@ -1,7 +1,7 @@
 # performance-patterns.json Schema Contract
 
 > version: 1.0 | last_updated: 2026-04-11
-> 雙方契約：Claude Code (reader/injector) + Codex (writer/computer)
+> 角色：Claude (reader/injector) × CLI 層 (writer/computer)
 
 SSoT 檔案：`data/[operator]/performance-patterns.json`
 
@@ -121,14 +121,14 @@ SSoT 檔案：`data/[operator]/performance-patterns.json`
 | 操作 | 執行者 | 函數 |
 |------|--------|------|
 | 讀取 patterns 做注入 | Claude（Skill prompt） | 讀 JSON 直接引用 |
-| 寫入 vid_evidence | Codex | `_add_vid_evidence()` |
-| 計算 stats | Codex | `compute_pattern_stats()` |
-| 衰減檢查 | Codex | `_check_pattern_decay()` |
-| 交叉分析 | Codex | `cross_dimensional_stats()` |
-| Skill 效能 | Codex | `skill_effectiveness()` |
+| 寫入 vid_evidence | CLI 層 | `_add_vid_evidence()` |
+| 計算 stats | CLI 層 | `compute_pattern_stats()` |
+| 衰減檢查 | CLI 層 | `_check_pattern_decay()` |
+| 交叉分析 | CLI 層 | `cross_dimensional_stats()` |
+| Skill 效能 | CLI 層 | `skill_effectiveness()` |
 
 ## 修改規則
 
-- **新增計算欄位**：Codex 實作 + 更新此文件 + 通知 Claude 更新 injection protocol
+- **新增計算欄位**：CLI 層實作 + 更新此文件 + 同步 injection protocol
 - **修改 pattern 結構**：雙方對齊後才動
 - **門檻調整**：改 `config.py:PATTERN_THRESHOLDS` + 更新此文件

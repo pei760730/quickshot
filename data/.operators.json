@@ -2,13 +2,13 @@
   "schema_version": "1.0",
   "description": "Per-repo operator registry",
   "operators": {
-    "longbro": {
-      "display_name": "Longbro",
-      "brand": "龍OS",
-      "data_dir_rel": "data/longbro",
+    "default": {
+      "display_name": "Default",
+      "brand": "{{BRAND_NAME}}",
+      "data_dir_rel": "data/default",
       "production_dir_rel": "03-production-line",
       "enabled": true,
-      "created_at": "2026-04-22"
+      "created_at": "2026-05-17"
     }
   }
 }

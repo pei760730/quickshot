@@ -203,7 +203,7 @@ A/B/C/D 缺一不可。
 | `flow-operator`（→ Generation Skill 主體）| 跨 task 重用、需 AI 判斷 4 版選邊、有明確 IO（腳本 markdown）、不可降級為純模板 |
 | `humanizer` + `script-verifier`（→ Quality Skill）| 同上、品質檢查需 AI 推理「這段是不是 AI 味」、不是固定規則 |
 | `harden`（→ Distillation Skill 主體）| 跨 task 重用、需 AI 判斷 lesson 升路徑、明確 IO（lesson stage 變動）|
-| **`topic-architect`（→ Discovery Skill 主體、v1.3 修正）**| 跨 task 重用、需 AI 判斷「外部熱點對紅茶巴士的意義」（推理性、非規則）、明確 IO（5-10 個選題建議 + 切角）、不可降級（web fetch + 大腦交互非 template/tool 能單獨做到、需 skill 級推理整合）|
+| **`topic-architect`（→ Discovery Skill 主體、v1.3 修正）**| 跨 task 重用、需 AI 判斷「外部熱點對品牌的意義」（推理性、非規則）、明確 IO（5-10 個選題建議 + 切角）、不可降級（web fetch + 大腦交互非 template/tool 能單獨做到、需 skill 級推理整合）|
 
 ### v1.3 反例新增：**自我漏判**（準則 E + 準則 D 的元教訓）
 

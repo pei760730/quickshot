@@ -1,7 +1,7 @@
 # Pipeline Schema Contract
 
 > version: 2.1 | last_updated: 2026-05-15
-> 雙方契約：Claude Code (prompt/skill) + Codex (backend/infra)
+> 角色：Claude (prompt/skill) × CLI 層 (backend/infra)
 > 🚨 schema-migration: v2.1（engine v5.97、Issue #438、整層退役 legacy `pipeline.json`、純 sharded SSoT、`.gitignore` 防誤建）
 > 🚨 schema-migration（歷史）: v2.0（engine v4.x、pipeline 改為 sharded storage、legacy `pipeline.json` 仍為相容輸出）
 
@@ -38,7 +38,7 @@ Python 的狀態機、驗證、門檻全部從 `_meta` 讀取，不硬編碼。
 | `thresholds.performance` | dict | 高/低表現門檻 | backfill.py `classify_performance()` |
 | `_meta.sedimentation.max_proposals_per_backfill` | int | 每次 backfill 最多提出幾條規則建議（建議值 2） | Claude 主動沉澱 |
 | `_meta.sedimentation.fallback_threshold` | int | fallback 規則提案門檻（對齊舊版 3） | sedimentation.py fallback |
-| `_meta.quality.levels` | dict | L0/L1/L2 機器可讀品質分級條件 | Claude/Codex 共用 |
+| `_meta.quality.levels` | dict | L0/L1/L2 機器可讀品質分級條件 | Claude / CLI 共用 |
 | `_meta.verifier.checks` | dict | 5 項 verifier 檢查門檻（衝突感、AI 殘留等） | save/verifier/scoring |
 | `thresholds.shelf_life_stale_days` | dict | timely/trending 過期天數 | `classify_idea_freshness()` |
 | `thresholds.shelf_life_expire_days` | dict | trending 徹底過期天數 | `classify_idea_freshness()` |
@@ -70,7 +70,7 @@ archived → inbox
 | low | retention_3s < 40 OR completion_rate < 15（兩值皆非 null）| low |
 | normal | 其餘 | normal |
 
-> ⚠️ **L-0024 hardened**：`retention_3s=0.0` 是「資料未抓到」的 sentinel、不是真值。若 views>0 + retention=0、判定為無效；backfill 寫入端 (Codex) 應 reject 或轉 null；分類器遇 retention=null 必歸 `unknown`、不歸 `low`。事件流見 `data/{operator}/lessons.json` L-0024。
+> ⚠️ **L-0024 hardened**：`retention_3s=0.0` 是「資料未抓到」的 sentinel、不是真值。若 views>0 + retention=0、判定為無效；backfill 寫入端應 reject 或轉 null；分類器遇 retention=null 必歸 `unknown`、不歸 `low`。事件流見 `data/{operator}/lessons.json` L-0024。
 
 ### sedimentation / quality / verifier（中央 rulesheet）
 
@@ -232,6 +232,6 @@ archived → inbox
 ## 修改規則
 
 - **Claude Code**：讀取 `_meta.valid_*` 決定存檔參數，讀取 items 做分析/提醒
-- **Codex**：實作所有寫入邏輯（透過 video-ops.py CLI），驗證欄位合法性
+- **CLI 層**：實作所有寫入邏輯（透過 video-ops.py CLI）、驗證欄位合法性
 - **新增欄位**：雙方先在此文件對齊，再各自實作
 - **刪除/改名欄位**：必須通知對方 + 更新此文件 + 更新 `conftest.py:make_video()`

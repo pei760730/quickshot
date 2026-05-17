@@ -35,7 +35,7 @@
 |-------|--------|-----------|----------|------------|------|
 | **flow-operator** | v1.50 | Generation Skill 主體（mode=dual-track）| T1 主生成器、跨 task 重用、需 AI 判斷 4 版選邊、明確 IO（腳本 markdown）、不可降級為純模板 | ✅ 全 10 條 | Phase 3 升級為 Generation Skill |
 | **harden** | v1.2 | Distillation Skill 主體 | 規則沉澱層、跨 task 重用、需 AI 判斷 lesson 升路徑、明確 IO（lesson stage 變動）| ✅ 全 10 條 | Phase 4 升級為 Distillation Skill |
-| **topic-architect**（v1.1 新增）| v1.24 | **Discovery Skill 主體**（modes: discover-week / discover-month / discover-trend）| 對應失敗模式 F7（靈感被個人視野限制）、跨 task 重用、需 AI 判斷「外部熱點對紅茶巴士有沒有意義」、明確 IO（5-10 個選題建議）| ✅ 全 10 條（過了 v1.3 §F7 + G 推導）| **Phase 4 升級為 Discovery Skill**（需 Codex 配套：web fetch tool）|
+| **topic-architect**（v1.1 新增）| v1.24 | **Discovery Skill 主體**（modes: discover-week / discover-month / discover-trend）| 對應失敗模式 F7（靈感被個人視野限制）、跨 task 重用、需 AI 判斷「外部熱點對品牌有沒有意義」、明確 IO（5-10 個選題建議）| ✅ 全 10 條（過了 v1.3 §F7 + G 推導）| **Phase 4 升級為 Discovery Skill**（需 tool 配套：web fetch tool）|
 
 ### 合併（併入核心 skill）
 
@@ -81,7 +81,7 @@
 | **Quality** | D 驗證定義 | F5 | Generation output + verification 標準 | 修改後 artifact + verifier_scores JSON + pass/fail |
 | **Distillation** | E 經驗沉澱 | F6 | task 過程 contract 預測 vs 實際 + lessons.json | `lessons add-evidence` 呼叫 + 候選 lesson 提案 + brand 更新建議 |
 
-**邊界遵守 F**（territory）= **不是 skill**、由 territory-lint CI gate 守。
+**邊界遵守 F**（territory）= **不是 skill**、由 (territory-lint 已退役) 守。
 
 **流程**：Orientation → 若 task=找選題 → Discovery → Generation → Quality → Distillation。  
 若 task=拍既有選題 → 跳過 Discovery、直接 Orientation → Generation → Quality → Distillation。
@@ -95,7 +95,7 @@
 | **Phase 1** | 規則 + 文件層（CLAUDE.md 禁令 #12 + workflow.md §Orientation Phase 1 + 準則 E + vNext 章節 + 本 map）| 低 | 6-8 hr / 5 檔 / 1 PR | **本 PR 落地** |
 | **Phase 2** | 降級類（hook-killer + title-generator + topic-researcher + trend-adapter + topic-architect 反向重設計）| 中 | 8-12 hr / 10-15 檔 / 2-3 PR | 待 Phase 1 merge 後 |
 | **Phase 3** | 合併類 - Generation Skill（5 generation skill → 1 + 5 modes）| 中高 | 12-16 hr / 15-20 檔 / 2-3 PR | 待 Phase 2 merge 後 |
-| **Phase 4** | 合併類 - Quality + Distillation + Orientation Skill 升級 + **Discovery Skill 建立**（從 topic-architect 升級、需 Codex 寫 web fetch tool）| 中高 | 16-20 hr / 18-25 檔 / 3-4 PR | 待 Phase 3 merge 後 |
+| **Phase 4** | 合併類 - Quality + Distillation + Orientation Skill 升級 + **Discovery Skill 建立**（從 topic-architect 升級、需寫 web fetch tool）| 中高 | 16-20 hr / 18-25 檔 / 3-4 PR | 待 Phase 3 merge 後 |
 
 每 Phase 之間可選擇：
 - 連續做（密集週、每階段間最多停 1 天驗）
@@ -115,7 +115,7 @@
 | `scripts/libs/brain_loader.py` | Orientation Skill 內部 tool（不變）|
 | `scripts/ops/video-ops.py` CLI | 4 核心 skill 都會呼叫（不變）|
 | `data/<operator>/pipeline.json` schema | 不變、繼續累積 trace / scores |
-| `territory-lint` CI gate | 守 F「邊界遵守」、4 核心 skill 不取代（不變）|
+| (territory-lint 已退役) | 守 F「邊界遵守」、4 核心 skill 不取代（不變）|
 | `engine-version-check` CI gate | 守版本一致（不變）|
 | `/harden` skill（v1.2）| Phase 4 併入 Distillation Skill 為 phase=harden |
 | `lesson-pressure` hook（PR #289）| Phase 4 對應 Distillation Skill 對話端 |
@@ -123,21 +123,21 @@
 
 ---
 
-## Codex 配套（Phase 2-4 才需要）
+## CLI 層配套（Phase 2-4 才需要）
 
-Phase 1 純 Claude 領土、無 Codex 工作。後續階段預期需要 Codex：
+Phase 1 純 prompt / skill 層、無 CLI 工作。後續階段預期需要 CLI 配套：
 
-| Phase | Codex 配套 | 領土 |
+| Phase | CLI 配套 | 層 |
 |-------|----------|------|
-| Phase 2 | `scripts/lint/canonical-registry.json` valid_skills 列表更新（4 個 skill 降級時） | Codex |
-| Phase 2 | `scripts/utils/check-version-sync.py` skill count check（從 14 降到 11） | Codex |
-| Phase 3 | `scripts/libs/brain_loader.py` 加 mode 參數支援（Generation Skill 5 modes）| Codex |
-| Phase 3 | canonical-registry valid_skills（從 11 降到 7） | Codex |
-| Phase 4 | quality-loop CLI（合併 humanizer + verifier 操作）| Codex |
-| Phase 4 | **web fetch tool**（Discovery Skill 配套：IG / TikTok / 競品熱點 fetch）| **Codex（v1.1 新增）** |
-| Phase 4 | canonical-registry valid_skills（從 7 降到 **5**、不是 4）| Codex |
+| Phase 2 | `scripts/lint/canonical-registry.json` valid_skills 列表更新（4 個 skill 降級時） | CLI 層 |
+| Phase 2 | (已退役) skill count check（從 14 降到 11） | CLI 層 |
+| Phase 3 | `scripts/libs/brain_loader.py` 加 mode 參數支援（Generation Skill 5 modes）| CLI 層 |
+| Phase 3 | canonical-registry valid_skills（從 11 降到 7） | CLI 層 |
+| Phase 4 | quality-loop CLI（合併 humanizer + verifier 操作）| CLI 層 |
+| Phase 4 | **web fetch tool**（Discovery Skill 配套：IG / TikTok / 競品熱點 fetch）| **CLI 層（v1.1 新增）** |
+| Phase 4 | canonical-registry valid_skills（從 7 降到 **5**、不是 4）| CLI 層 |
 
-詳細 Codex Task brief 在每 Phase 開始時撰寫。
+詳細 task brief 在每 Phase 開始時撰寫。
 
 ---
 

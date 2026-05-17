@@ -29,6 +29,6 @@
 ## 建議
 
 1. **若問題在 skill 流程未觸發**：交給 Claude 在 `script-verifier` / workflow 端補上固定呼叫節點（Claude 領土）。  
-2. **若要由 CLI 端補防呆**：Codex 可另開 PR（不在本 audit）加入 `save` 後提醒或狀態檢查，提示「尚未記錄 verifier_scores」。  
+2. **若要由 CLI 端補防呆**：可另開 PR（不在本 audit）加入 `save` 後提醒或狀態檢查，提示「尚未記錄 verifier_scores」。  
 3. 保持本次 audit 純文件，不修改 `record-verifier-scores` 指令本體與 skill 檔案。
 

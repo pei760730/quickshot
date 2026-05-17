@@ -1,0 +1,29 @@
+{
+  "_meta": {
+    "description": "社群粉絲追蹤 SSoT。Kai 貼平台截圖 → Claude 讀數字 → append 到 history。Dashboard 讀此檔顯示規模 + 增長。profile_url 用於整張卡點擊跳轉。",
+    "last_updated": ""
+  },
+  "platforms": {
+    "tiktok": {
+      "display_name": "TikTok",
+      "icon": "🎵",
+      "handle": "",
+      "profile_url": "",
+      "history": []
+    },
+    "instagram": {
+      "display_name": "Instagram",
+      "icon": "📷",
+      "handle": "",
+      "profile_url": "",
+      "history": []
+    },
+    "facebook": {
+      "display_name": "Facebook",
+      "icon": "👍",
+      "handle": "",
+      "profile_url": "",
+      "history": []
+    }
+  }
+}

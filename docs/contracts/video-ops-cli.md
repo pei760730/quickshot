@@ -1,11 +1,11 @@
 # video-ops.py CLI Contract
 
 > version: 1.16 | last_updated: 2026-05-08
-> 雙方契約：Claude Code (caller) + Codex (implementer)
+> 角色：Claude (caller) × CLI 層 (implementer)
 
 入口：`python scripts/ops/video-ops.py [--operator <代號>] <command> [args]`
 
-**注意**（v4.38）：合法 operator 由 `data/.operators.json` 動態決定（客戶 repo 自己 bootstrap 註冊）、引擎預設只有 `kai`。
+**注意**：合法 operator 由 `data/.operators.json` 動態決定（每個 repo 在 onboarding 時自己註冊）。
 
 ---
 
@@ -104,7 +104,7 @@
 
 ## 修改規則
 
-- **新增命令**：Codex 實作 + 更新此文件 + 通知 Claude 更新 workflow.md
+- **新增命令**：CLI 層實作 + 更新此文件 + 同步 workflow.md
 - **修改參數**：更新此文件 + 確認 Claude 側 workflow.md 同步
 - **刪除命令**：必須先確認 Claude 側無引用
 - **exit code / stdout 格式**：不可變更（✅/❌ + exit 0/1）
