@@ -1,0 +1,207 @@
+name: Wipe client data
+
+# 短期客戶結束、清回 template 狀態。
+# 三層安全：
+#   L1. operator 必填
+#   L2. confirmation 必填、且必須等於 "WIPE <operator>" 字串（case-sensitive）
+#   L3. dry_run 預設 true、要明示 toggle false 才真清
+# 只能在 main 跑（github.ref check）、防止在功能分支誤觸。
+
+on:
+  workflow_dispatch:
+    inputs:
+      operator:
+        description: 'Operator name (e.g., longbro)'
+        required: true
+        type: string
+      confirmation:
+        description: 'Type "WIPE <operator>" exactly (case-sensitive)'
+        required: true
+        type: string
+      dry_run:
+        description: 'Dry run (preview only, no changes). Toggle off to actually wipe.'
+        type: boolean
+        default: true
+
+jobs:
+  wipe:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate confirmation
+        run: |
+          EXPECTED="WIPE ${{ inputs.operator }}"
+          if [ "${{ inputs.confirmation }}" != "$EXPECTED" ]; then
+            echo "::error::Confirmation mismatch. Got '${{ inputs.confirmation }}', expected '$EXPECTED'"
+            exit 1
+          fi
+          echo "✓ Confirmation matched"
+
+      - name: Compute tag name
+        id: tag
+        run: |
+          TAG="client-end-${{ inputs.operator }}-$(date -u +'%Y%m%d-%H%M%S')"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "tag_name=$TAG" >> $GITHUB_ENV
+          echo "Tag: $TAG"
+
+      - name: Dry run preview
+        if: ${{ inputs.dry_run }}
+        run: |
+          python scripts/utils/wipe_client.py \
+            "${{ inputs.operator }}" \
+            --dry-run \
+            --output-json /tmp/wipe-preview.json
+          echo "::group::Wipe preview (JSON)"
+          cat /tmp/wipe-preview.json
+          echo "::endgroup::"
+          echo "─────────────────────────────"
+          python3 -c "import json; d=json.load(open('/tmp/wipe-preview.json')); print('Operator:', d['operator']); print('Brand:', d['brand']); print('Files to clear:', d['total_files']); print('Total size:', d['total_size_bytes'], 'bytes'); print('Lessons kept:', d['lessons_filter']['kept']); print('Lessons dropped:', len(d['lessons_filter']['dropped_entries'])); print('Hardening archive entries preserved:', d['preserved']['hardening_archive_entries'])"
+
+      - name: Upload dry-run preview
+        if: ${{ inputs.dry_run }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: wipe-preview-${{ inputs.operator }}
+          path: /tmp/wipe-preview.json
+          retention-days: 30
+
+      - name: Exit if dry run
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "✓ Dry run complete."
+          echo ""
+          echo "To execute the actual wipe:"
+          echo "  1. Download the 'wipe-preview-${{ inputs.operator }}' artifact above and review"
+          echo "  2. Re-run this workflow with dry_run = false"
+          exit 0
+
+      # ───────────────────────────────────────────────
+      # REAL WIPE (only when dry_run = false)
+      # ───────────────────────────────────────────────
+
+      - name: Configure git
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Create and push backup tag
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git tag "${{ steps.tag.outputs.tag }}"
+          for i in 1 2 3 4; do
+            git push origin "${{ steps.tag.outputs.tag }}" && break
+            sleep $((2**$i))
+          done
+
+      - name: Create template-reset branch
+        if: ${{ !inputs.dry_run }}
+        run: |
+          BRANCH="template-reset/$(date -u +'%Y%m%d-%H%M%S')"
+          git checkout -b "$BRANCH"
+          echo "branch=$BRANCH" >> $GITHUB_ENV
+
+      - name: Execute wipe
+        if: ${{ !inputs.dry_run }}
+        run: |
+          python scripts/utils/wipe_client.py \
+            "${{ inputs.operator }}" \
+            --tag "${{ steps.tag.outputs.tag }}" \
+            --output-json /tmp/wipe-report.json
+          echo "::group::Wipe report"
+          cat /tmp/wipe-report.json
+          echo "::endgroup::"
+
+      - name: Commit
+        if: ${{ !inputs.dry_run }}
+        env:
+          OP: ${{ inputs.operator }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          git add -A
+          MSG=$(printf '🧹 wipe: %s client ended\n\nBackup tag: %s\nRestore: git checkout %s\n\nSee workflow run artifacts for wipe report.' "$OP" "$TAG" "$TAG")
+          git commit -m "$MSG"
+
+      - name: Push branch
+        if: ${{ !inputs.dry_run }}
+        run: |
+          for i in 1 2 3 4; do
+            git push -u origin "$branch" && break
+            sleep $((2**$i))
+          done
+
+      - name: Create PR
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OP: ${{ inputs.operator }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          RUN_ID: ${{ github.run_id }}
+          REPO: ${{ github.repository }}
+        run: |
+          BODY=$(cat <<EOF
+          ## Summary
+
+          Client \`${OP}\` ended. Repo reset to short-term template state.
+
+          **Backup tag**: [\`${TAG}\`](https://github.com/${REPO}/tree/${TAG})
+
+          **Restore command** (if needed): \`git checkout ${TAG}\`
+
+          ## Wipe report
+
+          See \`wipe-report-${OP}\` artifact in [workflow run #${RUN_ID}](https://github.com/${REPO}/actions/runs/${RUN_ID}).
+
+          ## Review checklist
+
+          - [ ] Backup tag exists and is fetchable: \`git fetch --tags && git show ${TAG}\`
+          - [ ] Cleared files are correct (no engine files touched — check diff)
+          - [ ] Preserved files (lessons hardened, hardening-archive) intact
+          - [ ] CHANGELOG entry recorded
+          - [ ] Ready to onboard next client (see \`docs/references/wipe-client-sop.md\`)
+
+          After merge, see SOP for next-client setup steps.
+          EOF
+          )
+          gh pr create --base main --head "$branch" --title "🧹 Wipe client data: ${OP}" --body "$BODY"
+
+      - name: Upload wipe report
+        if: ${{ !inputs.dry_run }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: wipe-report-${{ inputs.operator }}
+          path: /tmp/wipe-report.json
+          retention-days: 365
+
+      - name: Create issue on failure
+        if: failure() && !inputs.dry_run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OP: ${{ inputs.operator }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          RUN_ID: ${{ github.run_id }}
+          REPO: ${{ github.repository }}
+        run: |
+          BODY=$(cat <<EOF
+          Wipe workflow run [#${RUN_ID}](https://github.com/${REPO}/actions/runs/${RUN_ID}) failed.
+
+          - Backup tag (if pushed): \`${TAG}\`
+          - Branch (if created): \`${branch:-not created}\`
+
+          Check workflow logs to determine state. Branch and tag left intact for inspection / recovery.
+          EOF
+          )
+          gh issue create --title "⚠️ Wipe workflow failed for ${OP}" --body "$BODY"
