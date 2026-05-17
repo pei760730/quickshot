@@ -1,6 +1,6 @@
 # 01 - Data Brain
 
-> Red Tea Bus 品牌知識庫
+> 客戶品牌知識庫（短期客戶 template、品牌名見 `CLAUDE.local.md`）
 
 ## 結構
 

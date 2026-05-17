@@ -1,0 +1,10 @@
+{
+  "description": "品牌輿情監控設定 — discovery skill 靈感發想時自動讀取（Google 全網搜尋，待各平台 API 後升級）。新 client 可在 bootstrap 後填入自家品牌關鍵字。",
+  "last_updated": "",
+  "brand_keywords": [],
+  "person_keywords": [],
+  "sentiment_keywords": {
+    "negative": [],
+    "positive": []
+  }
+}

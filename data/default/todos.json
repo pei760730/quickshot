@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0",
+  "description": "Per-operator structured todo list.",
+  "next_id": 1,
+  "todos": []
+}

@@ -37,7 +37,7 @@
 | `data/[operator]/performance-patterns.json` | backfill auto-extract + compute_pattern_stats | 每次回填後（含 win_rate/confidence 計算） | 注入成功/失敗模式（附信心等級） |
 | `data/[operator]/lessons.json` | `video-ops.py 記錯` / `diff-script` / verifier 沉澱 / quality skill phase=fix 高頻（設計中、未實作）/ 對話中 Claude 即時提案 | 事件驅動 + 對話提議 → Kai 確認後透過 `video-ops.py` 寫入（內部呼叫 `add_lesson()` / `promote_stage()`） | 統一避免模式 + 錯誤記憶 + 偏差 + 畢業規則（origin 7 種、stage 3 種：soft/hardened/archived）|
 | `data/[operator]/todos.json` | `video-ops.py todo add` / 對話中「待辦：XXX」命令 / lesson close 時自動連動 | 事件驅動 → Kai 確認後透過 `video-ops.py` 寫入 | 待辦清單結構化（id / state / priority / due / related_vid / related_lesson_id）、逾期/重要度可查詢 |
-| `data/.operators.json` | `bootstrap-client.sh` → `reset-operator.py` | 新客戶初始化 | operator 註冊（blacklist 保護、sync-engine 不覆蓋） |
+| `data/.operators.json` | 手動編輯（新客戶 onboarding 時加 operator entry）| 新客戶初始化 | operator 註冊（per-client、不在引擎層）|
 | `data/[operator]/hardening-archive.json` | `/harden` 對話內硬化成功後寫入（source="dialog"）| `harden_from_dialog()` 執行成功 | 已硬化記錄（稽核追溯、queue 層 v4.67 退役）|
 | `02-skill-factory/shared-references/banned-words.md` | 偏差分析 / 手動 | 人工確認後 | 禁止特定詞彙 |
 | `01-data-brain/transcripts/*.md` | 語音筆記流程 | Kai 貼逐字稿 / 錄音轉文字時 | 原文完整保留，定期沉澱交叉分析 |

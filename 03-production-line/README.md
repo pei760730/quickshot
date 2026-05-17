@@ -60,7 +60,7 @@
 python3 scripts/ops/video-ops.py list-orphans
 ```
 
-CLI 已實作（Codex PR）、取代過去的 one-liner 臨時檢查。**不要手改 pipeline.json** — 所有 orphan 處置用下方 CLI 子命令。
+CLI 已實作、取代過去的 one-liner 臨時檢查。**不要手改 pipeline.json** — 所有 orphan 處置用下方 CLI 子命令。
 
 ### 處置決策樹
 
