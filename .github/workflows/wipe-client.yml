@@ -102,10 +102,18 @@ jobs:
         if: ${{ !inputs.dry_run }}
         run: |
           git tag "${{ steps.tag.outputs.tag }}"
+          PUSHED=0
           for i in 1 2 3 4; do
-            git push origin "${{ steps.tag.outputs.tag }}" && break
+            if git push origin "${{ steps.tag.outputs.tag }}"; then
+              PUSHED=1
+              break
+            fi
             sleep $((2**$i))
           done
+          if [ "$PUSHED" != "1" ]; then
+            echo "::error::Failed to push backup tag '${{ steps.tag.outputs.tag }}' after 4 attempts. Aborting wipe — recovery point would be unreachable."
+            exit 1
+          fi
 
       - name: Create template-reset branch
         if: ${{ !inputs.dry_run }}
@@ -138,10 +146,18 @@ jobs:
       - name: Push branch
         if: ${{ !inputs.dry_run }}
         run: |
+          PUSHED=0
           for i in 1 2 3 4; do
-            git push -u origin "$branch" && break
+            if git push -u origin "$branch"; then
+              PUSHED=1
+              break
+            fi
             sleep $((2**$i))
           done
+          if [ "$PUSHED" != "1" ]; then
+            echo "::error::Failed to push template-reset branch '$branch' after 4 attempts. Backup tag '${{ steps.tag.outputs.tag }}' remains on remote for recovery."
+            exit 1
+          fi
 
       - name: Create PR
         if: ${{ !inputs.dry_run }}

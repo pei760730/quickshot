@@ -162,7 +162,7 @@ def get_archive_count(project_root, operator):
         if isinstance(d, list):
             return len(d)
         if isinstance(d, dict):
-            for key in ("entries", "records", "archive"):
+            for key in ("items", "entries", "records", "archive"):
                 if isinstance(d.get(key), list):
                     return len(d[key])
     except Exception:
