@@ -80,7 +80,7 @@ lessons schema 降維、hit_count 已退役）。
 | `discovery` | discover-week / discover-month / discover-trend | ✅ | 需全份 brand + cases + performance-patterns + lessons |
 | `generation` | mode=dual-track | ✅ | T1 主生成器、需全份 |
 | `generation` | mode=variant | ✅ | 變體器、同 dual-track |
-| `generation` | mode=series | ✅ | 系列架構、需 [12] 加盟主巡禮類 |
+| `generation` | mode=series | ✅ | 系列架構、需 [12] FAQ / 異常處理素材 |
 | `generation` | mode=interview | ✅ | 對話壓力腳本、需 interview-bank.md |
 | `generation` | mode=viral | ❌ | 知識型、不綁品牌（跳過 brand/cases、僅 lessons + banned-words）|
 | `quality` | phase=check / phase=fix | ✅ | 需 personas/kai.md [1] 說話風格 + lessons + banned-words |

@@ -88,16 +88,17 @@ v3.0 lint-driven：
 | [0] 基本資料 | 品牌名、店數、商業模式 | discovery / generation 全 modes |
 | [1] 業務能力與優勢 | 供應鏈、爆品、SOP | discovery / generation mode=dual-track |
 | [2] 目標受眾 | TA 畫像 | generation 各 modes（補充） |
-| [3] *已搬遷* | → `personas/kai.md` [1] 說話風格 | quality phase=fix（核心）/ generation 全 modes |
+| [2.5] 高流量素材庫 | 個人故事 / 行業誤會 / 圈內事 + Hook 適用 tag + 可拍嗎 tag | generation 各 modes（短期客戶主彈藥）|
+| [3] 內容調性 | 說話風格、口頭禪、禁說 | quality phase=fix（核心）/ generation 全 modes |
 | [4] 商業洞察 | 核心論點 | discovery（C 版切角推理用、generation 不直接引用、僅 dual-track 內生成參考）|
 | [5] 禁忌與邊界 | 迴避話題、灰色地帶 | quality phase=check / generation 各 modes |
 | [6] 競爭對手 | 敵人具象化素材 | discovery / generation mode=interview |
 | [7] 平台策略 | CTA 風格、粉絲互動 | generation 各 modes |
-| [8] 真實案例庫（cases.md）| 5 大案例 + 高表現記錄 | discovery / generation 全 modes |
+| [8] 真實案例庫（cases.md）| 案例 + 高表現記錄 | discovery / generation 全 modes |
 | [9] 數據記錄 | 營業數字 | quality phase=check / generation D 版 |
-| [10] 目標與規劃 | 2026 展店目標 | discovery |
-| [11] 季節性 | 淡旺季 | discovery（節點選題） |
-| [12] 其他補充 | 人生故事、價值觀 | discovery / generation mode=series + interview |
+| [10] 90 天里程碑 | 短期目標 + 可選長期願景 | discovery |
+| [11] 季節性 *(optional)* | 淡旺季（季節性行業才填）| discovery（節點選題） |
+| [12] 已知 FAQ / 異常處理 | 核心信念 + FAQ + 客訴模式 | discovery / generation mode=series + interview |
 
 實際依賴以 lint manifest 為準、本表只是脈絡說明。
 
