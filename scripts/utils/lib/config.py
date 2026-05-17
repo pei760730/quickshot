@@ -29,13 +29,37 @@ SH_REPORT = "報表"
 SH_EMPLOYEE_LOG = "日報"
 
 # ── 操作員 → 分頁對照 ───────────────────────────────
-OPERATOR_SHEETS = {
-    "kai": {
-        "inspiration": SH_INSPIRATION,
-        "video_overview": SH_VIDEO_OVERVIEW,
-    },
-}
-DEFAULT_OPERATOR = next(iter(OPERATOR_SHEETS), "kai")
+# 從 data/.operators.json 動態建構、所有註冊的 operator 都用同一組分頁設定。
+# 新客戶 onboarding 後不需動本檔。
+_OPERATORS_JSON = os.path.join(PROJECT_ROOT, "data", ".operators.json")
+
+
+def _build_operator_sheets():
+    sheets = {}
+    try:
+        import json as _json
+
+        with open(_OPERATORS_JSON, "r", encoding="utf-8") as f:
+            raw = _json.load(f)
+        for op_id, cfg in raw.get("operators", {}).items():
+            if cfg.get("enabled", True):
+                sheets[op_id] = {
+                    "inspiration": SH_INSPIRATION,
+                    "video_overview": SH_VIDEO_OVERVIEW,
+                }
+    except (FileNotFoundError, ValueError):
+        pass
+    # 空 registry 時 fallback 給 default、避免 sync 完全壞掉
+    if not sheets:
+        sheets["default"] = {
+            "inspiration": SH_INSPIRATION,
+            "video_overview": SH_VIDEO_OVERVIEW,
+        }
+    return sheets
+
+
+OPERATOR_SHEETS = _build_operator_sheets()
+DEFAULT_OPERATOR = next(iter(OPERATOR_SHEETS), "default")
 
 
 def resolve_operator(operator=None):
