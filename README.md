@@ -36,20 +36,19 @@ quickshot/
 ├── .claude/
 │   ├── rules/workflow.md       # 對話開頭檢查 + 設計原則 + 冷啟動萃取
 │   ├── rules/permissions.md    # 受保護路徑
-│   ├── hooks/session-start.sh  # 品牌速查注入 + dashboard rebuild
+│   ├── hooks/session-start.sh  # 品牌速查注入
 │   ├── commands/{harden,scan}.md
 │   └── settings.json           # deny list 保護 CLAUDE.md / .claude/**
 │
 ├── 01-data-brain/              # 品牌知識
 │   ├── index.md                # 資料地圖
-│   ├── brand.md                # 14 sections（MVP 5 個：[0][1][2.5][3][5]）
-│   ├── brand-summary.md        # SessionStart hook 速查注入
+│   ├── brand.md                # 14 sections schema（MVP 5 個：[0][1][2.5][3][5]、客戶 onboarding 時填）
 │   ├── cases.md                # 真實案例庫
 │   └── transcripts/            # 語音 / 訪談原文
 │
 ├── data/
 │   ├── .operators.json         # operator 註冊
-│   ├── {operator}/             # 每 operator 一個 dir（本 repo: longbro）
+│   ├── {operator}/             # 每 operator 一個 dir（在 data/.operators.json 註冊後建立）
 │   │   ├── pipeline.json       # 狀態 SSoT
 │   │   ├── lessons.json        # 學習 lessons
 │   │   ├── todos.json          # 待辦

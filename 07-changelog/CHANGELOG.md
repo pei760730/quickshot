@@ -8,6 +8,22 @@
 
 ---
 
+## wipe: longbro client ended (2026-05-17)
+
+**主題：🧹 短期客戶 longbro 結束、repo 清回 template 狀態**
+
+- 清掉檔案數：10（20086 bytes）
+- 過濾 lessons：保 0 / 砍 2
+- 保留 hardening-archive entries：0
+
+### 還原方式
+
+```bash
+git checkout deep-clean-2026-05-17
+```
+
+---
+
 ## v7.00 short-term template fork（2026-05-17）
 
 **主題：🔧 quickshot 短期客戶 template 從 KaiOS-ContentSystem 精簡分叉**

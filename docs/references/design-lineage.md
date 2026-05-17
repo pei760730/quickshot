@@ -1,7 +1,7 @@
 # 系統設計原則 — 追溯與本地化
 
 > version: 1.1 | created: 2026-04-21 | last_updated: 2026-05-15
-> 記錄 KaiOS 系統中哪些原則來自外部（主要為 Boris Cherny / Claude Code 團隊），哪些是本專案原創改造。避免內部引用變成確認偏誤。
+> 記錄本系統中哪些原則來自外部（主要為 Boris Cherny / Claude Code 團隊），哪些是本專案原創改造。避免內部引用變成確認偏誤。
 
 ## 為什麼有這個檔
 
@@ -16,7 +16,7 @@
 ### Plan mode（`CLAUDE.md §3.5`）
 - 來源：Boris 官方 CLAUDE.md（github.com/0xquinto/bcherny-claude）L53-58 + 2026-01 X thread
 - 原話：「Start every complex task in plan mode... When something goes sideways, switch back to plan mode and re-plan. Don't keep pushing.」
-- 本地化：觸發條件具體到「多檔連動 ≥ 3、跨責任區、engine-manifest、全修指令、卡住重回」。比 Boris 更結構化、核心「預先規劃 + 走不通重走」不變。
+- 本地化：觸發條件具體到「多檔連動 ≥ 3、全修指令、卡住重回」。比 Boris 更結構化、核心「預先規劃 + 走不通重走」不變。
 
 ### Headless Claude（已退役、v4.69）
 - 來源：Boris 2026-03 thread Tip #3 + Latent Space podcast

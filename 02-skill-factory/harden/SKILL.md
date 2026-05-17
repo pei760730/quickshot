@@ -60,7 +60,7 @@ Kai 在對話中：
 ## 相關文件
 
 - `.claude/commands/harden.md`：command 入口（Claude 對話實際讀此檔）
-- `scripts/ops/lib/hardening.py`：`harden_from_dialog()` 實作（Codex 領土）
+- `scripts/ops/lib/hardening.py`：`harden_from_dialog()` 實作
 - `data/[op]/hardening-archive.json`：成功記錄（source="dialog"、稽核用）
 - `docs/references/skill-architecture-principles.md` v1.6+：第二輪退役脈絡
 - `.claude/rules/workflow.md` v2.25+ §Lesson 硬化提議：對話準則層

@@ -20,7 +20,7 @@
 之前各 skill SKILL.md 的 stage 0 段落各自寫「讀 brand.md、讀 cases.md、讀 lessons.json（過濾 stage...）」、**12 份檔案重複 12 次**。任何規則變更（e.g. scope 過濾邏輯、origin 欄位新增）需要 12 處同步更新、容易漏。
 
 解法：
-- **Python 層**：Codex 建了 `scripts/libs/brain_loader.py`（Phase 1 PR #225）、`load_for_skill(operator, skill_name) -> BrainBundle` 統一回傳
+- **Python 層**：`scripts/libs/brain_loader.py` 的 `load_for_skill(operator, skill_name) -> BrainBundle` 統一回傳
 - **Prompt 層**（本檔）：各 skill SKILL.md 只寫「依 `shared-references/brain-loading.md` 載入」、不再寫具體清單
 
 兩層對齊、SSoT 在本檔 + `brain_loader.py`。
@@ -52,7 +52,7 @@ AND (scope 為空 OR skill_name ∈ scope OR "generation" ∈ scope)
 
 **意思**：skill 只會收到「軟規則」（stage=soft、已 Kai 確認值得載入但未落成硬 artifact）且 scope 相關的。stage=hardened（已寫入 test/lint/禁令/brand、由 artifact 強制）或 archived（已退役）的不載入。
 
-> ⚠️ **v1.6 修正紀錄（PR #365 silent regression）**：`brain_loader.py:_active_lessons` 從 PR #365（2026-04-29）至 v5.83（2026-05-04）期間用已退役的 4 態 schema 過濾（`stage in ("candidate", "active")`）、導致所有 skill 載入 lessons = 0、24 條 soft lessons 從未到達任何 skill。配套 Codex PR `codex/fix-brain-loader-stage-drift` 修復 + `tests/test_brain_loader.py` regression guard + `scripts/lint/rules-lint.py` 新規則防再犯。詳見 `07-changelog/CHANGELOG.md` v5.84。
+> ⚠️ **歷史 silent regression 紀錄**：`brain_loader.py:_active_lessons` 曾用已退役的 4 態 schema 過濾（`stage in ("candidate", "active")`）、導致所有 skill 載入 lessons = 0。已修復為 `stage == "soft"`、加 `tests/test_brain_loader.py` regression guard + `scripts/lint/rules-lint.py` 新規則防再犯。
 
 ## Skill prompt stage 0 引用格式
 
@@ -97,10 +97,10 @@ lessons schema 降維、hit_count 已退役）。
 - **v1.0**（2026-04-22）：Phase 3 建立、取代各 skill 分散寫法
 - 未來 brain_loader 加 cache / 加 operator capability matrix / scope 過濾升級 → 本檔同步更新、skill SKILL.md 不需改（因 pointer 不變）
 
-## 跨代理協作
+## Prompt × 實作對齊
 
-- **Claude 側**：skill prompt 讀本檔 pointer、執行時依 brain_loader 行為
-- **Codex 側**：`scripts/libs/brain_loader.py` 為 Python 實作、本檔為契約
+- **Prompt 層**：skill prompt 讀本檔 pointer、執行時依 brain_loader 行為
+- **Python 層**：`scripts/libs/brain_loader.py` 為實作、本檔為契約
 - **任一側升級**：先改另一側同步（契約 → 實作 OR 實作 → 契約、雙向）
 
 ## 相關契約
@@ -110,10 +110,10 @@ lessons schema 降維、hit_count 已退役）。
 
 ## Changelog
 
-- **v1.0（2026-04-22）**：Phase 3 新建。對齊 Codex PR #225 的 `brain_loader.py`、收斂 6 個生成 skill 的 stage 0 敘述、避免未來再發生「stage 0 載入清單漂移」（/scan 抓到、PR ef28413 已修一次）。
+- **v1.0（2026-04-22）**：Phase 3 新建。對齊 `brain_loader.py`、收斂 6 個生成 skill 的 stage 0 敘述、避免未來再發生「stage 0 載入清單漂移」。
 - **v1.1（2026-04-23）**：對齊 lessons-schema v2.0 降維（4 SKILL.md 的 stage 過濾補齊）、修 Stage C 殘留。
 - **v1.2（2026-04-23、波次 4）**：§Lessons 過濾規則改寫（退役 candidate/active/observation 詞彙）、§Skill prompt stage 0 範本移除「Hit 網格（對應禁令 #8）」殘留（禁令 #8 於 CLAUDE.md v4.16 退役、Hit 機制 v4.63 降維）、外部契約版本 stale 引用更新。
 - **v1.3（2026-04-25、Phase 5 對齊）**：§適用 skill 表從 14 個既有 skill 名重寫為 vNext 5 核心（discovery / generation 5 modes / quality / orientation / distillation）+ 對應 mode/phase + 載入策略。對應 engine v5.42-v5.44 退役 12 stub redirect。
 - **v1.4（2026-04-29、第二輪退役對齊）**：§適用 skill 表中 orientation / distillation 標為退役 stub、實際規則回 workflow.md §Orientation + §Lesson 硬化提議 + session-start hook + `/harden` command。本協議下游剩 3 真 skill（discovery / generation / quality）為主要載入對象。對應 `docs/references/skill-architecture-principles.md` v1.6 §第二輪退役執行。
 - **v1.5（2026-05-04、token cost 優化）**：`session-start.sh` brand.md auto-inject 退役（v4.62 全文塞 → lazy load）。所有載入路徑統一走 `brain_loader`：skill 跑時 `load_for_skill()`、對話中 Claude 需要時 `Read` on-demand。每 session 省 ~27k token baseline、skill 跑時去 hook + brain_loader 雙倍載入。配 7 陷阱對照（trap #3 hook 群體偷塞）優化第 1 步、無 schema 變動。
-- **v1.6（2026-05-04、PR #365 silent regression 修復對齊）**：`brain_loader.py:_active_lessons` 從 PR #365（2026-04-29）起用已退役 4 態 schema（`("candidate", "active")`）、與本檔 v1.2 §Lessons 過濾規則 SSoT（`stage == "soft"`）+ `lessons-schema` v2.3（3 態 soft/hardened/archived）矛盾、導致 24 條 soft lessons 對所有 skill 命中 0%。配套 Codex PR `codex/fix-brain-loader-stage-drift`：(1) `_active_lessons` 改為 `stage == "soft"`、(2) `tests/test_brain_loader.py` regression guard、(3) `scripts/lint/rules-lint.py` 新規則防 stage 舊名再混入。對應 v1.0 §發現 B 真因 reframe（不是設計層問題、是實作層 silent regression）。L-NEW lesson 已記錄。
+- **v1.6（2026-05-04、silent regression 修復對齊）**：`brain_loader.py:_active_lessons` 曾用已退役 4 態 schema（`("candidate", "active")`）、與本檔 §Lessons 過濾規則 SSoT（`stage == "soft"`）+ `lessons-schema` v2.3（3 態 soft/hardened/archived）矛盾、導致所有 skill lessons 命中 0%。修復：(1) `_active_lessons` 改 `stage == "soft"`、(2) `tests/test_brain_loader.py` regression guard、(3) `scripts/lint/rules-lint.py` 新規則防 stage 舊名再混入。

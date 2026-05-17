@@ -109,11 +109,9 @@ jobs:
 
           # 記錄當前分支要同步的檔案
           # v4.39+：todos 已從 00-control-center/todo/*.md 遷移至 data/<op>/todos.json
-          # v5.60 (2026-04-27)：
-          #   1. 排除 **/template/** — 共享引擎狀態、不該被 per-operator branch 覆蓋
-          #      （root cause of L-0023 sync-engine 4-layer / template 回歸事件）
-          #   2. 改用 branch-modified 而非 diff vs main — 只 sync branch 的 commits
-          #      真的改過的檔、避免 stale branch 拿舊狀態洗掉 main 的新狀態
+          # 1. 排除 **/template/** — 共享引擎狀態、不該被 per-operator branch 覆蓋
+          # 2. 改用 branch-modified 而非 diff vs main — 只 sync branch 的 commits
+          #    真的改過的檔、避免 stale branch 拿舊狀態洗掉 main 的新狀態
           BRANCH_BASE=$(git merge-base origin/main HEAD)
           DATA_FILES=$(git log --name-only --pretty=format: "$BRANCH_BASE..HEAD" -- \
             "data/" ":!data/template/**" \

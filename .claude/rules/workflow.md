@@ -8,7 +8,7 @@
 ## 對話開頭（掃描五項，無則不顯示，不阻塞）
 
 1. **回填到期**：pipeline.json 已上線 + backfill 為空 + backfill_due_date ≤ 今天 → `📊 VID-XXX 上線 N 天，回填到期`
-2. **待辦逾期**：`data/default/todos.json` 中 `state=pending` 且 `due` ≤ 今天 → `📋 ⚠️「title」逾期 N 天（T-NNNN）` (v4.39+)
+2. **待辦逾期**：`data/{operator}/todos.json` 中 `state=pending` 且 `due` ≤ 今天 → `📋 ⚠️「title」逾期 N 天（T-NNNN）` (v4.39+)
 3. **大腦新鮮度**：brand.md 任一 section `last_updated` > 30 天 → `🧠 [section] 已 N 天未更新`
 4. **Transcripts 沉澱門檻**（v2.5+）：`01-data-brain/transcripts/` 計數 ≥ 5 → `📚 觸發批次沉澱`；3-4 篇顯示距離門檻
 
@@ -195,7 +195,7 @@ Kai 說「升」→ 走 `/harden`（v4.64+、見 `02-skill-factory/harden/SKILL.
 | 品牌知識（競品、禁止點名）| 寫進 `01-data-brain/brand.md` 對應 section |
 | 一次性偶發 | `stage = "archived"`、保留為歷史 |
 
-### evidence 累積 CLI（v2.10 配套、Codex 已實作）
+### evidence 累積 CLI（v2.10 配套）
 
 P2 hook 化的 evidence 累積 CLI 已上線（驗證：`python scripts/ops/video-ops.py lessons --help` 列出子命令 `<list|add|add-evidence|stats|propose-hardening|archive>`）：
 
@@ -242,8 +242,8 @@ Claude 對話中觸發 lesson 時直接呼叫此 CLI、單行完事。
 **範例**（取 P2 hook 實作 task）：
 ```
 ✓ Context: P2 hook 化 lesson-pressure 實作
-  動: .claude/hooks/session-start.sh + workflow.md + engine-manifest + CHANGELOG
-  禁: scripts/ops (Codex 領土)、其他 .claude/* (Kai 未授權)
+  動: .claude/hooks/session-start.sh + workflow.md + CHANGELOG
+  禁: 其他 .claude/* (Kai 未授權)
   讀: brain-loading.md、lessons.json schema (on-demand)；brand.md (auto, 跳過、與任務無關)
   active: 禁令 #11 hook 四階段
   驗: rules-lint + engine-version-check + bash -n + 本地 hook 跑、Kai merge PR
@@ -472,7 +472,7 @@ Claude 萃取的候選 vs Kai 標 ✅ 採用的比例
 | `上線：VID-NNN` | 狀態改已上線 |
 | `看靈感箱` / `i` | 列出靈感 |
 | `看影片清單` / `q` | 列出影片 |
-| `看待辦` / `t` | **v4.39+**：讀 `data/default/todos.json` 過濾 `state in (pending, in_progress)`、按 priority + due 排序 |
+| `看待辦` / `t` | **v4.39+**：讀 `data/{operator}/todos.json` 過濾 `state in (pending, in_progress)`、按 priority + due 排序 |
 | `待辦：XXX` | **v4.39+**：呼叫 `video-ops.py todo add --title "XXX"`、自動給 `T-NNNN` id + state=pending（schema 見 `docs/contracts/todos-schema.md`）|
 | `關閉 T-XXXX` / `完成 T-XXXX` | **v4.39+**：Claude 詢問 closed_reason、呼叫 `video-ops.py todo close T-XXXX --reason "..."` |
 | `擱置 T-XXXX` | **v4.39+**：`video-ops.py todo archive T-XXXX --reason "..."` |
@@ -483,7 +483,7 @@ Claude 萃取的候選 vs Kai 標 ✅ 採用的比例
 | `複製贏家：VID-NNN` | 高表現公式複製（→ `production-details.md`） |
 | `週報` | weekly-report |
 | `看漏斗` | pipeline-stats |
-| `記錯：XXX` | 錯誤記憶（→ `system-maintenance.md`）→ 寫入 `data/default/lessons.json`（origin=`mistake`） |
+| `記錯：XXX` | 錯誤記憶（→ `system-maintenance.md`）→ 寫入 `data/{operator}/lessons.json`（origin=`mistake`） |
 | `看偏差` | analyze-deviations |
 | `看 lessons` / `lessons 統計` | `video-ops.py lessons stats`（按 stage 分組：soft / hardened / archived）|
 | `提硬化` | `video-ops.py lessons propose-hardening`（列 soft + 有 counter_pattern 的候選、v4.63+ 不靠 hit_count 門檻）|

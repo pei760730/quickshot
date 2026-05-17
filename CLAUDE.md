@@ -1,4 +1,4 @@
-# KaiOS 短影音生產系統（短期客戶 template）
+# 短影音生產系統（短期客戶 template）
 
 > version: 5.0 | last_updated: 2026-05-17
 > 短期客戶精簡版。品牌身份見 **`CLAUDE.local.md`**（客戶專屬、可自行編輯）。
@@ -59,7 +59,7 @@
 |------|------|--------|
 | `CLAUDE.local.md` | 此 repo 品牌身份 + 使用者習慣 | 每次對話自動載入 |
 | `01-data-brain/index.md` | **資料地圖 SSoT** | 產出腳本前必讀、改動資料層前必讀 |
-| `data/{operator}/pipeline.json` | 狀態 SSoT（含門檻定義 `_meta.thresholds`、`{operator}` 由 `data/.operators.json` 決定、本 repo 為 `longbro`）| 任何狀態操作時 |
+| `data/{operator}/pipeline.json` | 狀態 SSoT（含門檻定義 `_meta.thresholds`、`{operator}` 由 `data/.operators.json` 決定、新客戶需先註冊）| 任何狀態操作時 |
 | `02-skill-factory/` | Skill 定義（按需載入） | 生成腳本時 |
 | `docs/contracts/` | 共享契約（schema + CLI + conventions） | 修改接口前必讀 |
 | `docs/contracts/skill-io-schema.md` | Skill 間 IO 契約 | 修改任一生成 skill 輸出格式前必讀 |

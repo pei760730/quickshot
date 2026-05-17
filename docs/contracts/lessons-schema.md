@@ -1,7 +1,7 @@
 # lessons.json Schema Contract
 
 > version: 2.3 | last_updated: 2026-04-23
-> 雙方契約：Claude Code (consumer + stage curator) + Codex (writer + migration + stats API)
+> 角色：Claude (consumer + stage curator) × CLI 層 (writer + migration + stats API)
 >
 > **v2.0 變更（Opus 4.7 全修 Stage C、engine v4.63）**：schema 降維。
 > - stage 5 態 → 3 態：`soft` / `hardened` / `archived`

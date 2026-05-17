@@ -7,7 +7,7 @@ brand-refs: [4, 5, 6, 10, 11, 12]
 ---
 <!-- vNext 5 核心 skill #2（v1.3 補正新增）— 對應 docs/references/skill-architecture-principles.md v1.3 §v1.3 補丁 §1.3.4 -->
 <!-- engine v5.42 Phase 5 真退役：topic-architect / topic-researcher / trend-adapter 整刪、本 skill 邏輯已內化（內容變更但不 bump 版本、避免 stub frontmatter 不同步）-->
-<!-- 依賴 future Codex tool：scripts/tools/{web_fetch,research,trend}.py（Wave C 待寫）-->
+<!-- 依賴未來的 web fetch / research / trend tool（scripts/tools/、Wave C 待寫）-->
 
 # Discovery Skill v1.0
 
@@ -55,7 +55,7 @@ brand-refs: [4, 5, 6, 10, 11, 12]
 ### Mode 3: discover-trend（即時熱點響應）
 
 即時對外部熱點做品牌 fit 判斷：
-- 熱點 X 對紅茶巴士有沒有意義？（推理：對應 personas/kai.md [1] 說話風格 + brand.md [4]/[6]）
+- 熱點 X 對品牌有沒有意義？（推理：對應 brand.md [3] 說話風格 + [4] 商業洞察 + [6] 競爭對手）
 - 該怎麼切才不踩雷？（對應 brand.md [5] 禁忌）
 - 多快回應？（即時 / 本週 / 本月）
 
@@ -92,7 +92,7 @@ scripts/libs/brain_loader.load_for_skill("<operator>", "discovery")
 | `performance_patterns` | ✅ | 高勝率 hook / 結構參考、信心分數計算 |
 | `lessons` | — | scope=discovery 或 generation 的 soft lessons |
 
-**外部 fetch（Wave C 待 Codex 寫、tool 層不走本協議）**：
+**外部 fetch（Wave C 待寫、tool 層不走本協議）**：
 - `scripts/tools/web_fetch.py`（IG/TikTok/同業/熱點 fetch；目前 prompt-only fallback）
 - `scripts/tools/research.py`（外部資料 fetch；原 topic-researcher v1.10 邏輯）
 - `scripts/tools/trend.py`（Reels 解析；原 trend-adapter v1.20 邏輯）
@@ -142,7 +142,7 @@ Discovery Skill 跑完輸出（給 pipeline.json）：
 }
 ```
 
-寫入 CLI 由 Codex 後續實作（Phase 5 配套）。
+寫入 CLI 後續實作（Phase 5 配套）。
 
 ---
 
@@ -171,8 +171,8 @@ Discovery Skill 跑完輸出（給 pipeline.json）：
 | 原 skill | v 號（退役前）| 落在 Discovery |
 |----------|------------|--------------|
 | topic-architect | v1.24 | Discovery 主體（從「萃取 50+ 選題」改「外部 + 內部交互、推薦 5-10 個 + 切角」、方向反轉）|
-| trend-adapter | v1.20 | Wave C `scripts/tools/trend.py`（Reels 解析、待 Codex 寫）|
-| topic-researcher | v1.10 | Wave C `scripts/tools/research.py`（外部資料 fetch、待 Codex 寫）|
+| trend-adapter | v1.20 | Wave C `scripts/tools/trend.py`（Reels 解析、待寫）|
+| topic-researcher | v1.10 | Wave C `scripts/tools/research.py`（外部資料 fetch、待寫）|
 
 退役歷程：v4.20（Phase 4、PR #295）topic-architect 升級為 Discovery 主體 + topic-researcher / trend-adapter 標 stub redirect → engine v5.42（Phase 5、本 PR）整刪 3 個目錄、tool 拆分留 Wave C 處理。
 
@@ -182,7 +182,7 @@ Discovery Skill 跑完輸出（給 pipeline.json）：
 
 本 skill v1.1 **prompt-only fallback**、外部 fetch 部分用 Claude 自身知識補（不準、不即時）。
 
-真正即時 fetch 需要 Wave C 三個 Codex tool（規格待 Kai 拍板後另起 PR）：
+真正即時 fetch 需要 Wave C 三個 tool（規格待 Kai 拍板後另起 PR）：
 - `scripts/tools/web_fetch.py`（IG/TikTok/同業/熱點 fetch）
 - `scripts/tools/research.py`（外部資料 fetch、原 topic-researcher 邏輯）
 - `scripts/tools/trend.py`（Reels 解析、原 trend-adapter 邏輯）

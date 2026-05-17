@@ -1,17 +1,18 @@
-# 龍OS — 客戶身份設定
+# {{BRAND_NAME}} — 客戶身份設定
 
 > 此 repo 的品牌與操作員配置。短期客戶 template、不被引擎覆蓋。
+> 初始化日期：{{INIT_DATE}}
 
 ## 身份
 
-- **品牌**：龍OS
-- **主要創作者 / 預設 operator**：longbro（Longbro）
+- **品牌**：{{BRAND_NAME}}
+- **主要創作者 / 預設 operator**：{{OPERATOR_KEY}}（{{OPERATOR_LABEL}}）
 - **額外 operator**（若有，逐行填）：
 
 ## 品牌速查
 
 完整精華見 `01-data-brain/brand-summary.md`（每次對話由 SessionStart hook 自動注入 context）。
-細節 brand.md 在 `01-data-brain/brand.md`。
+細節 brand.md 在 `01-data-brain/brand.md`（lazy load、skill 跑時 brain_loader 載 / 對話需要時 Read）。
 
 ## 使用者習慣（可選填）
 

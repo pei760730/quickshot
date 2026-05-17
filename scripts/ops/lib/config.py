@@ -56,8 +56,9 @@ def _validate_operators_payload(raw):
     if not isinstance(raw, dict):
         raise ValueError("data/.operators.json 格式錯誤：root 必須是 object")
     operators = raw.get("operators")
-    if not isinstance(operators, dict) or not operators:
-        raise ValueError("data/.operators.json 格式錯誤：operators 必須是非空 object")
+    if not isinstance(operators, dict):
+        raise ValueError("data/.operators.json 格式錯誤：operators 必須是 object")
+    # 空 operators 是合法 template state（客戶尚未 onboard）、不報錯
     for op_id, cfg in operators.items():
         if not isinstance(op_id, str) or not op_id:
             raise ValueError(
@@ -93,7 +94,11 @@ def _load_operators():
         if cfg.get("enabled", True):
             result[op_id] = _resolve_operator_cfg(cfg, op_id)
     if not result:
-        raise ValueError("data/.operators.json 格式錯誤：至少要有一個 enabled operator")
+        # 空 operators 是合法 template state（客戶尚未 onboard）、fallback DEFAULT
+        return {
+            op_id: _resolve_operator_cfg(cfg, op_id)
+            for op_id, cfg in DEFAULT_OPERATORS.items()
+        }
     return result
 
 

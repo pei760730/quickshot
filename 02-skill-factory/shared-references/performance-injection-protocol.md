@@ -3,7 +3,7 @@
 > version: 3.0 | last_updated: 2026-04-26
 > 自動執行，不需 Kai 觸發。數據不足 → 跳過，不阻塞。
 >
-> **v3.0（Phase 6、Codex PR #310 落地）**：從 aggregate-only 改 **aggregate（背景）+ case-based retrieval（前景）** 雙軌注入。4.7 推理力下、5 個具體歷史案例 > 全局統計表、解 v1.0 死角 #1（Reading loop 讀取端）。
+> **v3.0**：從 aggregate-only 改 **aggregate（背景）+ case-based retrieval（前景）** 雙軌注入。4.7 推理力下、5 個具體歷史案例 > 全局統計表、解 v1.0 死角 #1（Reading loop 讀取端）。
 
 ---
 
@@ -96,7 +96,7 @@ payload = build_injection_payload(
 # }
 ```
 
-底層相似度（per Codex `lessons_retrieval.py`）：topic_tags overlap 50% + performance tier 30% + time decay 20%。
+底層相似度（per `scripts/utils/lessons_retrieval.py`）：topic_tags overlap 50% + performance tier 30% + time decay 20%。
 
 ### Prompt 注入範例
 

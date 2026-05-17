@@ -38,6 +38,10 @@ PRODUCTION_DIRS_CLEAR = [
 # Root-level dirs deleted entirely (client-specific, regen on next client)
 ROOT_DIRS_DELETE = ["00-control-center"]
 
+# Files that should never be deleted by wipe (structural / git-tracking)
+PRESERVE_FILENAMES = {"README.md", ".gitkeep"}
+
+
 # Per-operator data files reset from data/template/
 PER_OP_RESET_FILES = [
     "pipeline.json",
@@ -77,7 +81,7 @@ def gather_files_to_clear(project_root, operator):
         d = project_root / rel
         if d.is_dir():
             for f in sorted(d.rglob("*")):
-                if f.is_file():
+                if f.is_file() and f.name not in PRESERVE_FILENAMES:
                     items.append(
                         {
                             "path": str(f.relative_to(project_root)),
@@ -265,7 +269,7 @@ def execute_wipe(project_root, operator, dry_run, tag=None):
         dpath = project_root / "01-data-brain" / d
         if dpath.is_dir():
             for f in dpath.glob("*"):
-                if f.is_file():
+                if f.is_file() and f.name not in PRESERVE_FILENAMES:
                     f.unlink()
 
     # 5. Clear production line
@@ -273,7 +277,7 @@ def execute_wipe(project_root, operator, dry_run, tag=None):
         dpath = project_root / rel
         if dpath.is_dir():
             for f in dpath.rglob("*"):
-                if f.is_file():
+                if f.is_file() and f.name not in PRESERVE_FILENAMES:
                     f.unlink()
             for sd in sorted(dpath.rglob("*"), reverse=True):
                 if sd.is_dir() and not any(sd.iterdir()):
