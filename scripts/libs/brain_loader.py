@@ -24,7 +24,13 @@ LEGACY_SKILLS = {
     "skill-creator",
 }
 
-CORE_VNEXT_SKILLS = {"orientation", "discovery", "generation", "quality", "distillation"}
+CORE_VNEXT_SKILLS = {
+    "orientation",
+    "discovery",
+    "generation",
+    "quality",
+    "distillation",
+}
 
 GENERATION_MODE_SCOPE = {
     "orientation": ["orientation"],
@@ -47,7 +53,11 @@ def _operator_data_dir(operator: str) -> Path:
             payload = json.loads(operators_json.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             payload = {}
-        cfg = (payload.get("operators") or {}).get(operator) if isinstance(payload, dict) else None
+        cfg = (
+            (payload.get("operators") or {}).get(operator)
+            if isinstance(payload, dict)
+            else None
+        )
         if isinstance(cfg, dict):
             return root / cfg.get("data_dir_rel", f"data/{operator}")
     return root / "data" / operator
@@ -93,7 +103,9 @@ def _normalize_scope(raw_scope: Any) -> list[str]:
     return []
 
 
-def _filter_lessons(rows: list[dict[str, Any]], scopes: list[str] | None) -> list[dict[str, Any]]:
+def _filter_lessons(
+    rows: list[dict[str, Any]], scopes: list[str] | None
+) -> list[dict[str, Any]]:
     active_rows = _active_lessons(rows)
     if not scopes:
         return active_rows
@@ -108,7 +120,9 @@ def _filter_lessons(rows: list[dict[str, Any]], scopes: list[str] | None) -> lis
     return filtered
 
 
-def _resolve_vnext_scopes(skill_name: str, mode: str | None, phase: str | None) -> list[str] | None:
+def _resolve_vnext_scopes(
+    skill_name: str, mode: str | None, phase: str | None
+) -> list[str] | None:
     # graceful fallback when mode/phase is missing
     if skill_name in {"orientation", "discovery"} and not mode:
         return None
@@ -125,41 +139,60 @@ def _resolve_vnext_scopes(skill_name: str, mode: str | None, phase: str | None) 
     return None
 
 
-def load_for_skill(operator: str, skill_name: str, mode: str | None = None, phase: str | None = None) -> BrainBundle:
+def load_for_skill(
+    operator: str, skill_name: str, mode: str | None = None, phase: str | None = None
+) -> BrainBundle:
     root = _repo_root()
     data_dir = _operator_data_dir(operator)
 
     brand_md = _load_required_text(root / "01-data-brain" / "brand.md", "brand.md")
     cases_md = _load_required_text(root / "01-data-brain" / "cases.md", "cases.md")
     personas_dir = root / "01-data-brain" / "personas"
-    kai_md = _load_required_text(personas_dir / "kai.md", "personas/kai.md")
+    kai_path = personas_dir / "kai.md"
+    kai_md = kai_path.read_text(encoding="utf-8") if kai_path.exists() else ""
     an_path = personas_dir / "an.md"
     an_md = an_path.read_text(encoding="utf-8") if an_path.exists() else ""
 
-    perf = _load_optional_json(data_dir / "performance-patterns.json", {
-        "proven_openings": [], "proven_ctas": [], "proven_formulas": [], "risk_patterns": []
-    })
+    perf = _load_optional_json(
+        data_dir / "performance-patterns.json",
+        {
+            "proven_openings": [],
+            "proven_ctas": [],
+            "proven_formulas": [],
+            "risk_patterns": [],
+        },
+    )
     if skill_name == "discovery" and mode == "discover-trend":
         perf = dict(perf)
         perf.setdefault("web_fetch_placeholder", {"enabled": True})
 
     lessons_payload = _load_optional_json(data_dir / "lessons.json", {"lessons": []})
-    lessons = lessons_payload.get("lessons") if isinstance(lessons_payload, dict) else []
+    lessons = (
+        lessons_payload.get("lessons") if isinstance(lessons_payload, dict) else []
+    )
     if not isinstance(lessons, list):
         lessons = []
 
     if skill_name in LEGACY_SKILLS:
         lessons = _filter_lessons(lessons, [skill_name, "generation"])
     elif skill_name in CORE_VNEXT_SKILLS:
-        lessons = _filter_lessons(lessons, _resolve_vnext_scopes(skill_name, mode, phase))
+        lessons = _filter_lessons(
+            lessons, _resolve_vnext_scopes(skill_name, mode, phase)
+        )
         if skill_name == "distillation":
-            preferred = [r for r in lessons if "distillation" in _normalize_scope(r.get("scope"))]
+            preferred = [
+                r for r in lessons if "distillation" in _normalize_scope(r.get("scope"))
+            ]
             lessons = preferred or lessons
     else:
         lessons = _filter_lessons(lessons, None)
 
     banned_path = root / "02-skill-factory" / "shared-references" / "banned-words.md"
-    banned_words = _parse_banned_words(banned_path.read_text(encoding="utf-8")) if banned_path.exists() else []
+    banned_words = (
+        _parse_banned_words(banned_path.read_text(encoding="utf-8"))
+        if banned_path.exists()
+        else []
+    )
 
     return BrainBundle(
         brand_md=brand_md,

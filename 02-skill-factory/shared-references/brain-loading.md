@@ -32,14 +32,14 @@
 | 欄位 | 必要 | 內容 | 失敗行為 |
 |------|------|------|---------|
 | `brand_md` | ✅ | `01-data-brain/brand.md` 全文（純品牌、v4.97 起 [3] / [12] 個人 section 已搬至 personas/）| `FileNotFoundError` 阻斷 |
-| `kai_md` | ✅ | `01-data-brain/personas/kai.md` 全文（主要創作者人格、檔名 hardcode 為 `kai.md`、客戶建立 template 時必補）| `FileNotFoundError` 阻斷 |
+| `kai_md` | — | `01-data-brain/personas/kai.md` 全文（主要創作者人格、檔名 hardcode 為 `kai.md`、選用）| 缺檔 → 空字串、不阻斷（lazy load fallback）|
 | `an_md` | — | `01-data-brain/personas/an.md` 全文（對話搭檔 / 藏鏡人人格、選用）| 缺檔 → 空字串、不阻斷（lazy load fallback）|
 | `cases_md` | ✅ | `01-data-brain/cases.md` 全文 | `FileNotFoundError` 阻斷 |
 | `performance_patterns` | — | `data/<operator>/performance-patterns.json`（dict）| 缺檔 → 空 dict、不阻斷 |
 | `lessons` | — | `data/<operator>/lessons.json.lessons[]` 過濾後 list | 缺檔 → 空 list、不阻斷 |
 | `banned_words` | — | `02-skill-factory/shared-references/banned-words.md` 解析清單 | 缺檔 → 空 list、不阻斷 |
 
-> **載入狀態**：`kai_md` / `an_md` 由 `scripts/libs/brain_loader.load_for_skill()` 自動載入進 BrainBundle、不需要 skill 端 lazy Read。`kai_md` 缺檔阻斷（必要）、`an_md` 缺檔回空字串（選用）。Regression 守護：`tests/test_brain_loader.py` 4 個 test cases。template 客戶必補 `01-data-brain/personas/kai.md`（或對應 primary 人格）才能跑 generation skill。
+> **載入狀態**：`kai_md` / `an_md` 由 `scripts/libs/brain_loader.load_for_skill()` 自動載入進 BrainBundle、不需要 skill 端 lazy Read。兩者皆 optional、缺檔回空字串、不阻斷（template 客戶尚未建 personas/ 時 generation skill 仍可跑、只是不注入人格）。Regression 守護：`tests/test_brain_loader.py`。
 
 ## Lessons 過濾規則（SSoT）
 
