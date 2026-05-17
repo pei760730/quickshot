@@ -8,6 +8,76 @@
 
 ---
 
+## v7.00 short-term template fork（2026-05-17）
+
+**主題：🔧 quickshot 短期客戶 template 從 KaiOS-ContentSystem 精簡分叉**
+
+### 背景
+
+KaiOS 主 repo 設計給長期經營（≥90 天）客戶用、累積多月 transcripts 才生效的機制（sync-engine 同步、adoption-gate 警告衰退治理、雙 agent 領土邊界 CI）對 ≤30 天驗證型客戶純成本。從 KaiOS 砍出 quickshot template、留下短期客戶開拍即用的核心。
+
+### 砍掉的（PR #1 Stage 1-2）
+
+🔧 sync-engine 整套：
+- `.claude/commands/sync-engine.md`、`scripts/utils/sync-engine.py` + `check-version-sync.py`
+- `scripts/engine/`（7 個 .py：bump / lag / version / pollution / territory / schema-migration）
+- `.github/workflows/{engine-version-check,territory-lint}.yml`
+- `docs/contracts/sync-protocol.md` + `docs/references/client-sync-sop.md`
+- `engine-manifest.json`、`sync-from-github.bat`
+
+🔧 雙 agent 協作（Claude × Codex）：
+- `AGENTS.md`、`docs/contracts/agent-collaboration.md` + agent-dispatch.md + design-collaboration.md
+- workflow.md §Dispatch + §平行任務 worktree
+- `scripts/utils/lib/employee.py`、`employee-system-prompt.md`
+
+🔧 Adoption-gate hook（原 CLAUDE.md 禁令 #7 + #9）：
+- `.claude/hooks/session-start.sh` FACTS block
+- `scripts/utils/adoption_gate_scan.py` + `scripts/utils/lib/adoption_gate.py`
+- workflow.md §Adoption-gate
+
+🔧 對應 tests（25 檔）：test_adoption_gate_* / test_bootstrap.py / test_engine_* / test_sync_* 等
+
+CLAUDE.md 禁令重編號：14 條 → 9 條（移 #6 #7 #8 #9 #14）
+
+### 新增的（PR #1 Stage 3-4）
+
+📦 brand.md [2.5] 高流量素材庫：
+- §個人經歷 / 故事 + §行業誤會 + §圈內事
+- 每條 2 個 tag 欄位（Hook 適用 B1-B3/D1-D3 + 可拍嗎 ✅/⚠/❌）
+- redirect 至 `02-skill-factory/shared-references/templates/hook-templates.md` + `red-line-protocol.md`
+
+🔧 brand.md sections 瘦身：
+- [10] 長期目標 → §90 天里程碑（用「天」單位、強迫具體）
+- [11] 季節性 → 加 `(optional, 季節性行業才填)`
+- [12] 其他補充 → §已知 FAQ / 異常處理（從「雜物抽屜」改為結構化 FAQ slot）
+- MVP 從 4 個（[0][1][2.5][3]）擴到 5 個（加 [5] 禁忌）
+
+🔧 `.claude/rules/workflow.md` §冷啟動萃取（v1.0）：
+- 短期客戶 onboarding 工作流、quickshot 原創
+- 7 步流程、KaiOS 元件差異對照、候選清單呈現格式
+- 觸發詞：`冷啟動：[音檔/文章/連結]`
+
+📦 CLAUDE.local.md 砍 Q1-Q6 sync-engine 共識條款（過時、Stage 1 已砍對應 infra）
+📦 README.md 重寫為短期客戶 template 自我介紹（從 316 行降到 ~120 行）
+
+### Codex review fix
+
+🔧 Stage 1 漏改 `.github/workflows/rules-lint.yml` 的 `Run version sync guard` step（commit 4f1d8ce）
+🔧 Stage 1 `data/{operator}/` hard-code 為 `data/default/`、改回參數化（commit b1509c5d）
+
+### 驗證
+
+- rules-lint 0 issues
+- brand-ref lint 0 issues
+- pytest 503 passed 1 skipped
+- CI 全綠（PR #1）
+
+### 對主 repo 影響
+
+無。quickshot 是獨立 branch / repo、不回 sync 至 KaiOS。
+
+---
+
 ## v6.02（2026-05-15）
 
 **主題：🔧 sync-to-sheets workflow 在 `GOOGLE_CREDENTIALS_JSON` 缺時 silent skip（不 fail）**
