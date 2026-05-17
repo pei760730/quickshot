@@ -60,7 +60,7 @@ brand-refs: []
 - `.claude/skills/distillation.md` 連同移除
 - canonical-registry.json valid_skills 移除 distillation
 
-短期不刪、stub 維持 sync-engine 對齊。
+短期不刪、stub 維持骨架供日後升回。
 
 ---
 

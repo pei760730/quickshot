@@ -59,11 +59,11 @@
 |------|------|--------|
 | `CLAUDE.local.md` | 此 repo 品牌身份 + 使用者習慣 | 每次對話自動載入 |
 | `01-data-brain/index.md` | **資料地圖 SSoT** | 產出腳本前必讀、改動資料層前必讀 |
-| `data/default/pipeline.json` | 狀態 SSoT（含門檻定義 `_meta.thresholds`） | 任何狀態操作時 |
+| `data/{operator}/pipeline.json` | 狀態 SSoT（含門檻定義 `_meta.thresholds`、`{operator}` 由 `data/.operators.json` 決定、本 repo 為 `longbro`）| 任何狀態操作時 |
 | `02-skill-factory/` | Skill 定義（按需載入） | 生成腳本時 |
 | `docs/contracts/` | 共享契約（schema + CLI + conventions） | 修改接口前必讀 |
 | `docs/contracts/skill-io-schema.md` | Skill 間 IO 契約 | 修改任一生成 skill 輸出格式前必讀 |
-| `data/default/hardening-archive.json` | `/harden` 對話內硬化成功記錄 | 稽核硬化歷史時讀 |
+| `data/{operator}/hardening-archive.json` | `/harden` 對話內硬化成功記錄 | 稽核硬化歷史時讀 |
 
 ## 操作原則
 

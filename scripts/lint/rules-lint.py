@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Cross-file lint for KaiOS Content System rules.
+Cross-file lint for the content system rules.
 
 3-layer validation:
   Layer 1: Cross-file references (見 XXX.md, 步驟 ①②③, anchors)

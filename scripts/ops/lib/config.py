@@ -4,9 +4,8 @@
 共用路徑、常數、時區設定。
 所有模組從此處匯入，單一修改點。
 
-v4.38：OPERATORS 從 data/.operators.json 動態載入（客戶側 blacklist 保護），
-避免 sync-engine 覆蓋客戶自己的 operator 註冊。引擎層提供 DEFAULT_OPERATORS
-作為 fallback（主 repo 自用 + 新客戶 bootstrap 前初始值）。
+OPERATORS 從 data/.operators.json 動態載入。引擎層提供 DEFAULT_OPERATORS
+作為 fallback（registry 不存在時的初始值）。
 """
 
 import json
@@ -61,13 +60,19 @@ def _validate_operators_payload(raw):
         raise ValueError("data/.operators.json 格式錯誤：operators 必須是非空 object")
     for op_id, cfg in operators.items():
         if not isinstance(op_id, str) or not op_id:
-            raise ValueError("data/.operators.json 格式錯誤：operator key 必須是非空字串")
+            raise ValueError(
+                "data/.operators.json 格式錯誤：operator key 必須是非空字串"
+            )
         if not isinstance(cfg, dict):
-            raise ValueError(f"data/.operators.json 格式錯誤：operators.{op_id} 必須是 object")
+            raise ValueError(
+                f"data/.operators.json 格式錯誤：operators.{op_id} 必須是 object"
+            )
         if "enabled" in cfg and not cfg.get("enabled", True):
             continue
         if "data_dir_rel" not in cfg:
-            raise ValueError(f"data/.operators.json 格式錯誤：operators.{op_id} 缺 data_dir_rel")
+            raise ValueError(
+                f"data/.operators.json 格式錯誤：operators.{op_id} 缺 data_dir_rel"
+            )
 
 
 def _load_operators():
@@ -77,7 +82,10 @@ def _load_operators():
     - 否則 → DEFAULT_OPERATORS（引擎層 fallback）
     """
     if not _OPERATORS_JSON.exists():
-        return {op_id: _resolve_operator_cfg(cfg, op_id) for op_id, cfg in DEFAULT_OPERATORS.items()}
+        return {
+            op_id: _resolve_operator_cfg(cfg, op_id)
+            for op_id, cfg in DEFAULT_OPERATORS.items()
+        }
     raw = json.loads(_OPERATORS_JSON.read_text(encoding="utf-8"))
     _validate_operators_payload(raw)
     result = {}
@@ -111,7 +119,9 @@ def get_operator_paths(operator=None):
         operator = globals().get("_current_operator", DEFAULT_OPERATOR)
     operator = operator.lower()
     if operator not in OPERATORS:
-        raise ValueError(f"未知操作員：{operator}（合法值：{', '.join(sorted(VALID_OPERATORS))}）")
+        raise ValueError(
+            f"未知操作員：{operator}（合法值：{', '.join(sorted(VALID_OPERATORS))}）"
+        )
     cfg = OPERATORS[operator]
     data_dir = cfg["data_dir"]
     return {
@@ -148,7 +158,9 @@ def set_operator(operator):
     global _current_operator
     operator = operator.lower()
     if operator not in OPERATORS:
-        raise ValueError(f"未知操作員：{operator}（合法值：{', '.join(sorted(VALID_OPERATORS))}）")
+        raise ValueError(
+            f"未知操作員：{operator}（合法值：{', '.join(sorted(VALID_OPERATORS))}）"
+        )
     paths = get_operator_paths(operator)
     PIPELINE_JSON = paths["pipeline_json"]
     PERFORMANCE_PATTERNS_JSON = paths["performance_patterns_json"]
@@ -158,6 +170,7 @@ def set_operator(operator):
 def current_operator():
     """回傳當前操作員名稱"""
     return _current_operator
+
 
 # ── 時區 ─────────────────────────────────────────────────
 TW_TZ = timezone(timedelta(hours=8))
@@ -205,19 +218,19 @@ PERFORMANCE_DISPLAY = {
 
 # ── 診斷門檻 ─────────────────────────────────────────────
 DIAGNOSIS_THRESHOLDS = {
-    "hook_weak": 55,          # retention_3s < 55% → Hook 弱
-    "completion_weak": 25,    # completion_rate < 25% → 完播弱
-    "engagement_weak": 1.5,   # engagement_rate < 1.5% → 互動弱
-    "engagement_strong": 3.0, # engagement_rate >= 3.0% → 互動率強
-    "dud_engagement": 0.5,    # 總互動率 < 0.5% → 啞彈
-    "balanced_gap": 10,       # 三者佔比差距 < 10% → 均衡型
+    "hook_weak": 55,  # retention_3s < 55% → Hook 弱
+    "completion_weak": 25,  # completion_rate < 25% → 完播弱
+    "engagement_weak": 1.5,  # engagement_rate < 1.5% → 互動弱
+    "engagement_strong": 3.0,  # engagement_rate >= 3.0% → 互動率強
+    "dud_engagement": 0.5,  # 總互動率 < 0.5% → 啞彈
+    "balanced_gap": 10,  # 三者佔比差距 < 10% → 均衡型
 }
 
 # ── Pattern 門檻（衰減 + 注入）────────────────────────
 PATTERN_THRESHOLDS = {
     "decay_low_evidence_trigger": 2,  # 幾支低表現影片使用此 pattern → 標記 degraded
-    "injection_min_evidence": 2,       # proven_openings / proven_ctas 需幾支影片才注入腳本
-    "formula_injection_min": 1,        # proven_formulas 只要 1 支就注入
-    "confidence_medium_min": 3,        # total_uses >= 3 → medium confidence
-    "confidence_high_min": 8,          # total_uses >= 8 → high confidence
+    "injection_min_evidence": 2,  # proven_openings / proven_ctas 需幾支影片才注入腳本
+    "formula_injection_min": 1,  # proven_formulas 只要 1 支就注入
+    "confidence_medium_min": 3,  # total_uses >= 3 → medium confidence
+    "confidence_high_min": 8,  # total_uses >= 8 → high confidence
 }
