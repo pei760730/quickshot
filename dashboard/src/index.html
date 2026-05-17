@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KaiOS ContentSystem · Dashboard</title>
+  <style>
+    :root {
+      --bg: #0a0b0d;
+      --panel: #15171b;
+      --panel-2: #1c1f24;
+      --border: #2a2d33;
+      --text: #e8e9ec;
+      --text-dim: #8a8f98;
+      --text-ghost: #4d525a;
+      --accent: #d4431f;
+      --green: #26c281;
+      --yellow: #e8c547;
+      --red: #e85d5d;
+      --blue: #5d9cec;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
+      /* 桌面優先：15px base、數據 table 閱讀舒適 */
+      font-size: 15px;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+    .app {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ──────────────────────────────────────────── */
+    .sidebar {
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 24px 16px;
+      overflow-y: auto;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 8px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .brand-logo {
+      width: 32px; height: 32px;
+      background: var(--accent); color: white;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px; font-weight: 700; font-size: 16px;
+    }
+    .brand-name { font-weight: 600; }
+    .brand-version { color: var(--text-dim); font-size: 12px; }
+
+    .nav-section { margin-bottom: 20px; }
+    .nav-title {
+      color: var(--text-ghost);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0 8px 6px;
+    }
+    .nav-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 7px 8px; border-radius: 6px;
+      color: var(--text-dim); cursor: pointer;
+    }
+    .nav-item:hover { background: var(--panel-2); color: var(--text); }
+    .nav-item.active { background: var(--panel-2); color: var(--text); }
+    .nav-count { font-size: 12px; color: var(--text-ghost); }
+    .nav-count.alert { color: var(--yellow); }
+
+    /* ── Main ─────────────────────────────────────────────── */
+    .main { padding: 24px 32px; overflow-y: auto; }
+    .crumb {
+      color: var(--text-dim); font-size: 13px; margin-bottom: 20px;
+    }
+    .crumb strong { color: var(--text); letter-spacing: 1px; }
+
+    /* ── Social Grid（v1.11: 平台粉絲、KPI 上方）──────────── */
+    .social-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 1000px) {
+      .social-grid { grid-template-columns: 1fr; }
+    }
+    .social-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    .social-card:hover {
+      border-color: var(--text-dim);
+      transform: translateY(-1px);
+    }
+    .social-card::before {
+      content: "";
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, transparent 50%, var(--sc-accent, transparent) 180%);
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    .social-card > * { position: relative; z-index: 1; }
+    .social-card.tiktok    { --sc-accent: rgba(232, 93, 93, 0.5); }  /* rose */
+    .social-card.instagram { --sc-accent: rgba(188, 80, 192, 0.55); } /* IG purple */
+    .social-card.facebook  { --sc-accent: rgba(93, 156, 236, 0.55); } /* FB blue */
+    .social-icon {
+      font-size: 28px;
+      line-height: 1;
+    }
+    .social-body { flex: 1; min-width: 0; }
+    .social-name { color: var(--text-dim); font-size: 12px; margin-bottom: 4px; }
+    .social-followers { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.15; }
+    .social-meta { color: var(--text-ghost); font-size: 11px; margin-top: 4px; display: flex; gap: 10px; }
+    .social-meta .growth.up { color: var(--green); }
+    .social-meta .growth.down { color: var(--red); }
+    .social-meta .growth { color: var(--text-dim); }
+
+    /* ── KPI Grid ─────────────────────────────────────────── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    /* v1.7 分色漸層（dark 底 + 微弱 accent、不破壞深色主題）*/
+    .kpi-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 55%, var(--accent-color, transparent) 180%);
+      opacity: 0.35;
+      pointer-events: none;
+    }
+    .kpi-card > * { position: relative; z-index: 1; }
+    .kpi-card.views    { --accent-color: rgba(93, 156, 236, 0.55); }  /* blue */
+    .kpi-card.retention{ --accent-color: rgba(38, 194, 129, 0.45); }  /* green */
+    .kpi-card.completion{ --accent-color: rgba(232, 197, 71, 0.40); } /* yellow */
+    .kpi-card.trophy-card{ --accent-color: rgba(212, 67, 31, 0.45); } /* accent (red) */
+    .kpi-label { color: var(--text-dim); font-size: 12px; margin-bottom: 8px; }
+    .kpi-value { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
+    .kpi-value.green { color: var(--green); }
+    .kpi-value.yellow { color: var(--yellow); }
+    .kpi-hint { color: var(--text-ghost); font-size: 11px; margin-top: 6px; }
+    .kpi-sub { color: var(--text-dim); font-size: 11px; margin-top: 4px; }
+    .kpi-sub .accent { color: var(--text); font-weight: 600; }
+    .trophy { display: inline-block; margin-right: 4px; }
+
+    /* ── Two-col sections ─────────────────────────────────── */
+    .row-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    /* 桌面優先：< 1200px 平板/窄螢幕退化，sidebar 先讓位給 content */
+    @media (max-width: 1200px) {
+      .row-2col { grid-template-columns: 1fr; }
+      .app { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+    .panel-title {
+      font-weight: 600;
+      margin-bottom: 14px;
+      font-size: 14px;
+    }
+    .panel-title .muted { color: var(--text-dim); font-weight: 400; font-size: 12px; margin-left: 4px; }
+
+    /* ── Top 5 list（v1.8: 移除 VID 欄、3 欄 grid） ───────── */
+    .vid-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .vid-row:last-child { border-bottom: 0; }
+    .vid-title { color: var(--text); font-size: 13px; }
+    .vid-views { color: var(--text); font-weight: 600; font-size: 13px; }
+    .vid-ret { color: var(--green); font-size: 12px; }
+
+    /* ── Formula list ─────────────────────────────────────── */
+    .formula-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .formula-row:last-child { border-bottom: 0; }
+    .formula-code {
+      display: inline-block;
+      padding: 2px 8px;
+      background: var(--panel-2);
+      color: var(--accent);
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      border-radius: 4px;
+    }
+    .formula-name { flex: 1; color: var(--text); }
+    .formula-stat { color: var(--text-dim); font-size: 12px; }
+    .formula-vids { color: var(--text-ghost); font-size: 11px; font-family: ui-monospace, monospace; }
+    .formula-note { color: var(--text-ghost); font-size: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+
+
+    /* ── Tab panes (v1.1) ─────────────────────────────────── */
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+    .nav-item { cursor: pointer; }
+    .nav-item.active { background: var(--panel-2); color: var(--text); font-weight: 600; }
+
+    /* ── List rows (各 tab 用) — 桌面優先、單行不擠 ───────── */
+    .list-row {
+      display: grid;
+      /* 預設 5 欄（backlog / ideas 用）*/
+      grid-template-columns: 80px minmax(240px, 1fr) auto auto auto;
+      gap: 16px;
+      align-items: center;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .list-row:last-child { border-bottom: 0; }
+    .list-vid {
+      color: var(--text-ghost);
+      font-family: ui-monospace, monospace;
+      font-size: 13px;
+    }
+    .list-title {
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .list-tags { color: var(--text-dim); font-size: 12px; }
+    .list-days { color: var(--text-dim); font-size: 13px; }
+    .list-stat { color: var(--text); font-size: 13px; font-variant-numeric: tabular-nums; }
+    .list-stat.perf-high { color: var(--green); font-weight: 600; }
+    .list-stat.perf-low { color: var(--red); }
+
+    /* 靈感箱專用：2 欄（主題 · 拍攝亮點）*/
+    .list-row.ideas-2col {
+      grid-template-columns: minmax(240px, 1fr) minmax(320px, 1.4fr);
+      align-items: start;
+    }
+    .ideas-2col .list-title {
+      white-space: normal;  /* 主題長可換行、不截斷 */
+    }
+    .list-hook {
+      color: var(--text-dim);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    /* 8 欄（表現分級 + 已上線 tab 用）：
+       編號 / 標題 / 觀看 / 3 秒留存 / 完播 / 分級 / 動作 / 上線日期
+       桌面總寬約 1060px + title 彈性、min-width 1200px 保證不擠
+       class 名 has-6col 為歷史遺留（保留避免 CSS selector breaking）*/
+    .list-row.has-6col {
+      grid-template-columns: 84px minmax(300px, 1fr) 96px 96px 96px 140px 160px 104px;
+    }
+    .list-tier {
+      color: var(--text-dim);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .list-action {
+      color: var(--yellow);
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .list-action.done { color: var(--text-ghost); }
+
+    /* ── List header row ─────────────────────────────────── */
+    .list-row.header {
+      color: var(--text-ghost);
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 8px 0;
+    }
+    .list-row.header:last-child { border-bottom: 1px solid var(--border); }  /* header 不是 last 也保留底線 */
+
+    /* ── Footer ───────────────────────────────────────────── */
+    .footer {
+      color: var(--text-ghost);
+      font-size: 11px;
+      padding: 16px 0;
+      border-top: 1px solid var(--border);
+      margin-top: 24px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .footer a { color: var(--text-dim); text-decoration: none; }
+    .footer code { font-family: ui-monospace, monospace; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── Sidebar ──────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">K</div>
+      <div>
+        <div class="brand-name">KaiOS</div>
+        <div class="brand-version" data-bind="meta.engine_version">v—</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-title">工作區</div>
+      <div class="nav-item active" data-tab-target="overview">
+        <span>總覽</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-title">影片管線</div>
+      <div class="nav-item" data-tab-target="ideas">
+        <span>💡 靈感箱</span>
+        <span class="nav-count" data-bind="nav_counts.total_ideas">—</span>
+      </div>
+      <div class="nav-item" data-tab-target="backlog">
+        <span>🎬 待拍</span>
+        <span class="nav-count" data-bind="nav_counts.待拍">—</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-title">表現分級</div>
+      <div class="nav-item" data-tab-target="high">
+        <span>🏆 高表現</span>
+        <span class="nav-count" data-bind="nav_counts.performance_high">—</span>
+      </div>
+      <div class="nav-item" data-tab-target="normal">
+        <span>😐 普通</span>
+        <span class="nav-count" data-bind="nav_counts.performance_normal">—</span>
+      </div>
+      <div class="nav-item" data-tab-target="low">
+        <span>⚠️ 低表現</span>
+        <span class="nav-count" data-bind="nav_counts.performance_low">—</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ─────────────────────────────────────── -->
+  <main class="main">
+    <div class="crumb"><strong>RED TEA BUS</strong> · <span id="crumb-tab">總覽</span></div>
+
+    <!-- ── Tab: 總覽 ─────────────────────────────────── -->
+    <section class="tab-pane active" data-tab="overview">
+
+    <!-- Social followers（v1.11）— 3 固定 card、data-bind 讀對應平台 index -->
+    <div class="social-grid">
+      <a class="social-card tiktok" target="_blank" rel="noopener" data-bind-href="social_platforms.0.profile_url">
+        <div class="social-icon" data-bind="social_platforms.0.icon">🎵</div>
+        <div class="social-body">
+          <div class="social-name" data-bind="social_platforms.0.display_name">TikTok</div>
+          <div class="social-followers" data-bind="social_platforms.0.followers_display">—</div>
+          <div class="social-meta">
+            <span class="growth" data-bind="social_platforms.0.growth_display">—</span>
+            <span data-bind="social_platforms.0.updated_display">—</span>
+          </div>
+        </div>
+      </a>
+      <a class="social-card instagram" target="_blank" rel="noopener" data-bind-href="social_platforms.1.profile_url">
+        <div class="social-icon" data-bind="social_platforms.1.icon">📸</div>
+        <div class="social-body">
+          <div class="social-name" data-bind="social_platforms.1.display_name">Instagram</div>
+          <div class="social-followers" data-bind="social_platforms.1.followers_display">—</div>
+          <div class="social-meta">
+            <span class="growth" data-bind="social_platforms.1.growth_display">—</span>
+            <span data-bind="social_platforms.1.updated_display">—</span>
+          </div>
+        </div>
+      </a>
+      <a class="social-card facebook" target="_blank" rel="noopener" data-bind-href="social_platforms.2.profile_url">
+        <div class="social-icon" data-bind="social_platforms.2.icon">💬</div>
+        <div class="social-body">
+          <div class="social-name" data-bind="social_platforms.2.display_name">Facebook</div>
+          <div class="social-followers" data-bind="social_platforms.2.followers_display">—</div>
+          <div class="social-meta">
+            <span class="growth" data-bind="social_platforms.2.growth_display">—</span>
+            <span data-bind="social_platforms.2.updated_display">—</span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- KPI Grid -->
+    <div class="kpi-grid">
+      <div class="kpi-card views">
+        <div class="kpi-label">累計觀看</div>
+        <div class="kpi-value" data-bind="kpis.accumulated_views_display">—</div>
+        <div class="kpi-hint">樣本 <span data-bind="kpis.sample_size">—</span> / <span data-bind="kpis.total_uploaded">—</span> 支</div>
+        <div class="kpi-sub">
+          平均 <span class="accent" data-bind="kpis.avg_views_per_video_display">—</span> · 最高 <span class="accent" data-bind="kpis.max_views_display">—</span>
+        </div>
+      </div>
+      <div class="kpi-card retention">
+        <div class="kpi-label">平均 3S 留存</div>
+        <div class="kpi-value green" data-bind="kpis.avg_retention_3s_pct_display">—</div>
+        <div class="kpi-hint">
+          門檻 <span data-bind="kpis.thresholds.retention_pass">—</span>% / 高表現 <span data-bind="kpis.thresholds.retention_high">—</span>%
+        </div>
+        <div class="kpi-sub">
+          達標 <span class="accent" data-bind="kpis.retention_pass_count">—</span> / <span data-bind="kpis.sample_size">—</span> 支
+        </div>
+      </div>
+      <div class="kpi-card completion">
+        <div class="kpi-label">平均完播</div>
+        <div class="kpi-value green" data-bind="kpis.avg_completion_rate_pct_display">—</div>
+        <div class="kpi-hint">門檻 <span data-bind="kpis.thresholds.completion_pass">—</span>%</div>
+        <div class="kpi-sub">
+          達標 <span class="accent" data-bind="kpis.completion_pass_count">—</span> / <span data-bind="kpis.sample_size">—</span> 支
+        </div>
+      </div>
+      <div class="kpi-card trophy-card">
+        <div class="kpi-label">高表現</div>
+        <div class="kpi-value yellow" data-bind="kpis.high_performers_count">—</div>
+        <div class="kpi-hint">勝率 <span data-bind="kpis.win_rate_pct_display">—</span></div>
+        <div class="kpi-sub">
+          最新爆款 <span class="accent" data-bind="kpis.latest_high_title">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top 5 High + Top 5 Low -->
+    <div class="row-2col">
+      <div class="panel">
+        <div class="panel-title">Top 5 高表現影片 <span class="muted">(依觀看數降冪)</span></div>
+        <section data-bind-list="top5_high_performers">
+          <div class="vid-row" data-bind-item>
+            <span class="vid-title" data-bind-field="title">—</span>
+            <span class="vid-views" data-bind-field="views_display">—</span>
+            <span class="vid-ret">留存 <span data-bind-field="retention_3s_pct_display">—</span></span>
+          </div>
+        </section>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Top 5 低表現影片 <span class="muted">(依觀看數降冪)</span></div>
+        <section data-bind-list="top5_low_performers">
+          <div class="vid-row" data-bind-item>
+            <span class="vid-title" data-bind-field="title">—</span>
+            <span class="vid-views" data-bind-field="views_display">—</span>
+            <span class="vid-ret">留存 <span data-bind-field="retention_3s_pct_display">—</span></span>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    </section><!-- /tab overview -->
+
+    <!-- ── Tab: 待拍 ─────────────────────────────────── -->
+    <section class="tab-pane" data-tab="backlog">
+      <div class="panel">
+        <div class="panel-title">待拍影片 <span class="muted">(<span data-bind="nav_counts.待拍">—</span> 支)</span></div>
+        <div class="list-row ideas-2col header">
+          <span>主題</span>
+          <span>拍攝亮點</span>
+        </div>
+        <section data-bind-list="lists.backlog">
+          <article class="list-row ideas-2col" data-bind-item>
+            <span class="list-title" data-bind-field="title">—</span>
+            <span class="list-hook" data-bind-field="hook_reason">—</span>
+          </article>
+        </section>
+      </div>
+    </section>
+
+    <!-- ── Tab: 高表現 ───────────────────────────────── -->
+    <section class="tab-pane" data-tab="high">
+      <div class="panel">
+        <div class="panel-title">🏆 高表現影片 <span class="muted">(<span data-bind="nav_counts.performance_high">—</span> 支 · 依觀看數)</span></div>
+        <div class="list-row has-6col header">
+          <span>編號</span>
+          <span>標題</span>
+          <span>觀看</span>
+          <span>3 秒留存</span>
+          <span>完播</span>
+          <span>分級</span>
+          <span>動作</span>
+          <span>上線日期</span>
+        </div>
+        <section data-bind-list="lists.high_performers_full">
+          <article class="list-row has-6col" data-bind-item>
+            <span class="list-vid" data-bind-field="vid">—</span>
+            <span class="list-title" data-bind-field="title">—</span>
+            <span class="list-stat perf-high" data-bind-field="views_display">—</span>
+            <span class="list-stat" data-bind-field="retention_3s_pct_display">—</span>
+            <span class="list-stat" data-bind-field="completion_rate_pct_display">—</span>
+            <span class="list-tier" data-bind-field="tier_display">—</span>
+            <span class="list-action" data-bind-field="next_action">—</span>
+            <span class="list-stat" data-bind-field="publish_date">—</span>
+          </article>
+        </section>
+      </div>
+    </section>
+
+    <!-- ── Tab: 普通 ─────────────────────────────────── -->
+    <section class="tab-pane" data-tab="normal">
+      <div class="panel">
+        <div class="panel-title">😐 普通影片 <span class="muted">(<span data-bind="nav_counts.performance_normal">—</span> 支 · 依觀看數)</span></div>
+        <div class="list-row has-6col header">
+          <span>編號</span>
+          <span>標題</span>
+          <span>觀看</span>
+          <span>3 秒留存</span>
+          <span>完播</span>
+          <span>分級</span>
+          <span>動作</span>
+          <span>上線日期</span>
+        </div>
+        <section data-bind-list="lists.normal_performers_full">
+          <article class="list-row has-6col" data-bind-item>
+            <span class="list-vid" data-bind-field="vid">—</span>
+            <span class="list-title" data-bind-field="title">—</span>
+            <span class="list-stat" data-bind-field="views_display">—</span>
+            <span class="list-stat" data-bind-field="retention_3s_pct_display">—</span>
+            <span class="list-stat" data-bind-field="completion_rate_pct_display">—</span>
+            <span class="list-tier" data-bind-field="tier_display">—</span>
+            <span class="list-action" data-bind-field="next_action">—</span>
+            <span class="list-stat" data-bind-field="publish_date">—</span>
+          </article>
+        </section>
+      </div>
+    </section>
+
+    <!-- ── Tab: 低表現 ───────────────────────────────── -->
+    <section class="tab-pane" data-tab="low">
+      <div class="panel">
+        <div class="panel-title">⚠️ 低表現影片 <span class="muted">(<span data-bind="nav_counts.performance_low">—</span> 支 · 依觀看數)</span></div>
+        <div class="list-row has-6col header">
+          <span>編號</span>
+          <span>標題</span>
+          <span>觀看</span>
+          <span>3 秒留存</span>
+          <span>完播</span>
+          <span>分級</span>
+          <span>動作</span>
+          <span>上線日期</span>
+        </div>
+        <section data-bind-list="lists.low_performers_full">
+          <article class="list-row has-6col" data-bind-item>
+            <span class="list-vid" data-bind-field="vid">—</span>
+            <span class="list-title" data-bind-field="title">—</span>
+            <span class="list-stat" data-bind-field="views_display">—</span>
+            <span class="list-stat" data-bind-field="retention_3s_pct_display">—</span>
+            <span class="list-stat" data-bind-field="completion_rate_pct_display">—</span>
+            <span class="list-tier" data-bind-field="tier_display">—</span>
+            <span class="list-action" data-bind-field="next_action">—</span>
+            <span class="list-stat" data-bind-field="publish_date">—</span>
+          </article>
+        </section>
+      </div>
+    </section>
+
+    <!-- ── Tab: 靈感箱 ───────────────────────────────── -->
+    <section class="tab-pane" data-tab="ideas">
+      <div class="panel">
+        <div class="panel-title">靈感箱 <span class="muted">(收集中 + 已選定 · <span data-bind="nav_counts.total_ideas">—</span> 個)</span></div>
+        <div class="list-row ideas-2col header">
+          <span>主題</span>
+          <span>拍攝亮點</span>
+        </div>
+        <section data-bind-list="lists.ideas">
+          <article class="list-row ideas-2col" data-bind-item>
+            <span class="list-title" data-bind-field="topic">—</span>
+            <span class="list-hook" data-bind-field="hook_reason">—</span>
+          </article>
+        </section>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>
+        同步於 main · <code data-bind="meta.source_commit">—</code>
+        · 生成於 <span data-bind="meta.generated_at">—</span>
+      </span>
+      <span>
+        <a href="https://github.com/pei760730/KaiOS-ContentSystem" target="_blank">KaiOS-ContentSystem</a>
+      </span>
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function() {
+    const crumbLabelMap = {
+      overview: "總覽",
+      backlog: "待拍",
+      high: "高表現",
+      normal: "普通",
+      low: "低表現",
+      ideas: "靈感箱"
+    };
+    const navs = document.querySelectorAll("[data-tab-target]");
+    const panes = document.querySelectorAll(".tab-pane");
+    const crumb = document.getElementById("crumb-tab");
+
+    function activate(target) {
+      navs.forEach(n => n.classList.toggle("active", n.dataset.tabTarget === target));
+      panes.forEach(p => p.classList.toggle("active", p.dataset.tab === target));
+      if (crumb && crumbLabelMap[target]) crumb.textContent = crumbLabelMap[target];
+      try { history.replaceState(null, "", "#" + target); } catch(e) {}
+    }
+
+    navs.forEach(nav => {
+      nav.addEventListener("click", () => activate(nav.dataset.tabTarget));
+    });
+
+    // 支援 URL hash 直連（例：開啟時 #backlog 自動切到待拍）
+    const initial = (location.hash || "#overview").slice(1);
+    if (document.querySelector(`.tab-pane[data-tab="${initial}"]`)) {
+      activate(initial);
+    }
+  })();
+</script>
+</body>
+</html>

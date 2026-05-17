@@ -1,0 +1,52 @@
+{
+    "permissions": {
+        "deny": [
+            "Write(CLAUDE.md)",
+            "Edit(CLAUDE.md)",
+            "Write(.claude/rules/**)",
+            "Edit(.claude/rules/**)",
+            "Write(.claude/skills/**)",
+            "Edit(.claude/skills/**)",
+            "Write(.claude/commands/**)",
+            "Edit(.claude/commands/**)",
+            "Write(.claude/settings.json)",
+            "Edit(.claude/settings.json)"
+        ]
+    },
+    "hooks": {
+        "SessionStart": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh\"",
+                        "timeout": 120
+                    }
+                ]
+            }
+        ],
+        "Stop": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop.sh\"",
+                        "timeout": 120
+                    }
+                ]
+            }
+        ],
+        "PostToolUse": [
+            {
+                "matcher": "Edit|Write|MultiEdit",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/post-tool-use.sh\"",
+                        "timeout": 30
+                    }
+                ]
+            }
+        ]
+    }
+}

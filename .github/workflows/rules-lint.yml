@@ -1,0 +1,47 @@
+name: Lint + Test
+
+# 不設 paths 過濾 — rules-lint 跑得快（<10s）、pytest <5s、值得每 PR 都跑
+# 之前的 paths 漏了 engine-manifest.json / 01-data-brain/** / README.md / 07-changelog/** / docs/**、
+# 導致只動契約檔但沒動 scripts/tests 的 PR 不觸發 lint、版本漂移會悄悄通過（v5.65 補強）
+on:
+  push:
+    branches:
+      - main
+      - 'claude/**'
+      - 'codex/**'
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run Ruff (critical rules)
+        run: ruff check --select E9,F63,F7,F82 scripts tests
+
+      - name: Run rules cross-file lint (CI mode)
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: python scripts/lint/rules-lint.py --ci
+
+      - name: Run version sync guard
+        run: python scripts/utils/check-version-sync.py
+
+      - name: Run unit tests
+        run: python -m pytest tests/ -v
+
+      - name: Validate JSON data integrity (kai)
+        run: python scripts/ops/video-ops.py validate-all

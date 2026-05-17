@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: engine-version-gate
+        name: engine version gate
+        entry: python scripts/lint/pre-commit-engine-check.py
+        language: system
+        pass_filenames: false

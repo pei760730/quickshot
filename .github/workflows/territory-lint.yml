@@ -1,0 +1,114 @@
+name: territory-lint
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+# 強制 docs/contracts/agent-collaboration.md §9.3 責任區白名單
+# Claude branch (claude/*) 不得寫 Codex 領土 / Codex branch (codex/*) 不得寫 Claude 領土
+# 根因：2026-04-24 Wave 1/2 Claude 違反 §9.3 導致 #260/#261 overlap
+# 硬化：把 markdown 規則升級成 CI gate
+# v2（2026-04-24）：加 PR body override 解析（配合 SOP §9.5 救援規則）、
+#                   `edited` 事件觸發（body 編輯後自動重跑）
+
+jobs:
+  check-territory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check branch prefix + changed-file territory
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -e
+          echo "PR head: $HEAD_REF"
+          echo "PR base: $BASE_REF"
+
+          git fetch origin "$BASE_REF"
+          CHANGED=$(git -c core.quotepath=false diff --name-only "origin/$BASE_REF"...HEAD)
+
+          if [[ -z "$CHANGED" ]]; then
+            echo "No changed files — skipping territory check"
+            exit 0
+          fi
+
+          echo ""
+          echo "Changed files:"
+          echo "$CHANGED" | sed 's/^/  /'
+          echo ""
+
+          # 白名單定義（對齊 agent-collaboration.md §9.3）
+          # Claude 可寫：skill-factory, .claude, CLAUDE.md, 01-data-brain, 03-production-line,
+          #             07-changelog, dashboard, docs/*（含 contracts 共享）, README, HOME, .github
+          # Codex 可寫：scripts/*, tests/*, data/*, docs/contracts 共享, engine-manifest, .github
+          # 共享：docs/contracts/**, engine-manifest.json, .github/**（不擋）
+
+          # data/** 是客戶資料層（pipeline.json / lessons.json / todos.json）
+          # 透過 video-ops.py CLI 寫入、不是手動 edit、兩邊都能透過 CLI 操作
+          # 所以 data/** 不列入任一方禁寫清單（CLI 本身在 Codex 領土、Codex 擁有工具碼）
+          #
+          # .gitignore 是 repo 層共享配置（兩邊都可能加 ignore rule、如 Phase 4 退役 legacy
+          # pipeline.json 時 Codex 加 data/*/pipeline.json ignore）→ 列入兩邊白名單
+
+          CLAUDE_OK='^(02-skill-factory/|\.claude/|CLAUDE\.md|CLAUDE\.local\.md|01-data-brain/|03-production-line/|07-changelog/|dashboard/|docs/|engine-manifest\.json|README\.md|HOME\.md|AGENTS\.md|\.githooks/|\.github/|00-control-center/|data/|\.gitignore$)'
+          CODEX_OK='^(scripts/|tests/|data/|docs/contracts/|engine-manifest\.json|\.github/|docs/references/|AGENTS\.md|\.githooks/|\.gitignore$)'
+
+          violations=""
+
+          if [[ "$HEAD_REF" == claude/* ]]; then
+            ROLE="Claude"
+            while IFS= read -r f; do
+              [[ -z "$f" ]] && continue
+              if ! [[ "$f" =~ $CLAUDE_OK ]]; then
+                violations="${violations}  ❌ $f\n"
+              fi
+            done <<< "$CHANGED"
+          elif [[ "$HEAD_REF" == codex/* ]]; then
+            ROLE="Codex"
+            while IFS= read -r f; do
+              [[ -z "$f" ]] && continue
+              if ! [[ "$f" =~ $CODEX_OK ]]; then
+                violations="${violations}  ❌ $f\n"
+              fi
+            done <<< "$CHANGED"
+          else
+            echo "⚠️  Branch prefix not claude/* or codex/* — skipping territory check"
+            echo "   (Manual branch; territory rules do not apply)"
+            exit 0
+          fi
+
+          if [[ -n "$violations" ]]; then
+            # Check PR body for override (SOP §9.5 rescue clause)
+            if echo "$PR_BODY" | grep -qi "territory override justified by:"; then
+              echo "⚠️  $ROLE branch territory violation (see agent-collaboration.md §9.3):"
+              echo ""
+              printf "$violations"
+              echo ""
+              # Extract the override reason for audit trail
+              OVERRIDE_REASON=$(echo "$PR_BODY" | grep -i "territory override justified by:" | head -1)
+              echo "✅ Override accepted (PR body contains override declaration):"
+              echo "   $OVERRIDE_REASON"
+              echo ""
+              echo "依據：docs/contracts/agent-collaboration.md §9.5 救援規則"
+              exit 0
+            fi
+            echo "❌ $ROLE branch territory violation (see agent-collaboration.md §9.3):"
+            echo ""
+            printf "$violations"
+            echo ""
+            echo "解法："
+            echo "  1. 把越界的檔案從這個 PR 抽出、交給對方代理處理"
+            echo "  2. 或在 PR body 明寫 'territory override justified by: <原因>'（v2+ 自動解析、check 轉 warn）"
+            echo "  3. 或請 Kai 以 admin 放行"
+            echo ""
+            echo "參考：docs/contracts/agent-collaboration.md §9.3 + §9.5"
+            exit 1
+          fi
+
+          echo "✅ $ROLE branch territory check passed"

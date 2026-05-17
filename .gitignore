@@ -1,0 +1,47 @@
+# 備份壓縮檔
+*.zip
+*.rar
+*.7z
+
+# 系統檔案
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 編輯器暫存
+*.tmp
+*.temp
+~$*
+
+# Claude 本機設定（不同電腦設定不同）
+.claude/settings.local.json
+
+# Windows 系統
+$RECYCLE.BIN/
+nul
+
+# Python 快取
+__pycache__/
+*.pyc
+
+# 檔案鎖（storage.py 並行寫入保護）
+data/**/*.lock
+
+# Claude hooks 執行 log（本地噪音、stop-hook-git-check.sh 會抓）
+data/.claude-hooks.log
+
+# Backfill runtime cache（sedimentation context，v4.22 後每次 backfill 產生）
+data/.cache/
+# Per-operator migration backups（v4.63 Stage C lessons schema migration 備份路徑）
+data/*/.cache/
+
+.obsidian/
+
+# Google API 金鑰（絕對不能上傳！）
+google-credentials.json
+*credentials*.json
+*service-account*.json
+.claude/admin-allow
+
+# Legacy monolithic pipeline.json is retired; use data/*/pipeline/ shards.
+data/*/pipeline.json

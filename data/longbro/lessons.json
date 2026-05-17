@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.1",
+  "description": "Unified lessons for next generation cycle.",
+  "next_id": 3,
+  "lessons": [
+    {
+      "id": "L-0001",
+      "origin": "mistake",
+      "pattern": "客戶 repo 漏跑 bootstrap → 主引擎私人資料殘留（interview-bank / 龍老闆合拍清單 / Red Tea Bus 標題 / data/kai 死路徑 / {{BRAND_NAME}} 模板）",
+      "counter_pattern": null,
+      "evidence": [],
+      "scope": [],
+      "stage": "soft",
+      "source_note": null,
+      "created_at": "2026-04-30",
+      "updated_at": "2026-04-30"
+    },
+    {
+      "id": "L-0002",
+      "origin": "mistake",
+      "pattern": "Claude 修改 engine-manifest.contract_files 列出的檔案後、自驗時僅跑 rules-lint + check-version-sync、漏跑 engine_version_check.py；PR body 因此錯誤宣稱「不 bump engine-manifest」、CI engine-version-check 紅後才補 5.72→5.73 + CHANGELOG（PR #25）",
+      "counter_pattern": "修改任何 engine-manifest.contract_files 列出的檔案（含 docs/references/**、docs/contracts/** 等）後、commit 前必跑 python3 scripts/engine/engine_version_check.py --base origin/main --head HEAD；fail → bump engine_version + 加 CHANGELOG entry、再 commit。不靠 CI 抓。",
+      "evidence": [],
+      "scope": [],
+      "stage": "soft",
+      "source_note": null,
+      "created_at": "2026-05-06",
+      "updated_at": "2026-05-06"
+    }
+  ],
+  "last_updated": "2026-05-15"
+}

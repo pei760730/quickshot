@@ -1,0 +1,16 @@
+{
+  "protocol_heading": "## 升版協議（Engine Version Bump Protocol）",
+  "required_keywords": [
+    "_meta.engine_version",
+    "_meta.sync_blacklist",
+    "CHANGELOG",
+    "inline",
+    "manifest"
+  ],
+  "data_only_keywords": [
+    "data/**",
+    "03-production-line/**",
+    "00-control-center/todo/**",
+    "docs/contracts/*-collaboration.md"
+  ]
+}

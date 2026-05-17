@@ -1,0 +1,170 @@
+name: Sync to Google Sheets
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Sync mode'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - default
+          - todo
+          - report
+          - inspiration
+          - video
+          - backfill
+          - usage
+          - archive_employee
+          - analyze_employee
+          - fetch_employee
+
+  push:
+    branches:
+      - main
+      - 'claude/**'
+    paths:
+      - "data/**"
+      - "03-production-line/**"
+      - "00-control-center/**"
+      - "scripts/**"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Write Google credentials
+        id: creds
+        env:
+          CREDS: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          set -e
+          if [ -z "$CREDS" ]; then
+            echo "::warning::GOOGLE_CREDENTIALS_JSON secret is empty — skipping sheet sync (客戶 repo / fork 預期狀態)"
+            echo "has_creds=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "has_creds=true" >> $GITHUB_OUTPUT
+          printf '%s' "$CREDS" > google-credentials.json
+          python3 -c 'import json; d=json.load(open("google-credentials.json")); print("Creds OK:", d.get("client_email","?"))'
+
+      - name: Debug - verify branch and todos data
+        run: |
+          echo "Branch: $(git branch --show-current || git rev-parse HEAD)"
+          echo "Ref: ${{ github.ref }}"
+          echo ""
+          # v4.39+: todos 從 markdown 遷移至 data/<operator>/todos.json
+          for op_dir in data/*/; do
+            op=$(basename "$op_dir")
+            [[ "$op" == "template" || "$op" == "employee-backup" ]] && continue
+            f="$op_dir/todos.json"
+            if [ -f "$f" ]; then
+              echo "=== $f ($(python3 -c "import json; d=json.load(open('$f')); print(len(d.get('items',[])), 'items')")) ==="
+            fi
+          done
+
+      - name: Determine sync mode
+        id: mode
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_MODE: ${{ inputs.mode }}
+        run: |
+          if [ "$EVENT_NAME" = "push" ]; then
+            echo "mode=all" >> $GITHUB_OUTPUT
+          else
+            echo "mode=${INPUT_MODE:-all}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run sync
+        if: steps.creds.outputs.has_creds == 'true'
+        timeout-minutes: 5
+        env:
+          SYNC_MODE: ${{ steps.mode.outputs.mode }}
+        run: |
+          echo "=== Sync mode: $SYNC_MODE ==="
+          python scripts/utils/sync-to-sheets.py "$SYNC_MODE"
+
+      - name: Sync data files to main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          set -e
+          SOURCE_BRANCH=$(git branch --show-current)
+          echo "Syncing data from $SOURCE_BRANCH to main..."
+
+          # 記錄當前分支要同步的檔案
+          # v4.39+：todos 已從 00-control-center/todo/*.md 遷移至 data/<op>/todos.json
+          # v5.60 (2026-04-27)：
+          #   1. 排除 **/template/** — 共享引擎狀態、不該被 per-operator branch 覆蓋
+          #      （root cause of L-0023 sync-engine 4-layer / template 回歸事件）
+          #   2. 改用 branch-modified 而非 diff vs main — 只 sync branch 的 commits
+          #      真的改過的檔、避免 stale branch 拿舊狀態洗掉 main 的新狀態
+          BRANCH_BASE=$(git merge-base origin/main HEAD)
+          DATA_FILES=$(git log --name-only --pretty=format: "$BRANCH_BASE..HEAD" -- \
+            "data/" ":!data/template/**" \
+            "03-production-line/" ":!03-production-line/template/**" \
+            "01-data-brain/" ":!01-data-brain/template/**" \
+            2>/dev/null | sort -u | grep -v '^$' || echo "")
+
+          # Pipeline v2：避免 stale branch 覆蓋整份 pipeline.json，
+          # 只同步 shard（_meta + items/*）與非 pipeline data。
+          DATA_FILES=$(echo "$DATA_FILES" | grep -v '^data/.*/pipeline.json$' || true)
+
+          if [ -z "$DATA_FILES" ]; then
+            echo "No data files modified by this branch's commits, skipping"
+            exit 0
+          fi
+
+          echo "Files to sync:"
+          echo "$DATA_FILES"
+
+          # 複製到暫存
+          mkdir -p /tmp/sync-data
+          for file in $DATA_FILES; do
+            if [ -f "$file" ]; then
+              dir=$(dirname "$file")
+              mkdir -p "/tmp/sync-data/$dir"
+              cp "$file" "/tmp/sync-data/$file"
+            fi
+          done
+
+          # 切到 main 並更新
+          git checkout main
+          SYNCED=0
+          for file in $DATA_FILES; do
+            if [ -f "/tmp/sync-data/$file" ]; then
+              dir=$(dirname "$file")
+              mkdir -p "$dir"
+              cp "/tmp/sync-data/$file" "$file"
+              git add "$file"
+              SYNCED=$((SYNCED + 1))
+            fi
+          done
+
+          if git diff --cached --quiet; then
+            echo "Main already up to date"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "data: sync $SYNCED file(s) from $SOURCE_BRANCH [skip ci]"
+          git push origin main
+          echo "✅ Synced $SYNCED file(s) to main"
+
+
