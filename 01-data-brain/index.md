@@ -16,8 +16,8 @@
 | # | 檔案 | 內容 | 消費者 |
 |---|------|------|--------|
 | 1 | `brand.md` | 純品牌知識 [0]~[12]（業務 / 受眾 / 洞察 / 禁忌 / 競品 / 平台 / 數據 / 目標）| 所有生成型 Skill |
-| 2 | `personas/kai.md` | Kai 人格（[1] 說話風格、[2] 觀點態度、[3] 禁區、[4] 創作野心、身份與背景）| 所有生成型 Skill（v4.97+）|
-| 3 | `personas/an.md` | 藏鏡人安 人格（觀眾印象 / 兩種模式 / 口頭禪 / 邊界）| 自動載入 BrainBundle.an_md（PR #432 merged 2026-05-11、選用欄位、缺檔回空字串）|
+| 2 | `personas/{primary}.md` | 主要創作者人格（[1] 說話風格、[2] 觀點態度、[3] 禁區、[4] 創作野心、身份與背景）；檔名對應 `data/.operators.json` primary operator key | 所有生成型 Skill |
+| 3 | `personas/{partner}.md` | 對話搭檔 / 藏鏡人人格（觀眾印象 / 兩種模式 / 口頭禪 / 邊界）| 自動載入 BrainBundle.an_md（選用欄位、缺檔回空字串）|
 | 4 | `cases.md` | 案例庫 [8] + 高表現影片記錄 | 需要具體例子時 |
 | 5 | `data/[operator]/performance-patterns.json` | 成功模式 + 風險模式 | 所有生成型 Skill（見 `shared-references/performance-injection-protocol.md`） |
 | 6 | `data/[operator]/lessons.json` | 統一 lessons（avoid rules / 錯誤 / 偏差 / 畢業規則），schema 見 `docs/contracts/lessons-schema.md` | 所有生成型 Skill（按 stage + scope 過濾、origin 7 種全收） |
