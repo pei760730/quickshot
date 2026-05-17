@@ -1,6 +1,6 @@
-# Brain Loading Protocol（v1.8）
+# Brain Loading Protocol（v1.9）
 
-> version: 1.8 | last_updated: 2026-05-15 | v1.8: 清「§Orientation Phase 1」stale pointer（workflow.md v2.25+ 已升正式 §Orientation、本檔 2 處 active reference 同步清）。v1.7: BrainBundle 加 kai_md / an_md 欄位（v4.97 personas/ 拆分）。實作層 `scripts/libs/brain_loader.py` 已於 PR #432 接入（2026-05-11、`tests/test_brain_loader.py` 4 個 regression tests 守護）。
+> version: 1.9 | last_updated: 2026-05-17 | v1.9: kai_md 從必要（✅、FileNotFoundError 阻斷）→ optional（缺檔回空字串、不阻斷）、對齊實作層 `scripts/libs/brain_loader.py`（template 客戶尚未建 personas/ 時 generation skill 仍可跑、只是不注入人格）。連動 `02-skill-factory/quality/SKILL.md` + `02-skill-factory/discovery/SKILL.md` kai_md 欄位標記同步。v1.8: 清「§Orientation Phase 1」stale pointer（workflow.md v2.25+ 已升正式 §Orientation、本檔 2 處 active reference 同步清）。v1.7: BrainBundle 加 kai_md / an_md 欄位（v4.97 personas/ 拆分）。實作層 `scripts/libs/brain_loader.py` 已於 PR #432 接入（2026-05-11、`tests/test_brain_loader.py` regression tests 守護）。
 > 所有生成類 skill 的「數據大腦載入」統一規範
 
 ## 本文件角色
@@ -83,7 +83,7 @@ lessons schema 降維、hit_count 已退役）。
 | `generation` | mode=series | ✅ | 系列架構、需 [12] FAQ / 異常處理素材 |
 | `generation` | mode=interview | ✅ | 對話壓力腳本、需 interview-bank.md |
 | `generation` | mode=viral | ❌ | 知識型、不綁品牌（跳過 brand/cases、僅 lessons + banned-words）|
-| `quality` | phase=check / phase=fix | ✅ | 需 personas/kai.md [1] 說話風格 + lessons + banned-words |
+| `quality` | phase=check / phase=fix | ✅ | 使用 personas/kai.md [1] 說話風格（loader 選用、缺檔則 [1] 比對降級）+ lessons + banned-words |
 | `orientation` | — | 退役 stub | v1.6 第二輪退役、規則回 workflow.md §Orientation；本協議僅在 Kai 真觸發 skill 時為相容性引用、不主動載入 |
 | `distillation` | — | 退役 stub | v1.6 第二輪退役、三 phase 拆三層（workflow.md §Lesson 硬化提議 + session-start hook + `/harden` command）；本協議僅在 Kai 真觸發 skill 時為相容性引用 |
 

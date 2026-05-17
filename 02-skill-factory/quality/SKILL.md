@@ -122,7 +122,7 @@ scripts/libs/brain_loader.load_for_skill("<operator>", "quality")
 | 欄位 | 必要 | 用途 |
 |------|------|------|
 | `brand_md` | ✅ | 商業禁忌 [5] + 品牌定位 [0] 等對齊 |
-| `kai_md` | ✅ | [1] 說話風格 核心比對（A8 規範、待 brain_loader B1 接）|
+| `kai_md` | — | [1] 說話風格 核心比對（A8 規範、待 brain_loader B1 接；loader 選用、缺檔則本項比對降級）|
 | `cases_md` | ✅ | 故事追蹤 ④ 驗證 |
 | `lessons` | ✅ | filter scope=quality 或 generation 的 soft lessons |
 | `performance_patterns` | — | 留存預測 ② 比對（有就用、缺檔不阻斷）|

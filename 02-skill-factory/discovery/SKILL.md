@@ -87,7 +87,7 @@ scripts/libs/brain_loader.load_for_skill("<operator>", "discovery")
 | 欄位 | 必要 | 用途 |
 |------|------|------|
 | `brand_md` | ✅ | [4]/[5]/[6]/[10]/[11]/[12] 整份載入、跨 mode 都要 |
-| `kai_md` | ✅ | [1] 說話風格、選題切角對齊（A8 規範、待 brain_loader B1 接）|
+| `kai_md` | — | [1] 說話風格、選題切角對齊（A8 規範、待 brain_loader B1 接；loader 選用、缺檔則本項對齊降級）|
 | `cases_md` | ✅ | [8] 案例庫、選題比對與切角推薦 |
 | `performance_patterns` | ✅ | 高勝率 hook / 結構參考、信心分數計算 |
 | `lessons` | — | scope=discovery 或 generation 的 soft lessons |

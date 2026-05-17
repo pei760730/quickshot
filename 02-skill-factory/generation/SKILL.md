@@ -2,7 +2,7 @@
 name: generation
 description: 內容生產核心 skill v1.4（vNext 5 核心之一） — 5 modes（dual-track / variant / series / interview / viral）整合於單一 skill。v1.4 §通用 Output 規格硬化：A/B/C/D 4 切角從 dual-track 專屬 → 跨所有 mode 強制 + 偏離度預算對應（A GREEN / B ORANGE / C/D YELLOW）；加 §強標題優先協議（每切角 ≥ 5 候選、依 title-rules.md 5 類心理觸發、4 必含逐項評分、⭐ 推薦、Hook 必 echo 推薦標題、不套 30s 默認）。保留前版 §Output Contract 動詞硬化（Bash tool 直接執行、禁止印命令給 Kai 抄、trace inline）。觸發：Kai 說「確認要拍：XXX」「變體」「拍系列」「訪談」「knowledge」或描述任務。
 version: 1.4
-last_updated: 2026-05-15
+last_updated: 2026-05-17
 brand-refs: [5, 6]
 ---
 <!-- vNext 5 核心 skill #2 — 對應 docs/references/skill-architecture-principles.md v1.3 §vNext 必要能力 C：變更設計 -->
