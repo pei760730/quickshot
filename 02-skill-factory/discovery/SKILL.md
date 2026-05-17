@@ -182,7 +182,7 @@ Discovery Skill 跑完輸出（給 pipeline.json）：
 
 本 skill v1.1 **prompt-only fallback**、外部 fetch 部分用 Claude 自身知識補（不準、不即時）。
 
-真正即時 fetch 需要 Wave C 三個 Codex tool（規格待 Kai 拍板後另起 PR）：
+真正即時 fetch 需要 Wave C 三個 tool（規格待 Kai 拍板後另起 PR）：
 - `scripts/tools/web_fetch.py`（IG/TikTok/同業/熱點 fetch）
 - `scripts/tools/research.py`（外部資料 fetch、原 topic-researcher 邏輯）
 - `scripts/tools/trend.py`（Reels 解析、原 trend-adapter 邏輯）
