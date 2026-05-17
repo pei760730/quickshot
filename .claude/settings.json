@@ -3,6 +3,8 @@
         "deny": [
             "Write(CLAUDE.md)",
             "Edit(CLAUDE.md)",
+            "Write(.claude/rules/**)",
+            "Edit(.claude/rules/**)",
             "Write(.claude/skills/**)",
             "Edit(.claude/skills/**)",
             "Write(.claude/commands/**)",
