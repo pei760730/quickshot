@@ -45,3 +45,6 @@ google-credentials.json
 
 # Legacy monolithic pipeline.json is retired; use data/*/pipeline/ shards.
 data/*/pipeline.json
+
+# Dashboard build artifacts（外部產生、無 source / 無 build script 在 repo 內）
+dashboard/
