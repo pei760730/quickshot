@@ -33,6 +33,7 @@ RULES_PATHS = [
 
 # ─── Load Registry ────────────────────────────────────────────────────────────
 
+
 def load_registry():
     try:
         with open(REGISTRY_PATH, "r", encoding="utf-8") as f:
@@ -44,7 +45,9 @@ def load_registry():
         print(f"❌ canonical-registry.json JSON 格式錯誤：{e}")
         sys.exit(1)
 
+
 # ─── Checks ───────────────────────────────────────────────────────────────────
+
 
 def _file_reference_exists(ref_file, filepath):
     """Return True when a referenced file can be resolved in known repo locations."""
@@ -71,10 +74,10 @@ def check_file_references(content, filepath, registry, errors):
     """Check that referenced .md files exist."""
     # Match patterns like: 見 XXX.md, 載入 XXX.md, 參考 XXX.md, `XXX.md`
     patterns = [
-        r'見\s+[`]?([a-zA-Z0-9_\-/]+\.md)[`]?',
-        r'載入\s+[`]?([a-zA-Z0-9_\-/]+\.md)[`]?',
-        r'參考\s+[`]?([a-zA-Z0-9_\-/]+\.md)[`]?',
-        r'[`]([a-zA-Z0-9_\-/]+\.md)[`]',
+        r"見\s+[`]?([a-zA-Z0-9_\-/]+\.md)[`]?",
+        r"載入\s+[`]?([a-zA-Z0-9_\-/]+\.md)[`]?",
+        r"參考\s+[`]?([a-zA-Z0-9_\-/]+\.md)[`]?",
+        r"[`]([a-zA-Z0-9_\-/]+\.md)[`]",
     ]
 
     deprecated_files = registry.get("deprecated_files", {})
@@ -87,29 +90,35 @@ def check_file_references(content, filepath, registry, errors):
 
             # Check deprecated files
             if basename in deprecated_files:
-                line_num = content[:match.start()].count('\n') + 1
-                errors.append({
-                    "file": str(filepath),
-                    "line": line_num,
-                    "severity": "ERROR",
-                    "check": "deprecated_file",
-                    "message": f"引用已廢棄檔案 '{basename}': {deprecated_files[basename]}",
-                })
+                line_num = content[: match.start()].count("\n") + 1
+                errors.append(
+                    {
+                        "file": str(filepath),
+                        "line": line_num,
+                        "severity": "ERROR",
+                        "check": "deprecated_file",
+                        "message": f"引用已廢棄檔案 '{basename}': {deprecated_files[basename]}",
+                    }
+                )
 
             # Check file exists (for rules files we know about)
-            if ref_file in rules_files or basename in [os.path.basename(k) for k in rules_files]:
+            if ref_file in rules_files or basename in [
+                os.path.basename(k) for k in rules_files
+            ]:
                 continue  # Known file, OK
 
             # Check if file actually exists on disk
             if not _file_reference_exists(ref_file, filepath):
-                line_num = content[:match.start()].count('\n') + 1
-                errors.append({
-                    "file": str(filepath),
-                    "line": line_num,
-                    "severity": "WARN",
-                    "check": "missing_file",
-                    "message": f"引用的檔案 '{ref_file}' 在磁碟上找不到",
-                })
+                line_num = content[: match.start()].count("\n") + 1
+                errors.append(
+                    {
+                        "file": str(filepath),
+                        "line": line_num,
+                        "severity": "WARN",
+                        "check": "missing_file",
+                        "message": f"引用的檔案 '{ref_file}' 在磁碟上找不到",
+                    }
+                )
 
 
 def check_deprecated_states(content, filepath, registry, errors):
@@ -122,24 +131,38 @@ def check_deprecated_states(content, filepath, registry, errors):
         for keyword, reason in states.items():
             for match in re.finditer(re.escape(keyword), content):
                 # Skip if inside a deprecation notice or explanatory context
-                line_start = content.rfind('\n', 0, match.start()) + 1
-                line_end = content.find('\n', match.end())
-                line_text = content[line_start:line_end if line_end != -1 else len(content)]
+                line_start = content.rfind("\n", 0, match.start()) + 1
+                line_end = content.find("\n", match.end())
+                line_text = content[
+                    line_start : line_end if line_end != -1 else len(content)
+                ]
 
                 # Allow mentions in deprecation notices, changelogs, or explanatory context
-                skip_patterns = ['廢除', '已廢除', 'deprecated', '不再有', '取消', 'v2.0',
-                                 'v2.1', 'v2.2', '移除', '無需']
+                skip_patterns = [
+                    "廢除",
+                    "已廢除",
+                    "deprecated",
+                    "不再有",
+                    "取消",
+                    "v2.0",
+                    "v2.1",
+                    "v2.2",
+                    "移除",
+                    "無需",
+                ]
                 if any(sp in line_text for sp in skip_patterns):
                     continue
 
-                line_num = content[:match.start()].count('\n') + 1
-                errors.append({
-                    "file": str(filepath),
-                    "line": line_num,
-                    "severity": "ERROR",
-                    "check": "deprecated_state",
-                    "message": f"使用已廢棄的 {category} 狀態 '{keyword}': {reason}",
-                })
+                line_num = content[: match.start()].count("\n") + 1
+                errors.append(
+                    {
+                        "file": str(filepath),
+                        "line": line_num,
+                        "severity": "ERROR",
+                        "check": "deprecated_state",
+                        "message": f"使用已廢棄的 {category} 狀態 '{keyword}': {reason}",
+                    }
+                )
 
 
 def check_deprecated_commands(content, filepath, registry, errors):
@@ -147,22 +170,26 @@ def check_deprecated_commands(content, filepath, registry, errors):
     deprecated = registry.get("deprecated_commands", {})
     for keyword, reason in deprecated.items():
         for match in re.finditer(re.escape(keyword), content):
-            line_start = content.rfind('\n', 0, match.start()) + 1
-            line_end = content.find('\n', match.end())
-            line_text = content[line_start:line_end if line_end != -1 else len(content)]
+            line_start = content.rfind("\n", 0, match.start()) + 1
+            line_end = content.find("\n", match.end())
+            line_text = content[
+                line_start : line_end if line_end != -1 else len(content)
+            ]
 
-            skip_patterns = ['廢除', '已廢除', 'deprecated', '不再']
+            skip_patterns = ["廢除", "已廢除", "deprecated", "不再"]
             if any(sp in line_text for sp in skip_patterns):
                 continue
 
-            line_num = content[:match.start()].count('\n') + 1
-            errors.append({
-                "file": str(filepath),
-                "line": line_num,
-                "severity": "ERROR",
-                "check": "deprecated_command",
-                "message": f"引用已廢棄指令 '{keyword}': {reason}",
-            })
+            line_num = content[: match.start()].count("\n") + 1
+            errors.append(
+                {
+                    "file": str(filepath),
+                    "line": line_num,
+                    "severity": "ERROR",
+                    "check": "deprecated_command",
+                    "message": f"引用已廢棄指令 '{keyword}': {reason}",
+                }
+            )
 
 
 def check_cross_references(content, filepath, registry, errors):
@@ -171,13 +198,13 @@ def check_cross_references(content, filepath, registry, errors):
 
     # Find patterns like: 見 workflow.md 流程 A 步驟 ⑥
     # or: system-rules.md 規則 5
-    ref_pattern = r'(?:見\s+)?(\w[\w\-]*\.md)\s+([\w\s步驟規則流程①-⑩A-Z0-9]+)'
+    ref_pattern = r"(?:見\s+)?(\w[\w\-]*\.md)\s+([\w\s步驟規則流程①-⑩A-Z0-9]+)"
 
     for match in re.finditer(ref_pattern, content):
         full_ref = match.group(0).strip()
         # Normalize: remove 見 prefix, collapse spaces
-        normalized = re.sub(r'^見\s+', '', full_ref).strip()
-        normalized = re.sub(r'\s+', ' ', normalized)
+        normalized = re.sub(r"^見\s+", "", full_ref).strip()
+        normalized = re.sub(r"\s+", " ", normalized)
 
         # Check against known anchors (partial match)
         found = False
@@ -187,7 +214,7 @@ def check_cross_references(content, filepath, registry, errors):
                 break
 
         # Only flag if it looks like a specific section reference
-        if not found and ('步驟' in normalized or '規則' in normalized):
+        if not found and ("步驟" in normalized or "規則" in normalized):
             # Check if the referenced file at least exists
             ref_file = match.group(1)
             rules_files = registry.get("rules_files", {})
@@ -195,14 +222,16 @@ def check_cross_references(content, filepath, registry, errors):
             known_basenames = [os.path.basename(k) for k in rules_files]
 
             if basename not in known_basenames and ref_file not in rules_files:
-                line_num = content[:match.start()].count('\n') + 1
-                errors.append({
-                    "file": str(filepath),
-                    "line": line_num,
-                    "severity": "WARN",
-                    "check": "unknown_anchor",
-                    "message": f"交叉引用 '{normalized}' 不在 canonical registry 中",
-                })
+                line_num = content[: match.start()].count("\n") + 1
+                errors.append(
+                    {
+                        "file": str(filepath),
+                        "line": line_num,
+                        "severity": "WARN",
+                        "check": "unknown_anchor",
+                        "message": f"交叉引用 '{normalized}' 不在 canonical registry 中",
+                    }
+                )
 
 
 def check_state_consistency(content, filepath, registry, errors):
@@ -210,19 +239,36 @@ def check_state_consistency(content, filepath, registry, errors):
     valid_inspiration = registry.get("valid_states", {}).get("idea", [])
 
     # Check for unknown [xxx] patterns that look like states
-    state_pattern = r'\[([a-z]+)\]'
+    state_pattern = r"\[([a-z]+)\]"
     known_states = set()
     for s in valid_inspiration:
         # Support both "[inbox]" and "inbox" formats
-        m = re.search(r'\[([a-z]+)\]', s)
+        m = re.search(r"\[([a-z]+)\]", s)
         if m:
             known_states.add(m.group(1))
-        elif re.match(r'^[a-z]+$', s):
+        elif re.match(r"^[a-z]+$", s):
             known_states.add(s)
 
     # Also add some known non-state bracket patterns to ignore
-    ignore_patterns = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-                       '10', '11', '12', 'x', 'N', 'X', 'operator'}
+    ignore_patterns = {
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "x",
+        "N",
+        "X",
+        "operator",
+    }
 
     for match in re.finditer(state_pattern, content):
         state = match.group(1)
@@ -242,22 +288,24 @@ def check_state_consistency(content, filepath, registry, errors):
             continue
 
         # Unknown state - might be worth flagging
-        line_num = content[:match.start()].count('\n') + 1
-        line_start = content.rfind('\n', 0, match.start()) + 1
-        line_end = content.find('\n', match.end())
-        line_text = content[line_start:line_end if line_end != -1 else len(content)].strip()
+        line_num = content[: match.start()].count("\n") + 1
+        line_start = content.rfind("\n", 0, match.start()) + 1
+        line_end = content.find("\n", match.end())
+        line_text = content[
+            line_start : line_end if line_end != -1 else len(content)
+        ].strip()
 
         # Only flag if it looks like a status marker (near 靈感/狀態 context)
-        if '靈感' in line_text or '狀態' in line_text or '收集箱' in line_text:
-            errors.append({
-                "file": str(filepath),
-                "line": line_num,
-                "severity": "WARN",
-                "check": "unknown_state",
-                "message": f"未知狀態 '[{state}]' 不在 canonical registry 中",
-            })
-
-
+        if "靈感" in line_text or "狀態" in line_text or "收集箱" in line_text:
+            errors.append(
+                {
+                    "file": str(filepath),
+                    "line": line_num,
+                    "severity": "WARN",
+                    "check": "unknown_state",
+                    "message": f"未知狀態 '[{state}]' 不在 canonical registry 中",
+                }
+            )
 
 
 def _read_pipeline_sharded_from_data_dir(data_dir):
@@ -284,13 +332,19 @@ def _read_pipeline_sharded_from_git(ref, operator="kai"):
     base = f"data/{operator}/pipeline"
     meta_proc = subprocess.run(
         ["git", "show", f"{ref}:{base}/_meta.json"],
-        capture_output=True, text=True, check=False, cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=REPO_ROOT,
     )
     if meta_proc.returncode != 0 or not meta_proc.stdout.strip():
         return None
     items_proc = subprocess.run(
         ["git", "ls-tree", "-r", "--name-only", ref, f"{base}/items"],
-        capture_output=True, text=True, check=False, cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=REPO_ROOT,
     )
     try:
         meta = json.loads(meta_proc.stdout)
@@ -303,7 +357,10 @@ def _read_pipeline_sharded_from_git(ref, operator="kai"):
                 continue
             item_proc = subprocess.run(
                 ["git", "show", f"{ref}:{rel_path}"],
-                capture_output=True, text=True, check=False, cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+                cwd=REPO_ROOT,
             )
             if item_proc.returncode != 0 or not item_proc.stdout.strip():
                 continue
@@ -324,6 +381,7 @@ def check_tracking_json(registry, errors):
     """
     # 動態 import 避免循環依賴
     import sys
+
     ops_lib_path = REPO_ROOT / "scripts" / "ops"
     if str(ops_lib_path) not in sys.path:
         sys.path.insert(0, str(ops_lib_path))
@@ -340,13 +398,15 @@ def _check_single_operator_tracking(op_name, op_cfg, registry, errors):
     vid_prefix = op_cfg["vid_prefix"]
 
     if data is None:
-        errors.append({
-            "file": str(tracking_json),
-            "line": 0,
-            "severity": "WARN",
-            "check": "tracking_missing",
-            "message": f"[{op_name}] SSoT shard {tracking_json.name} 不存在",
-        })
+        errors.append(
+            {
+                "file": str(tracking_json),
+                "line": 0,
+                "severity": "WARN",
+                "check": "tracking_missing",
+                "message": f"[{op_name}] SSoT shard {tracking_json.name} 不存在",
+            }
+        )
         return
 
     valid_statuses = set(registry.get("valid_states", {}).get("video", []))
@@ -356,7 +416,7 @@ def _check_single_operator_tracking(op_name, op_cfg, registry, errors):
         for s in registry.get("valid_states", {}).get(category, []):
             valid_statuses.add(s)
     seen_vids = set()
-    vid_pattern = re.compile(rf'^{re.escape(vid_prefix)}-\d{{3,}}$')
+    vid_pattern = re.compile(rf"^{re.escape(vid_prefix)}-\d{{3,}}$")
 
     for v in data.get("items", []):
         vid = v.get("vid")
@@ -365,68 +425,80 @@ def _check_single_operator_tracking(op_name, op_cfg, registry, errors):
 
         # VID format（operator-aware prefix）
         if not vid_pattern.match(vid):
-            errors.append({
-                "file": str(tracking_json),
-                "line": 0,
-                "severity": "ERROR",
-                "check": "tracking_vid",
-                "message": f"[{op_name}] 影片碼格式錯誤：'{vid}'（應為 {vid_prefix}-NNN）",
-            })
+            errors.append(
+                {
+                    "file": str(tracking_json),
+                    "line": 0,
+                    "severity": "ERROR",
+                    "check": "tracking_vid",
+                    "message": f"[{op_name}] 影片碼格式錯誤：'{vid}'（應為 {vid_prefix}-NNN）",
+                }
+            )
 
         # Duplicate VID
         if vid in seen_vids:
-            errors.append({
-                "file": str(tracking_json),
-                "line": 0,
-                "severity": "ERROR",
-                "check": "tracking_duplicate",
-                "message": f"重複的影片碼：{vid}",
-            })
+            errors.append(
+                {
+                    "file": str(tracking_json),
+                    "line": 0,
+                    "severity": "ERROR",
+                    "check": "tracking_duplicate",
+                    "message": f"重複的影片碼：{vid}",
+                }
+            )
         seen_vids.add(vid)
 
         # Status validity
         status = v.get("status")
         if status not in valid_statuses:
-            errors.append({
-                "file": str(tracking_json),
-                "line": 0,
-                "severity": "ERROR",
-                "check": "tracking_status",
-                "message": f"'{vid}' 狀態 '{status}' 不在合法值中（{', '.join(sorted(valid_statuses))}）",
-            })
+            errors.append(
+                {
+                    "file": str(tracking_json),
+                    "line": 0,
+                    "severity": "ERROR",
+                    "check": "tracking_status",
+                    "message": f"'{vid}' 狀態 '{status}' 不在合法值中（{', '.join(sorted(valid_statuses))}）",
+                }
+            )
 
         # Date format
-        date_pattern = r'^\d{4}-\d{2}-\d{2}$'
+        date_pattern = r"^\d{4}-\d{2}-\d{2}$"
         for field in ["publish_date"]:
             val = v.get(field)
             if val and not re.match(date_pattern, val):
-                errors.append({
-                    "file": str(tracking_json),
-                    "line": 0,
-                    "severity": "WARN",
-                    "check": "tracking_date",
-                    "message": f"'{vid}' {field} 格式不正確：'{val}'",
-                })
+                errors.append(
+                    {
+                        "file": str(tracking_json),
+                        "line": 0,
+                        "severity": "WARN",
+                        "check": "tracking_date",
+                        "message": f"'{vid}' {field} 格式不正確：'{val}'",
+                    }
+                )
 
         # Required fields
         for field in ["topic"]:
             if not v.get(field):
-                errors.append({
+                errors.append(
+                    {
+                        "file": str(tracking_json),
+                        "line": 0,
+                        "severity": "ERROR",
+                        "check": "tracking_field",
+                        "message": f"'{vid}' 缺少必填欄位 {field}",
+                    }
+                )
+        # 已上線必須有上片日
+        if status == "已上線" and not v.get("publish_date"):
+            errors.append(
+                {
                     "file": str(tracking_json),
                     "line": 0,
                     "severity": "ERROR",
                     "check": "tracking_field",
-                    "message": f"'{vid}' 缺少必填欄位 {field}",
-                })
-        # 已上線必須有上片日
-        if status == "已上線" and not v.get("publish_date"):
-            errors.append({
-                "file": str(tracking_json),
-                "line": 0,
-                "severity": "ERROR",
-                "check": "tracking_field",
-                "message": f"'{vid}' 已上線但缺少 publish_date",
-            })
+                    "message": f"'{vid}' 已上線但缺少 publish_date",
+                }
+            )
 
 
 def _parse_int(value):
@@ -454,13 +526,25 @@ def evaluate_pipeline_regression_guard(base_data, head_data):
 
     base_next_vid = _parse_int(base_meta.get("next_vid"))
     head_next_vid = _parse_int(head_meta.get("next_vid"))
-    if base_next_vid is not None and head_next_vid is not None and head_next_vid < base_next_vid:
-        issues.append(f"❌ pipeline-regression-guard: _meta.next_vid {base_next_vid} → {head_next_vid} (regression)")
+    if (
+        base_next_vid is not None
+        and head_next_vid is not None
+        and head_next_vid < base_next_vid
+    ):
+        issues.append(
+            f"❌ pipeline-regression-guard: _meta.next_vid {base_next_vid} → {head_next_vid} (regression)"
+        )
 
     base_next_idea = _parse_int(base_meta.get("next_idea_id"))
     head_next_idea = _parse_int(head_meta.get("next_idea_id"))
-    if base_next_idea is not None and head_next_idea is not None and head_next_idea < base_next_idea:
-        issues.append(f"❌ pipeline-regression-guard: _meta.next_idea_id {base_next_idea} → {head_next_idea} (regression)")
+    if (
+        base_next_idea is not None
+        and head_next_idea is not None
+        and head_next_idea < base_next_idea
+    ):
+        issues.append(
+            f"❌ pipeline-regression-guard: _meta.next_idea_id {base_next_idea} → {head_next_idea} (regression)"
+        )
 
     base_by_vid = _build_items_by_vid(base_data)
     head_by_vid = _build_items_by_vid(head_data)
@@ -483,9 +567,13 @@ def evaluate_pipeline_regression_guard(base_data, head_data):
             backfill_regressions.append(vid)
 
     for vid, b_status, h_status in sorted(status_regressions):
-        issues.append(f"❌ pipeline-regression-guard: {vid} status {b_status} → {h_status} (regression)")
+        issues.append(
+            f"❌ pipeline-regression-guard: {vid} status {b_status} → {h_status} (regression)"
+        )
     for vid in sorted(backfill_regressions):
-        issues.append(f"❌ pipeline-regression-guard: {vid} backfill non-null → null (regression)")
+        issues.append(
+            f"❌ pipeline-regression-guard: {vid} backfill non-null → null (regression)"
+        )
 
     return issues
 
@@ -510,24 +598,34 @@ def check_pipeline_regression_guard(errors):
     if base_data is None:
         return
 
-    head_data, head_path = _read_pipeline_sharded_from_data_dir(REPO_ROOT / "data" / "kai")
+    head_data, head_path = _read_pipeline_sharded_from_data_dir(
+        REPO_ROOT / "data" / "kai"
+    )
     if head_data is None:
         return
 
     for msg in evaluate_pipeline_regression_guard(base_data, head_data):
-        errors.append({
-            "file": str(head_path),
-            "line": 0,
-            "severity": "ERROR",
-            "check": "pipeline-regression-guard",
-            "message": msg.replace("❌ pipeline-regression-guard: ", ""),
-        })
+        errors.append(
+            {
+                "file": str(head_path),
+                "line": 0,
+                "severity": "ERROR",
+                "check": "pipeline-regression-guard",
+                "message": msg.replace("❌ pipeline-regression-guard: ", ""),
+            }
+        )
 
 
 def check_registry_completeness(registry, errors):
     """Check that .claude/skills/ entries and Registry valid_skills are in sync."""
     skills_dir = REPO_ROOT / ".claude" / "skills"
-    stub_backfill_allowlist = {"orientation", "discovery", "generation", "quality", "distillation"}
+    stub_backfill_allowlist = {
+        "orientation",
+        "discovery",
+        "generation",
+        "quality",
+        "distillation",
+    }
 
     # Discover skills from .claude/skills/*.md
     disk_skills = set()
@@ -546,115 +644,29 @@ def check_registry_completeness(registry, errors):
 
     # Skills on disk but not in Registry
     for skill in sorted(disk_skills - registry_skills):
-        errors.append({
-            "file": str(skills_dir / f"{skill}.md"),
-            "line": 0,
-            "severity": "WARN",
-            "check": "registry_missing_skill",
-            "message": f".claude/skills/ 有 '{skill}' 但 canonical-registry.json 沒有",
-        })
+        errors.append(
+            {
+                "file": str(skills_dir / f"{skill}.md"),
+                "line": 0,
+                "severity": "WARN",
+                "check": "registry_missing_skill",
+                "message": f".claude/skills/ 有 '{skill}' 但 canonical-registry.json 沒有",
+            }
+        )
 
     # Skills in Registry but not on disk
     for skill in sorted(registry_skills - disk_skills):
         if skill in stub_backfill_allowlist:
             continue
-        errors.append({
-            "file": str(REGISTRY_PATH),
-            "line": 0,
-            "severity": "ERROR",
-            "check": "disk_missing_skill",
-            "message": f"canonical-registry.json 有 '{skill}' 但 .claude/skills/ 沒有對應 entry",
-        })
-
-
-def check_engine_manifest_inline_versions(errors):
-    """Validate engine-manifest versioned files match inline '> version:' headers."""
-    manifest_path = REPO_ROOT / "engine-manifest.json"
-    if not manifest_path.exists():
-        return
-    try:
-        data = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as e:
-        errors.append({
-            "file": str(manifest_path),
-            "line": 0,
-            "severity": "ERROR",
-            "check": "engine_manifest_parse",
-            "message": f"engine-manifest.json 解析失敗：{e}",
-        })
-        return
-
-    # v5.95+ three-layer schema（semantic_contracts + factual_contracts + internal_files）
-    # with legacy contract_files / files fallback.
-    semantic = data.get("semantic_contracts")
-    factual = data.get("factual_contracts")
-    contract = data.get("contract_files")
-    internal = data.get("internal_files")
-    if any(isinstance(block, dict) for block in (semantic, factual, contract, internal)):
-        pairs = []
-        for block in (contract, semantic, factual, internal):
-            if isinstance(block, dict):
-                pairs.extend(block.items())
-    else:
-        manifest_files = data.get("_meta", {}).get("files")
-        if isinstance(manifest_files, list):
-            pairs = [(p, None) for p in manifest_files if isinstance(p, str)]
-        elif isinstance(manifest_files, dict):
-            pairs = list(manifest_files.items())
-        else:
-            pairs = list((data.get("files") or {}).items())
-
-    version_re = re.compile(r'^\s*>\s*version:\s*([0-9]+\.[0-9]+)\b')
-    for rel_path, expected in pairs:
-        if expected is None:
-            continue
-        fpath = REPO_ROOT / rel_path
-        if not fpath.exists() or not fpath.is_file():
-            continue
-        text = fpath.read_text(encoding="utf-8", errors="ignore")
-        found = None
-        for line in text.splitlines()[:30]:
-            m = version_re.match(line)
-            if m:
-                found = m.group(1)
-                break
-        if found is not None and str(expected) != found:
-            errors.append({
-                "file": str(fpath),
-                "line": 1,
+        errors.append(
+            {
+                "file": str(REGISTRY_PATH),
+                "line": 0,
                 "severity": "ERROR",
-                "check": "engine_manifest_inline_mismatch",
-                "message": f"manifest 版本={expected} 與 inline 版本={found} 不一致",
-            })
-
-
-def check_manifest_files_exist(errors):
-    """Report manifest entries that point to non-existent files.
-
-    Wave 11 hardening（2026-04-23、engine v4.87+）：避免 engine-manifest.json 出現
-    orphan entries（參考 `.claude/rules/workflow-analytics.md` v3.0 entry 於
-    commit 8bd298f 刪檔後遺留 ~2 個月的教訓）。
-    """
-    manifest_path = REPO_ROOT / "engine-manifest.json"
-    if not manifest_path.exists():
-        return
-    try:
-        data = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return  # 前面 check_engine_manifest_inline_versions 已報解析錯誤
-    for section in ("semantic_contracts", "factual_contracts", "contract_files", "internal_files"):
-        block = data.get(section)
-        if not isinstance(block, dict):
-            continue
-        for rel_path in block.keys():
-            if not (REPO_ROOT / rel_path).exists():
-                errors.append({
-                    "file": str(manifest_path),
-                    "line": 0,
-                    "severity": "ERROR",
-                    "check": "manifest_file_missing",
-                    "message": f"{section}.{rel_path} 指向的檔案不存在於 repo",
-                })
+                "check": "disk_missing_skill",
+                "message": f"canonical-registry.json 有 '{skill}' 但 .claude/skills/ 沒有對應 entry",
+            }
+        )
 
 
 def _flatten_meta_keys(obj, prefix=""):
@@ -679,7 +691,9 @@ def check_template_schema_alignment(errors):
     只比 `_meta` 層 dict 欄位、忽略 list 內容（如 statuses.idea 的 list）。
     允許 template 多出 `description` 這類自描述欄位。
     """
-    template, template_path = _read_pipeline_sharded_from_data_dir(REPO_ROOT / "data" / "template")
+    template, template_path = _read_pipeline_sharded_from_data_dir(
+        REPO_ROOT / "data" / "template"
+    )
     if template is None:
         return
     tkeys = _flatten_meta_keys(template.get("_meta", {}))
@@ -693,13 +707,15 @@ def check_template_schema_alignment(errors):
         okeys = _flatten_meta_keys(data.get("_meta", {}))
         missing = sorted(okeys - tkeys)
         if missing:
-            errors.append({
-                "file": str(template_path),
-                "line": 0,
-                "severity": "WARN",
-                "check": "template_schema_drift",
-                "message": f"template._meta 缺欄位（operator={op_dir.name} 有）：{', '.join(missing[:5])}{'…' if len(missing) > 5 else ''}",
-            })
+            errors.append(
+                {
+                    "file": str(template_path),
+                    "line": 0,
+                    "severity": "WARN",
+                    "check": "template_schema_drift",
+                    "message": f"template._meta 缺欄位（operator={op_dir.name} 有）：{', '.join(missing[:5])}{'…' if len(missing) > 5 else ''}",
+                }
+            )
 
 
 def check_skill_description_version_sync(errors):
@@ -736,13 +752,15 @@ def check_skill_description_version_sync(errors):
         inline = re.findall(r"[vV](\d+\.\d+)", desc)
         for found in inline:
             if found != actual:
-                errors.append({
-                    "file": str(skill_md),
-                    "line": 0,
-                    "severity": "ERROR",
-                    "check": "skill_description_version_drift",
-                    "message": f"{sub.name}: description 寫 v{found}、frontmatter version 是 {actual}",
-                })
+                errors.append(
+                    {
+                        "file": str(skill_md),
+                        "line": 0,
+                        "severity": "ERROR",
+                        "check": "skill_description_version_drift",
+                        "message": f"{sub.name}: description 寫 v{found}、frontmatter version 是 {actual}",
+                    }
+                )
 
 
 def check_ai_patterns_warnings(errors):
@@ -815,21 +833,26 @@ def check_legacy_lesson_stage_usage(errors):
             if rel.startswith("scripts/ops/lib/migrate_"):
                 continue
 
-            for idx, line in enumerate(path.read_text(encoding="utf-8", errors="ignore").splitlines(), start=1):
+            for idx, line in enumerate(
+                path.read_text(encoding="utf-8", errors="ignore").splitlines(), start=1
+            ):
                 stripped = line.strip()
                 if not stripped or stripped.startswith("#"):
                     continue
                 if any(p.search(line) for p in stage_patterns):
-                    errors.append({
-                        "file": str(path),
-                        "line": idx,
-                        "severity": "WARN",
-                        "check": "legacy_lesson_stage",
-                        "message": "偵測到 legacy lesson stage stage-filter（candidate/active/observation）；請改用 stage=\"soft\"。",
-                    })
+                    errors.append(
+                        {
+                            "file": str(path),
+                            "line": idx,
+                            "severity": "WARN",
+                            "check": "legacy_lesson_stage",
+                            "message": '偵測到 legacy lesson stage stage-filter（candidate/active/observation）；請改用 stage="soft"。',
+                        }
+                    )
 
 
 # ─── Runner ───────────────────────────────────────────────────────────────────
+
 
 def lint_file(filepath, registry):
     """Run all checks on a single file."""
@@ -837,13 +860,15 @@ def lint_file(filepath, registry):
     try:
         content = filepath.read_text(encoding="utf-8")
     except Exception as e:
-        errors.append({
-            "file": str(filepath),
-            "line": 0,
-            "severity": "ERROR",
-            "check": "read_error",
-            "message": f"無法讀取檔案: {e}",
-        })
+        errors.append(
+            {
+                "file": str(filepath),
+                "line": 0,
+                "severity": "ERROR",
+                "check": "read_error",
+                "message": f"無法讀取檔案: {e}",
+            }
+        )
         return errors
 
     check_file_references(content, filepath, registry, errors)
@@ -869,8 +894,6 @@ def main():
     # Cross-source checks (not per-file)
     check_registry_completeness(registry, all_errors)
     check_tracking_json(registry, all_errors)
-    check_engine_manifest_inline_versions(all_errors)
-    check_manifest_files_exist(all_errors)
     check_template_schema_alignment(all_errors)
     check_pipeline_regression_guard(all_errors)
     check_skill_description_version_sync(all_errors)

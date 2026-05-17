@@ -27,16 +27,8 @@ if [ -f "$BRAND" ]; then
   echo "   → skill 跑時 brain_loader 自動載；對話需要時 Read 01-data-brain/brand.md"
 fi
 
-FACTS=$(python3 "$PROJECT_DIR/scripts/utils/adoption_gate_scan.py" --project "$PROJECT_DIR" 2>/dev/null || true)
-if [ -n "${FACTS:-}" ]; then
-  echo ""
-  echo "──────────────────────────────────────────────────────────"
-  echo "$FACTS"
-  echo "──────────────────────────────────────────────────────────"
-fi
-
-# ── Stage 2: dashboard 落後靜默 rebuild（owner=auto、CLAUDE.md 禁令 #11）──
-# 成功不印（不打擾 Kai）；連續 3 次失敗才升 owner=employee 顯示
+# ── Stage 2: dashboard 落後靜默 rebuild ──
+# 成功不印（不打擾 Kai）；連續 3 次失敗才提示
 if [ -x "$PROJECT_DIR/.claude/hooks/dashboard-rebuild.sh" ]; then
   bash "$PROJECT_DIR/.claude/hooks/dashboard-rebuild.sh" --check 2>/dev/null || true
   STATE_FILE="$PROJECT_DIR/dashboard/dist/.rebuild-state.json"
@@ -51,7 +43,7 @@ except Exception:
 " 2>/dev/null || echo 0)
     if [ "${FAIL_COUNT:-0}" -ge 3 ]; then
       echo ""
-      echo "⚠️ dashboard rebuild 連續 ${FAIL_COUNT} 次失敗（owner=employee）"
+      echo "⚠️ dashboard rebuild 連續 ${FAIL_COUNT} 次失敗"
       echo "   → 看詳情：cat dashboard/dist/.rebuild-state.json"
       echo "   → 手動修：python3 dashboard/build.py"
     fi
