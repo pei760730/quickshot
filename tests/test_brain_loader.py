@@ -15,7 +15,9 @@ def brain_repo(tmp_path, monkeypatch):
     personas_dir.mkdir(parents=True)
     (brain_dir / "brand.md").write_text("# Brand\n", encoding="utf-8")
     (brain_dir / "cases.md").write_text("# Cases\n", encoding="utf-8")
-    (personas_dir / "kai.md").write_text("# Kai\nKai persona fixture.\n", encoding="utf-8")
+    (personas_dir / "kai.md").write_text(
+        "# Kai\nKai persona fixture.\n", encoding="utf-8"
+    )
     (personas_dir / "an.md").write_text("# An\nAn persona fixture.\n", encoding="utf-8")
 
     data_dir = tmp_path / "data" / "kai"
@@ -72,11 +74,11 @@ def test_load_for_skill_returns_an_md_when_present(brain_repo):
     assert "An persona fixture" in bundle.an_md
 
 
-def test_missing_kai_md_raises_filenotfounderror(brain_repo):
+def test_missing_kai_md_returns_empty_string(brain_repo):
     (brain_repo / "01-data-brain" / "personas" / "kai.md").unlink()
 
-    with pytest.raises(FileNotFoundError, match="personas/kai.md"):
-        load_for_skill("kai", "generation", mode="dual-track")
+    bundle = load_for_skill("kai", "generation", mode="dual-track")
+    assert bundle.kai_md == ""
 
 
 def test_missing_an_md_returns_empty_string(brain_repo):

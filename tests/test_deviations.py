@@ -1,10 +1,14 @@
 """Tests for lib/deviations.py — script deviation recording + analysis + auto-diff."""
 
-
 from lib.deviations import (
-    record_deviation, link_performance, count_deviations,
-    load_deviations, analyze_deviations,
-    extract_spoken_lines, diff_script, auto_diff_and_record,
+    record_deviation,
+    link_performance,
+    count_deviations,
+    load_deviations,
+    analyze_deviations,
+    extract_spoken_lines,
+    diff_script,
+    auto_diff_and_record,
     VALID_LEVELS,
 )
 
@@ -53,8 +57,11 @@ class TestRecordDeviation:
     def test_overwrite_on_same_vid(self, patch_paths):
         """Same VID should overwrite (re-backfill scenario)."""
         record_deviation("VID-001", "minimal")
-        record_deviation("VID-001", "significant",
-                         changes=[{"original": "X", "actual": "Y", "reason": "Z"}])
+        record_deviation(
+            "VID-001",
+            "significant",
+            changes=[{"original": "X", "actual": "Y", "reason": "Z"}],
+        )
         data = load_deviations()
         assert len(data["deviations"]) == 1
         assert data["deviations"][0]["level"] == "significant"
@@ -120,7 +127,11 @@ class TestAnalyzeDeviations:
         for i in range(10):
             level = "moderate" if i % 2 == 0 else "minimal"
             perf = "high" if i < 3 else "normal"
-            changes = [{"original": "其實", "actual": "我跟你講", "reason": "太文"}] if i % 2 == 0 else []
+            changes = (
+                [{"original": "其實", "actual": "我跟你講", "reason": "太文"}]
+                if i % 2 == 0
+                else []
+            )
             record_deviation(f"VID-{i:03d}", level, changes=changes)
             link_performance(f"VID-{i:03d}", perf)
 
@@ -178,8 +189,11 @@ class TestAnalyzeDeviations:
     def test_frequent_reasons(self, patch_paths):
         """Reason aggregation."""
         for i in range(3):
-            record_deviation(f"VID-{i:03d}", "moderate",
-                             changes=[{"original": f"A{i}", "actual": f"B{i}", "reason": "太文"}])
+            record_deviation(
+                f"VID-{i:03d}",
+                "moderate",
+                changes=[{"original": f"A{i}", "actual": f"B{i}", "reason": "太文"}],
+            )
             link_performance(f"VID-{i:03d}", "normal")
 
         report = analyze_deviations()
@@ -201,21 +215,21 @@ SIMPLE_SCRIPT = """\
 > 影片碼：VID-034
 > 生成日期：2026-03-20
 > Skill：flow-operator
-> 封面標題：一個塑膠杯，漲了40%
+> 封面標題：一個小零件，漲了40%
 
 ---
 
 **開頭（0-3s）**
-「戰爭，讓我花了五百萬。」
+「意外，讓我花了五百萬。」
 
 **衝突展開（3-15s）**
-「塑膠是石油做的，油價一漲，杯子、封膜、吸管全部跟著漲。」
+「原料是進口的，匯率一漲，包裝、配件、消耗品全部跟著漲。」
 
 **真相揭露（15-30s）**
-「那這筆錢誰出？不是消費者，因為我不敢漲價。」
+「那這筆錢誰出？不是客戶，因為我不敢漲價。」
 
 **收尾（30-45s）**
-「所以一杯飲料的背後，你是想像不到的。」
+「所以一個產品的背後，你是想像不到的。」
 """
 
 # 對話格式腳本
@@ -230,25 +244,25 @@ DIALOGUE_SCRIPT = """\
 
 【畫面】中景・手持・室內暗光
 
-安（藏鏡人）：又打來了？
+甲：又打來了？
 
-Kai：三點半欸
+乙：三點半欸
 
-安：誰
+甲：誰
 
-Kai：加盟主
+乙：客戶
 
-安：什麼事？
+甲：什麼事？
 
-Kai：鐵門打不開
+乙：門打不開
 
-【畫面】特寫・Kai 表情無奈
+【畫面】特寫・乙 表情無奈
 
-安：蛤？鐵門？
+甲：蛤？門？
 
-Kai：對啊，上次是停電
+乙：對啊，上次是停電
 
-【字幕收尾】開店不只是算帳，是扛人
+【字幕收尾】做生意不只是算帳，是扛人
 
 ## 結構拆解
 
@@ -264,17 +278,17 @@ class TestExtractSpokenLines:
     def test_simple_format(self):
         lines = extract_spoken_lines(SIMPLE_SCRIPT)
         assert len(lines) == 4
-        assert lines[0] == "戰爭，讓我花了五百萬。"
-        assert lines[1] == "塑膠是石油做的，油價一漲，杯子、封膜、吸管全部跟著漲。"
-        assert lines[3] == "所以一杯飲料的背後，你是想像不到的。"
+        assert lines[0] == "意外，讓我花了五百萬。"
+        assert lines[1] == "原料是進口的，匯率一漲，包裝、配件、消耗品全部跟著漲。"
+        assert lines[3] == "所以一個產品的背後，你是想像不到的。"
 
     def test_dialogue_format(self):
         lines = extract_spoken_lines(DIALOGUE_SCRIPT)
         assert "又打來了？" in lines
         assert "三點半欸" in lines
-        assert "加盟主" in lines
-        assert "鐵門打不開" in lines
-        assert "開店不只是算帳，是扛人" in lines
+        assert "客戶" in lines
+        assert "門打不開" in lines
+        assert "做生意不只是算帳，是扛人" in lines
 
     def test_dialogue_skips_stage_directions(self):
         lines = extract_spoken_lines(DIALOGUE_SCRIPT)
@@ -297,31 +311,31 @@ class TestDiffScript:
     """Test intelligent script-vs-subtitle comparison."""
 
     def test_identical(self):
-        orig = ["戰爭，讓我花了五百萬。", "塑膠是石油做的。"]
-        subtitle = "戰爭，讓我花了五百萬。\n塑膠是石油做的。"
+        orig = ["意外，讓我花了五百萬。", "原料是進口的。"]
+        subtitle = "意外，讓我花了五百萬。\n原料是進口的。"
         result = diff_script(orig, subtitle)
         assert result["similarity"] >= 0.95
         assert result["level"] == "minimal"
         assert result["changes"] == []
 
     def test_minor_word_change(self):
-        orig = ["戰爭，讓我花了五百萬。", "塑膠是石油做的，油價一漲全部跟著漲。"]
-        subtitle = "戰爭，讓我花了五百萬。\n塑膠是石油做的，油價一漲通通跟著漲。"
+        orig = ["意外，讓我花了五百萬。", "原料是進口的，匯率一漲全部跟著漲。"]
+        subtitle = "意外，讓我花了五百萬。\n原料是進口的，匯率一漲通通跟著漲。"
         result = diff_script(orig, subtitle)
         assert result["level"] == "minimal"
 
     def test_moderate_changes(self):
         orig = [
-            "戰爭，讓我花了五百萬。",
-            "塑膠是石油做的，油價一漲，杯子封膜吸管全部跟著漲。",
-            "那這筆錢誰出？不是消費者。",
-            "所以一杯飲料的背後，你是想像不到的。",
+            "意外，讓我花了五百萬。",
+            "原料是進口的，匯率一漲，包裝配件消耗品全部跟著漲。",
+            "那這筆錢誰出？不是客戶。",
+            "所以一個產品的背後，你是想像不到的。",
         ]
         subtitle = (
-            "戰爭，讓我多花了五百萬。\n"
-            "塑膠原料是石油，油價漲什麼都漲。\n"
-            "這錢誰出？消費者不出。\n"
-            "一杯飲料背後，你想不到。"
+            "意外，讓我多花了五百萬。\n"
+            "原料來自進口，匯率漲什麼都漲。\n"
+            "這錢誰出？客戶不出。\n"
+            "一個產品背後，你想不到。"
         )
         result = diff_script(orig, subtitle)
         assert result["level"] in ("minimal", "moderate")
@@ -329,10 +343,10 @@ class TestDiffScript:
 
     def test_significant_changes(self):
         orig = [
-            "戰爭，讓我花了五百萬。",
-            "塑膠是石油做的，油價一漲全部跟著漲。",
+            "意外，讓我花了五百萬。",
+            "原料是進口的，匯率一漲全部跟著漲。",
         ]
-        subtitle = "今天來聊一個完全不同的話題。\n你知道開店最累的是什麼嗎？\n不是做飲料，是管人。"
+        subtitle = "今天來聊一個完全不同的話題。\n你知道做生意最累的是什麼嗎？\n不是做產品，是管人。"
         result = diff_script(orig, subtitle)
         assert result["level"] == "significant"
         assert result["similarity"] < 0.55
@@ -371,27 +385,33 @@ class TestAutoDiffAndRecord:
         from lib.pipeline import load_pipeline, save_pipeline
 
         # Setup: create script file + pipeline entry
-        script_dir = tmp_project / "03-production-line" / "02-ready-to-shoot" / "kai"
+        script_dir = (
+            tmp_project / "03-production-line" / "02-ready-to-shoot" / "default"
+        )
         script_dir.mkdir(parents=True, exist_ok=True)
         script_file = script_dir / "2026-03-20_test_腳本_V1.md"
         script_file.write_text(SIMPLE_SCRIPT, encoding="utf-8")
 
-        rel_path = "03-production-line/02-ready-to-shoot/kai/2026-03-20_test_腳本_V1.md"
+        rel_path = (
+            "03-production-line/02-ready-to-shoot/default/2026-03-20_test_腳本_V1.md"
+        )
 
         data = load_pipeline()
-        data["items"].append({
-            "idea_id": "IDEA-099",
-            "vid": "VID-099",
-            "topic": "test",
-            "status": "已上線",
-            "created_date": "2026-03-20",
-            "script_path": rel_path,
-            "backfill": {"performance": "high"},
-        })
+        data["items"].append(
+            {
+                "idea_id": "IDEA-099",
+                "vid": "VID-099",
+                "topic": "test",
+                "status": "已上線",
+                "created_date": "2026-03-20",
+                "script_path": rel_path,
+                "backfill": {"performance": "high"},
+            }
+        )
         save_pipeline(data)
 
         # Run auto-diff with slightly modified subtitle
-        subtitle = "戰爭，讓我多花了五百萬。\n塑膠是石油做的，油價一漲，杯子封膜吸管全部跟著漲。\n那這筆錢誰出？不是消費者，因為我不敢漲價。\n所以一杯飲料的背後，你是想像不到的。"
+        subtitle = "意外，讓我多花了五百萬。\n原料是進口的，匯率一漲，包裝、配件、消耗品全部跟著漲。\n那這筆錢誰出？不是客戶，因為我不敢漲價。\n所以一個產品的背後，你是想像不到的。"
 
         ok, result = auto_diff_and_record("VID-099", subtitle)
         assert ok is True
@@ -413,13 +433,15 @@ class TestAutoDiffAndRecord:
         from lib.pipeline import load_pipeline, save_pipeline
 
         data = load_pipeline()
-        data["items"].append({
-            "idea_id": "IDEA-098",
-            "vid": "VID-098",
-            "topic": "test",
-            "status": "已上線",
-            "created_date": "2026-03-20",
-        })
+        data["items"].append(
+            {
+                "idea_id": "IDEA-098",
+                "vid": "VID-098",
+                "topic": "test",
+                "status": "已上線",
+                "created_date": "2026-03-20",
+            }
+        )
         save_pipeline(data)
 
         ok, result = auto_diff_and_record("VID-098", "some text")
@@ -430,14 +452,16 @@ class TestAutoDiffAndRecord:
         from lib.pipeline import load_pipeline, save_pipeline
 
         data = load_pipeline()
-        data["items"].append({
-            "idea_id": "IDEA-097",
-            "vid": "VID-097",
-            "topic": "test",
-            "status": "已上線",
-            "created_date": "2026-03-20",
-            "script_path": "nonexistent/path.md",
-        })
+        data["items"].append(
+            {
+                "idea_id": "IDEA-097",
+                "vid": "VID-097",
+                "topic": "test",
+                "status": "已上線",
+                "created_date": "2026-03-20",
+                "script_path": "nonexistent/path.md",
+            }
+        )
         save_pipeline(data)
 
         ok, result = auto_diff_and_record("VID-097", "some text")

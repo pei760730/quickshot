@@ -1,6 +1,6 @@
-# Brain Loading Protocol（v1.8）
+# Brain Loading Protocol（v1.9）
 
-> version: 1.8 | last_updated: 2026-05-15 | v1.8: 清「§Orientation Phase 1」stale pointer（workflow.md v2.25+ 已升正式 §Orientation、本檔 2 處 active reference 同步清）。v1.7: BrainBundle 加 kai_md / an_md 欄位（v4.97 personas/ 拆分）。實作層 `scripts/libs/brain_loader.py` 已於 PR #432 接入（2026-05-11、`tests/test_brain_loader.py` 4 個 regression tests 守護）。
+> version: 1.9 | last_updated: 2026-05-17 | v1.9: kai_md 從必要（✅、FileNotFoundError 阻斷）→ optional（缺檔回空字串、不阻斷）、對齊實作層 `scripts/libs/brain_loader.py`（template 客戶尚未建 personas/ 時 generation skill 仍可跑、只是不注入人格）。連動 `02-skill-factory/quality/SKILL.md` + `02-skill-factory/discovery/SKILL.md` kai_md 欄位標記同步。v1.8: 清「§Orientation Phase 1」stale pointer（workflow.md v2.25+ 已升正式 §Orientation、本檔 2 處 active reference 同步清）。v1.7: BrainBundle 加 kai_md / an_md 欄位（v4.97 personas/ 拆分）。實作層 `scripts/libs/brain_loader.py` 已於 PR #432 接入（2026-05-11、`tests/test_brain_loader.py` regression tests 守護）。
 > 所有生成類 skill 的「數據大腦載入」統一規範
 
 ## 本文件角色
@@ -32,14 +32,14 @@
 | 欄位 | 必要 | 內容 | 失敗行為 |
 |------|------|------|---------|
 | `brand_md` | ✅ | `01-data-brain/brand.md` 全文（純品牌、v4.97 起 [3] / [12] 個人 section 已搬至 personas/）| `FileNotFoundError` 阻斷 |
-| `kai_md` | ✅ | `01-data-brain/personas/kai.md` 全文（Kai 人格、v4.97+）| `FileNotFoundError` 阻斷 |
-| `an_md` | — | `01-data-brain/personas/an.md` 全文（藏鏡人安、v4.97+ 試用期）| 缺檔 → 空字串、不阻斷（試用期 lazy load fallback）|
+| `kai_md` | — | `01-data-brain/personas/kai.md` 全文（主要創作者人格、檔名 hardcode 為 `kai.md`、選用）| 缺檔 → 空字串、不阻斷（lazy load fallback）|
+| `an_md` | — | `01-data-brain/personas/an.md` 全文（對話搭檔 / 藏鏡人人格、選用）| 缺檔 → 空字串、不阻斷（lazy load fallback）|
 | `cases_md` | ✅ | `01-data-brain/cases.md` 全文 | `FileNotFoundError` 阻斷 |
 | `performance_patterns` | — | `data/<operator>/performance-patterns.json`（dict）| 缺檔 → 空 dict、不阻斷 |
 | `lessons` | — | `data/<operator>/lessons.json.lessons[]` 過濾後 list | 缺檔 → 空 list、不阻斷 |
 | `banned_words` | — | `02-skill-factory/shared-references/banned-words.md` 解析清單 | 缺檔 → 空 list、不阻斷 |
 
-> **v4.97 規範層 + 實作層狀態（2026-05-11、PR #432 merged）**：`kai_md` / `an_md` 由 `scripts/libs/brain_loader.load_for_skill()` 自動載入進 BrainBundle、不需要 skill 端 lazy Read。`kai_md` 缺檔阻斷（必要）、`an_md` 缺檔回空字串（選用）。Regression 守護：`tests/test_brain_loader.py` 4 個 test cases。
+> **載入狀態**：`kai_md` / `an_md` 由 `scripts/libs/brain_loader.load_for_skill()` 自動載入進 BrainBundle、不需要 skill 端 lazy Read。兩者皆 optional、缺檔回空字串、不阻斷（template 客戶尚未建 personas/ 時 generation skill 仍可跑、只是不注入人格）。Regression 守護：`tests/test_brain_loader.py`。
 
 ## Lessons 過濾規則（SSoT）
 
@@ -83,7 +83,7 @@ lessons schema 降維、hit_count 已退役）。
 | `generation` | mode=series | ✅ | 系列架構、需 [12] FAQ / 異常處理素材 |
 | `generation` | mode=interview | ✅ | 對話壓力腳本、需 interview-bank.md |
 | `generation` | mode=viral | ❌ | 知識型、不綁品牌（跳過 brand/cases、僅 lessons + banned-words）|
-| `quality` | phase=check / phase=fix | ✅ | 需 personas/kai.md [1] 說話風格 + lessons + banned-words |
+| `quality` | phase=check / phase=fix | ✅ | 使用 personas/kai.md [1] 說話風格（loader 選用、缺檔則 [1] 比對降級）+ lessons + banned-words |
 | `orientation` | — | 退役 stub | v1.6 第二輪退役、規則回 workflow.md §Orientation；本協議僅在 Kai 真觸發 skill 時為相容性引用、不主動載入 |
 | `distillation` | — | 退役 stub | v1.6 第二輪退役、三 phase 拆三層（workflow.md §Lesson 硬化提議 + session-start hook + `/harden` command）；本協議僅在 Kai 真觸發 skill 時為相容性引用 |
 
