@@ -384,9 +384,9 @@ def format_health_report(h: BrainHealth) -> str:
     )
     lines.append(f"pipeline       {pl.items_total} items（{by_status_str}）")
 
-    l = h.lessons
+    l_ = h.lessons
     lines.append(
-        f"lessons        {l.soft} soft / {l.hardened} hardened / {l.archived} archived"
+        f"lessons        {l_.soft} soft / {l_.hardened} hardened / {l_.archived} archived"
     )
 
     t = h.todos

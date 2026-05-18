@@ -48,6 +48,8 @@ video-ops.py v7.0
   python scripts/ops/video-ops.py record-verifier-scores VID-009 --conflict-score 8 --retention-prediction A --ai-residue-count 0 --data-consistency true --format-complete true --pass-count "5/5"
   # ── 選題去重 ──
   python scripts/ops/video-ops.py list-topics
+  # ── 大腦健康度 ──
+  python scripts/ops/video-ops.py health
   # ── 系統維護 ──
   python scripts/ops/video-ops.py migrate
   python scripts/ops/video-ops.py renumber [--dry-run]
