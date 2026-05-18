@@ -1,3 +1,4 @@
+import json
 import sys
 from pathlib import Path
 
@@ -85,4 +86,77 @@ def test_missing_an_md_returns_empty_string(brain_repo):
     (brain_repo / "01-data-brain" / "personas" / "an.md").unlink()
 
     bundle = load_for_skill("kai", "generation", mode="dual-track")
+    assert bundle.an_md == ""
+
+
+def test_load_for_skill_resolves_operator_custom_persona_files(tmp_path, monkeypatch):
+    """Operator config with primary/partner_persona_file → loads those files into kai_md/an_md slots."""
+    brain_dir = tmp_path / "01-data-brain"
+    personas_dir = brain_dir / "personas"
+    personas_dir.mkdir(parents=True)
+    (brain_dir / "brand.md").write_text("# Brand\n", encoding="utf-8")
+    (brain_dir / "cases.md").write_text("# Cases\n", encoding="utf-8")
+    (personas_dir / "alex.md").write_text(
+        "# Alex\nAlex primary persona.\n", encoding="utf-8"
+    )
+    (personas_dir / "sam.md").write_text(
+        "# Sam\nSam partner persona.\n", encoding="utf-8"
+    )
+
+    data_dir = tmp_path / "data" / "alex"
+    data_dir.mkdir(parents=True)
+
+    operators_json = tmp_path / "data" / ".operators.json"
+    operators_json.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "operators": {
+                    "alex": {
+                        "data_dir_rel": "data/alex",
+                        "primary_persona_file": "alex.md",
+                        "partner_persona_file": "sam.md",
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(brain_loader, "_repo_root", lambda: tmp_path)
+    bundle = load_for_skill("alex", "generation", mode="dual-track")
+    assert "Alex primary persona" in bundle.kai_md
+    assert "Sam partner persona" in bundle.an_md
+
+
+def test_load_for_skill_falls_back_when_operator_config_omits_persona_files(
+    tmp_path, monkeypatch
+):
+    """Operator config without persona file fields → fallback to kai.md/an.md filenames."""
+    brain_dir = tmp_path / "01-data-brain"
+    personas_dir = brain_dir / "personas"
+    personas_dir.mkdir(parents=True)
+    (brain_dir / "brand.md").write_text("# Brand\n", encoding="utf-8")
+    (brain_dir / "cases.md").write_text("# Cases\n", encoding="utf-8")
+    (personas_dir / "kai.md").write_text(
+        "# Kai\nKai legacy fallback.\n", encoding="utf-8"
+    )
+
+    data_dir = tmp_path / "data" / "minimal"
+    data_dir.mkdir(parents=True)
+
+    operators_json = tmp_path / "data" / ".operators.json"
+    operators_json.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "operators": {"minimal": {"data_dir_rel": "data/minimal"}},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(brain_loader, "_repo_root", lambda: tmp_path)
+    bundle = load_for_skill("minimal", "generation", mode="dual-track")
+    assert "Kai legacy fallback" in bundle.kai_md
     assert bundle.an_md == ""
