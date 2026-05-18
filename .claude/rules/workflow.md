@@ -1,6 +1,6 @@
 # 工作流程
 
-> version: 2.31 | last_updated: 2026-05-15
+> version: 2.31 | last_updated: 2026-05-18
 > 精煉版。詳細步驟按需載入 `docs/references/`。
 
 ---
