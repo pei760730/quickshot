@@ -1,6 +1,6 @@
-# Brain Loading Protocol（v1.9）
+# Brain Loading Protocol（v1.10）
 
-> version: 1.9 | last_updated: 2026-05-17 | v1.9: kai_md 從必要（✅、FileNotFoundError 阻斷）→ optional（缺檔回空字串、不阻斷）、對齊實作層 `scripts/libs/brain_loader.py`（template 客戶尚未建 personas/ 時 generation skill 仍可跑、只是不注入人格）。連動 `02-skill-factory/quality/SKILL.md` + `02-skill-factory/discovery/SKILL.md` kai_md 欄位標記同步。v1.8: 清「§Orientation Phase 1」stale pointer（workflow.md v2.25+ 已升正式 §Orientation、本檔 2 處 active reference 同步清）。v1.7: BrainBundle 加 kai_md / an_md 欄位（v4.97 personas/ 拆分）。實作層 `scripts/libs/brain_loader.py` 已於 PR #432 接入（2026-05-11、`tests/test_brain_loader.py` regression tests 守護）。
+> version: 1.10 | last_updated: 2026-05-18 | v1.10: persona 檔名 operator-keyed — `kai_md` / `an_md` BrainBundle 欄位名保留為 legacy slot identifier、實際載入檔名改由 `data/.operators.json` 該 operator 的 `primary_persona_file` / `partner_persona_file` 解析（fallback `kai.md` / `an.md`）。清掉 brain layer 與原始 KaiOS template lineage 的 hardcode 耦合、multi-operator 同 repo 各自綁自己的創作者名。v1.9: kai_md 從必要（✅、FileNotFoundError 阻斷）→ optional（缺檔回空字串、不阻斷）、對齊實作層 `scripts/libs/brain_loader.py`。連動 `02-skill-factory/quality/SKILL.md` + `02-skill-factory/discovery/SKILL.md` kai_md 欄位標記同步。v1.8: 清「§Orientation Phase 1」stale pointer。v1.7: BrainBundle 加 kai_md / an_md 欄位（v4.97 personas/ 拆分）、實作層 `scripts/libs/brain_loader.py` 已於 PR #432 接入（2026-05-11、`tests/test_brain_loader.py` regression tests 守護）。
 > 所有生成類 skill 的「數據大腦載入」統一規範
 
 ## 本文件角色
@@ -32,14 +32,16 @@
 | 欄位 | 必要 | 內容 | 失敗行為 |
 |------|------|------|---------|
 | `brand_md` | ✅ | `01-data-brain/brand.md` 全文（純品牌、v4.97 起 [3] / [12] 個人 section 已搬至 personas/）| `FileNotFoundError` 阻斷 |
-| `kai_md` | — | `01-data-brain/personas/kai.md` 全文（主要創作者人格、檔名 hardcode 為 `kai.md`、選用）| 缺檔 → 空字串、不阻斷（lazy load fallback）|
-| `an_md` | — | `01-data-brain/personas/an.md` 全文（對話搭檔 / 藏鏡人人格、選用）| 缺檔 → 空字串、不阻斷（lazy load fallback）|
+| `kai_md` | — | 主要創作者人格、檔名由 operator config `primary_persona_file` 解析（fallback `kai.md`）；欄位名為 legacy slot identifier、實際內容是 operator 對應的 primary persona | 缺檔 → 空字串、不阻斷（lazy load fallback）|
+| `an_md` | — | 對話搭檔 / 藏鏡人人格、檔名由 operator config `partner_persona_file` 解析（fallback `an.md`）；欄位名為 legacy slot identifier、實際內容是 operator 對應的 partner persona | 缺檔 → 空字串、不阻斷（lazy load fallback）|
 | `cases_md` | ✅ | `01-data-brain/cases.md` 全文 | `FileNotFoundError` 阻斷 |
 | `performance_patterns` | — | `data/<operator>/performance-patterns.json`（dict）| 缺檔 → 空 dict、不阻斷 |
 | `lessons` | — | `data/<operator>/lessons.json.lessons[]` 過濾後 list | 缺檔 → 空 list、不阻斷 |
 | `banned_words` | — | `02-skill-factory/shared-references/banned-words.md` 解析清單 | 缺檔 → 空 list、不阻斷 |
 
 > **載入狀態**：`kai_md` / `an_md` 由 `scripts/libs/brain_loader.load_for_skill()` 自動載入進 BrainBundle、不需要 skill 端 lazy Read。兩者皆 optional、缺檔回空字串、不阻斷（template 客戶尚未建 personas/ 時 generation skill 仍可跑、只是不注入人格）。Regression 守護：`tests/test_brain_loader.py`。
+>
+> **operator-keyed 檔名**：persona 檔名由 `data/.operators.json` 該 operator 的 `primary_persona_file` / `partner_persona_file` 解析。未設定時 fallback `kai.md` / `an.md`（歷史 KaiOS template lineage）。新客戶建議在 operator config 直接指定自己的創作者名（例：`"primary_persona_file": "alex.md"`、檔放 `01-data-brain/personas/alex.md`）。
 
 ## Lessons 過濾規則（SSoT）
 

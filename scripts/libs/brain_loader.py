@@ -12,6 +12,8 @@ from typing import Any
 class BrainBundle:
     brand_md: str
     cases_md: str
+    # kai_md / an_md are legacy slot identifiers: primary / partner persona
+    # (filename resolved per operator via _persona_files_for_operator).
     kai_md: str
     an_md: str
     performance_patterns: dict[str, Any]
@@ -61,6 +63,37 @@ def _operator_data_dir(operator: str) -> Path:
         if isinstance(cfg, dict):
             return root / cfg.get("data_dir_rel", f"data/{operator}")
     return root / "data" / operator
+
+
+def _persona_files_for_operator(operator: str) -> tuple[str, str]:
+    """Resolve (primary, partner) persona filenames for given operator.
+
+    Reads `data/.operators.json` operator config keys:
+      - `primary_persona_file` (e.g. "alex.md")
+      - `partner_persona_file` (e.g. "sam.md")
+
+    Falls back to ("kai.md", "an.md") for backwards compat with the
+    original KaiOS template lineage. New clients should set these in
+    their operator config to use their own creator name.
+    """
+    primary, partner = "kai.md", "an.md"
+    root = _repo_root()
+    operators_json = root / "data" / ".operators.json"
+    if not operators_json.exists():
+        return primary, partner
+    try:
+        payload = json.loads(operators_json.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return primary, partner
+    cfg = (
+        (payload.get("operators") or {}).get(operator)
+        if isinstance(payload, dict)
+        else None
+    )
+    if isinstance(cfg, dict):
+        primary = cfg.get("primary_persona_file") or primary
+        partner = cfg.get("partner_persona_file") or partner
+    return primary, partner
 
 
 def _load_required_text(path: Path, label: str) -> str:
@@ -148,10 +181,15 @@ def load_for_skill(
     brand_md = _load_required_text(root / "01-data-brain" / "brand.md", "brand.md")
     cases_md = _load_required_text(root / "01-data-brain" / "cases.md", "cases.md")
     personas_dir = root / "01-data-brain" / "personas"
-    kai_path = personas_dir / "kai.md"
-    kai_md = kai_path.read_text(encoding="utf-8") if kai_path.exists() else ""
-    an_path = personas_dir / "an.md"
-    an_md = an_path.read_text(encoding="utf-8") if an_path.exists() else ""
+    primary_file, partner_file = _persona_files_for_operator(operator)
+    primary_path = personas_dir / primary_file
+    primary_persona_md = (
+        primary_path.read_text(encoding="utf-8") if primary_path.exists() else ""
+    )
+    partner_path = personas_dir / partner_file
+    partner_persona_md = (
+        partner_path.read_text(encoding="utf-8") if partner_path.exists() else ""
+    )
 
     perf = _load_optional_json(
         data_dir / "performance-patterns.json",
@@ -197,8 +235,8 @@ def load_for_skill(
     return BrainBundle(
         brand_md=brand_md,
         cases_md=cases_md,
-        kai_md=kai_md,
-        an_md=an_md,
+        kai_md=primary_persona_md,
+        an_md=partner_persona_md,
         performance_patterns=perf,
         lessons=lessons,
         banned_words=banned_words,
