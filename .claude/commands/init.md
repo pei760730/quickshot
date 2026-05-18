@@ -22,9 +22,9 @@
 問 Kai：「**品牌名是什麼？**（會寫進 CLAUDE.local.md、所有對話會看到這個名字）」
 
 收到答覆後：
-1. Read `CLAUDE.local.md`
-2. 把 `{{BRAND_NAME}}` 全部替換成 Kai 給的品牌名
-3. 把 `{{INIT_DATE}}` 替換成今日（YYYY-MM-DD）
+1. Read `CLAUDE.local.md`、`01-data-brain/brand.md`、`01-data-brain/cases.md`（三檔都帶 placeholder）
+2. 把 `{{BRAND_NAME}}` 全部替換成 Kai 給的品牌名（3 個檔都動）
+3. 把 `{{INIT_DATE}}` 替換成今日（YYYY-MM-DD）（3 個檔都動）
 4. 展示 diff、Kai 說「OK」才 Write
 
 ## Step 2：operator 註冊（寫 data/.operators.json）
@@ -49,6 +49,7 @@
    ```
 3. 展示 diff、Kai 確認、Write
 4. 複製 `data/template/` → `data/{key}/`（用 `cp -r` 或 Python shutil）
+5. 同步替換 `CLAUDE.local.md` 內的 `{{OPERATOR_KEY}}` → `<key>`、`{{OPERATOR_LABEL}}` → `<display>`（Step 1 已把 `{{BRAND_NAME}}` / `{{INIT_DATE}}` 替換、Step 2 補完 operator 兩個 placeholder）
 
 ## Step 3：主創作者 persona
 
