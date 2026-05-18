@@ -489,6 +489,8 @@ Claude 萃取的候選 vs Kai 標 ✅ 採用的比例
 | `提硬化` | `video-ops.py lessons propose-hardening`（列 soft + 有 counter_pattern 的候選、v4.63+ 不靠 hit_count 門檻）|
 | `掃描` / `/scan` | 責任區掃描 |
 | `/harden` / `升 L-XXXX 為 <path>` / `硬化 L-XXXX` | **v4.64+**：對話內一站式硬化（見 `02-skill-factory/harden/SKILL.md` v1.2）— soft lesson → test / lint / CLAUDE.md 禁令 / workflow.md 規則 / brand.md section。當場寫 artifact + validator + 升 stage=hardened |
+| `/init` / `新客戶開始` / `onboarding` | 新客戶 day-1 一站式 bootstrap（見 `.claude/commands/init.md`）— 5 步：品牌名 / operator / persona / brand.md MVP / 歷史素材冷啟動 |
+| `/check` / `健康度` | 大腦健康度單行可視化（見 `.claude/commands/check.md`）— 跑 `video-ops.py health`、列各 dimension 原始數字（brand MVP/cases/personas/operators/pipeline/lessons/todos/patterns/transcripts）、不算 overall score |
 | `同步全部` | sync-to-sheets all |
 | `填大腦` | 載入填充引導手冊 |
 

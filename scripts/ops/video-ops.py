@@ -64,27 +64,53 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from lib.config import (
-    PROJECT_ROOT, today_str, set_operator, get_operator_paths, DEFAULT_OPERATOR, VALID_OPERATORS,
+    PROJECT_ROOT,
+    today_str,
+    set_operator,
+    get_operator_paths,
+    DEFAULT_OPERATOR,
+    VALID_OPERATORS,
 )
 from lib.pipeline import (
-    load_tracking, save_tracking, find_video, next_vid,
-    add_video, transition, format_video, update_publish_date,
-    renumber_videos, add_transcript, query_pending_scripts,
-    load_pipeline, add_item as pipeline_add_item, transition_item as pipeline_transition_item,
-    record_verifier_scores, validate_verifier_scores,
-    save_script, bind_script_path, delete_video,
+    load_tracking,
+    save_tracking,
+    find_video,
+    next_vid,
+    add_video,
+    transition,
+    format_video,
+    update_publish_date,
+    renumber_videos,
+    add_transcript,
+    query_pending_scripts,
+    load_pipeline,
+    add_item as pipeline_add_item,
+    transition_item as pipeline_transition_item,
+    record_verifier_scores,
+    validate_verifier_scores,
+    save_script,
+    bind_script_path,
+    delete_video,
     classify_idea_freshness,
     pipeline_stats,
-    set_hook_type, set_trace, validate_generation_trace,
+    set_hook_type,
+    set_trace,
+    validate_generation_trace,
 )
 from lib.backfill import (
-    backfill_video, extract_learning,
-    load_performance_patterns, save_performance_patterns,
-    cleanup_unverified_formulas, auto_extract_from_script,
+    backfill_video,
+    extract_learning,
+    load_performance_patterns,
+    save_performance_patterns,
+    cleanup_unverified_formulas,
+    auto_extract_from_script,
 )
 from lib.validate import validate, validate_all, migrate
 from lib.deviations import (
-    record_deviation, link_performance, analyze_deviations, auto_diff_and_record,
+    record_deviation,
+    link_performance,
+    analyze_deviations,
+    auto_diff_and_record,
 )
 from lib.mistakes import record_mistake
 from lib.sedimentation import get_sedimentation_context, propose_rules_from_verifier
@@ -96,7 +122,14 @@ from lib.lessons import (
     propose_hardening as propose_lesson_hardening,
     archive_lesson,
 )
-from lib.todos import add_todo, query as query_todos, close_todo, reopen_todo, archive_todo, update_todo
+from lib.todos import (
+    add_todo,
+    query as query_todos,
+    close_todo,
+    reopen_todo,
+    archive_todo,
+    update_todo,
+)
 from lib.schema_drift import collect_schema_drifts
 
 sys.path.insert(0, str((Path(__file__).resolve().parent.parent / "utils")))
@@ -104,6 +137,7 @@ from lessons_retrieval import get_similar_vids
 
 
 # ── CLI 輔助 ─────────────────────────────────────────────
+
 
 def _parse_kv_args(argv, start=2):
     """將 --key value 格式的 argv 解析為 dict。"""
@@ -119,7 +153,6 @@ def _parse_kv_args(argv, start=2):
             result[f"_pos_{i}"] = arg
             i += 1
     return result
-
 
 
 def _argv_without_flags(argv, flags):
@@ -168,7 +201,6 @@ def _print_missing_trace_error(command, status):
     )
 
 
-
 def _format_scalar(value):
     if value is None or value == "":
         return "N/A"
@@ -178,7 +210,11 @@ def _format_scalar(value):
 
 
 def _format_title_candidates(trace, video):
-    candidates = trace.get("title_candidates") or trace.get("title_candidate") or trace.get("titles")
+    candidates = (
+        trace.get("title_candidates")
+        or trace.get("title_candidate")
+        or trace.get("titles")
+    )
     if isinstance(candidates, list):
         text = " / ".join(str(x).strip() for x in candidates if str(x).strip())
         return text or _format_scalar(video.get("title"))
@@ -203,14 +239,18 @@ def _save_quality_snapshot(trace):
 def _print_save_stdout_summary(video, trace, kv, msg):
     skill = trace.get("skill_used") or kv.get("skill")
     skill_version = trace.get("skill_version")
-    skill_text = f"{skill}@{skill_version}" if skill and skill_version else _format_scalar(skill)
+    skill_text = (
+        f"{skill}@{skill_version}" if skill and skill_version else _format_scalar(skill)
+    )
     mode = trace.get("mode") or kv.get("mode")
     print(f"✅ {msg}")
     print(f"VID：{video.get('vid', 'N/A')}")
     print(f"主題：{_format_scalar(video.get('topic'))}")
     print(f"skill：{skill_text}")
     print(f"mode：{_format_scalar(mode)}")
-    print(f"hook_type：{_format_scalar(video.get('hook_type') or trace.get('hook_type') or kv.get('hook_type'))}")
+    print(
+        f"hook_type：{_format_scalar(video.get('hook_type') or trace.get('hook_type') or kv.get('hook_type'))}"
+    )
     print(f"title 候選：{_format_title_candidates(trace, video)}")
     print(f"品質快照：{_save_quality_snapshot(trace)}")
 
@@ -244,6 +284,7 @@ def _print_verifier_stdout_summary(vid, scores, msg):
     print(f"  格式完整：{_format_scalar(scores['format_complete'])}")
     print(f"  5 項通過數：{scores['pass_count']}")
     print(f"建議：{_verifier_recommendation(scores)}")
+
 
 def _parse_bool_arg(raw_value, key_name):
     val = (raw_value or "").strip().lower()
@@ -284,7 +325,9 @@ def _print_validate_all(data, result):
 
     p_icon = "✅" if not pat_errs else "❌"
     print("\n━━ performance-patterns.json ━━")
-    print(f"  {p_icon} {'所有引用指向有效 VID' if not pat_errs else f'{len(pat_errs)} 個問題'}")
+    print(
+        f"  {p_icon} {'所有引用指向有效 VID' if not pat_errs else f'{len(pat_errs)} 個問題'}"
+    )
     for e in pat_errs:
         print(f"    • {e}")
 
@@ -308,8 +351,12 @@ def _print_validate_all(data, result):
 
 def _cmd_list(ctx):
     for video in ctx["data"]["videos"]:
-        status_icon = {"待拍": "📋", "剪輯中": "✂️", "已上線": "✅"}.get(video["status"], "?")
-        print(f"  {status_icon} {video['vid']} | {video['status']:4s} | {video['topic']}")
+        status_icon = {"待拍": "📋", "剪輯中": "✂️", "已上線": "✅"}.get(
+            video["status"], "?"
+        )
+        print(
+            f"  {status_icon} {video['vid']} | {video['status']:4s} | {video['topic']}"
+        )
 
 
 def _cmd_get(ctx):
@@ -333,14 +380,18 @@ def _cmd_add(ctx):
     topic = kv.get("topic")
     tag = kv.get("tag")
     if not topic:
-        print("用法：video-ops.py add --topic \"主題\" --tag \"標籤\" --title \"標題\" --source-inspiration \"靈感\" [--source pipeline|quick-shot] [--initial-status 狀態] [--skill generation --mode dual-track] [--script-path 路徑] [--notes 備註] [--operator <代號>]")
+        print(
+            '用法：video-ops.py add --topic "主題" --tag "標籤" --title "標題" --source-inspiration "靈感" [--source pipeline|quick-shot] [--initial-status 狀態] [--skill generation --mode dual-track] [--script-path 路徑] [--notes 備註] [--operator <代號>]'
+        )
         sys.exit(1)
     if not tag:
         tag = "未分類"
         print("⚠️ 未提供 --tag，已使用預設標籤「未分類」")
     try:
         vid = add_video(
-            ctx["data"], topic, tag,
+            ctx["data"],
+            topic,
+            tag,
             source_inspiration=kv.get("source_inspiration"),
             script_path=kv.get("script_path"),
             notes=kv.get("notes"),
@@ -351,7 +402,9 @@ def _cmd_add(ctx):
             title=kv.get("title"),
             vid_prefix=ctx["op_paths"]["vid_prefix"],
         )
-        print(f"✅ 已新增 {vid}：{topic}（{tag}）[{kv.get('initial_status', '待拍')}] source={kv.get('source', 'pipeline')}")
+        print(
+            f"✅ 已新增 {vid}：{topic}（{tag}）[{kv.get('initial_status', '待拍')}] source={kv.get('source', 'pipeline')}"
+        )
     except ValueError as e:
         print(f"❌ {e}")
         sys.exit(1)
@@ -359,7 +412,9 @@ def _cmd_add(ctx):
 
 def _cmd_transition(ctx):
     if len(sys.argv) < 3:
-        print("用法：video-ops.py transition VID-NNN 新狀態 或 transition VID-NNN --to 新狀態 [--allow-missing-trace]")
+        print(
+            "用法：video-ops.py transition VID-NNN 新狀態 或 transition VID-NNN --to 新狀態 [--allow-missing-trace]"
+        )
         sys.exit(1)
     allow_missing_trace = "--allow-missing-trace" in sys.argv[3:]
     argv = _argv_without_flags(sys.argv, {"--allow-missing-trace"})
@@ -370,7 +425,9 @@ def _cmd_transition(ctx):
         reason = kv.get("_pos_4") or kv.get("_pos_5")
     else:
         if len(argv) < 4:
-            print("用法：video-ops.py transition VID-NNN 新狀態 或 transition VID-NNN --to 新狀態 [--allow-missing-trace]")
+            print(
+                "用法：video-ops.py transition VID-NNN 新狀態 或 transition VID-NNN --to 新狀態 [--allow-missing-trace]"
+            )
             sys.exit(1)
         new_status = argv[3]
         reason = argv[4] if len(argv) > 4 else None
@@ -414,7 +471,11 @@ def _cmd_delete(ctx):
                 abs_script.unlink()
                 removed_script = sp
             elif sys.stdin.isatty():
-                ans = input(f"⚠️ {vid} 連結腳本存在：{sp}，要同步刪除嗎？[y/N] ").strip().lower()
+                ans = (
+                    input(f"⚠️ {vid} 連結腳本存在：{sp}，要同步刪除嗎？[y/N] ")
+                    .strip()
+                    .lower()
+                )
                 if ans in ("y", "yes"):
                     abs_script.unlink()
                     removed_script = sp
@@ -431,7 +492,7 @@ def _cmd_delete(ctx):
 
 def _cmd_bind_script(ctx):
     if len(sys.argv) < 3:
-        print("用法：video-ops.py bind-script VID-NNN --script-path \"路徑\" [--force]")
+        print('用法：video-ops.py bind-script VID-NNN --script-path "路徑" [--force]')
         sys.exit(1)
     vid = sys.argv[2]
     kv = _parse_kv_args(sys.argv, start=3)
@@ -500,7 +561,9 @@ def _cmd_update_date(ctx):
 def _cmd_set_hook_type(ctx):
     kv = _parse_kv_args(sys.argv)
     if len(sys.argv) < 3 or not sys.argv[2].startswith("VID-"):
-        print("用法：video-ops.py set-hook-type VID-NNN --hook-type B1|B2|B3|D1|D2|D3|D4|D5")
+        print(
+            "用法：video-ops.py set-hook-type VID-NNN --hook-type B1|B2|B3|D1|D2|D3|D4|D5"
+        )
         print("  回填既有影片的 hook_type（quick-shot 存量補齊用）")
         sys.exit(1)
     vid = sys.argv[2]
@@ -517,7 +580,9 @@ def _cmd_set_hook_type(ctx):
 def _cmd_set_trace(ctx):
     kv = _parse_kv_args(sys.argv)
     if len(sys.argv) < 3 or not sys.argv[2].startswith("VID-"):
-        print("用法：video-ops.py set-trace VID-NNN --trace '{\"skill_used\":\"generation\",\"mode\":\"dual-track\",...}' [--no-overwrite]")
+        print(
+            '用法：video-ops.py set-trace VID-NNN --trace \'{"skill_used":"generation","mode":"dual-track",...}\' [--no-overwrite]'
+        )
         sys.exit(1)
     vid = sys.argv[2]
     raw_trace = kv.get("trace")
@@ -533,7 +598,9 @@ def _cmd_set_trace(ctx):
         print("❌ --trace 必須是 JSON object")
         sys.exit(1)
     meta = ctx["data"].get("_meta", {})
-    ok_v, msg_v, warnings, _normalized = validate_generation_trace(trace_dict, meta=meta)
+    ok_v, msg_v, warnings, _normalized = validate_generation_trace(
+        trace_dict, meta=meta
+    )
     if not ok_v:
         print(f"❌ {msg_v}")
         sys.exit(1)
@@ -548,7 +615,9 @@ def _cmd_set_trace(ctx):
 
 def _cmd_add_transcript(ctx):
     if len(sys.argv) < 4:
-        print("用法：video-ops.py add-transcript VID-NNN --text \"逐字稿\" 或 --file path.txt")
+        print(
+            '用法：video-ops.py add-transcript VID-NNN --text "逐字稿" 或 --file path.txt'
+        )
         sys.exit(1)
     vid = sys.argv[2]
     kv = _parse_kv_args(sys.argv, start=3)
@@ -580,19 +649,28 @@ def _cmd_quick_add(ctx):
     tag = kv.get("tag")
     title = kv.get("title")
     if not topic or not tag or not title:
-        print("用法：video-ops.py quick-add --topic \"主題\" --tag \"標籤\" --title \"標題\" [--status 待拍|剪輯中|已上線] [--initial-status 待拍|剪輯中|已上線] [--hook-type B1|B2|B3|D1|D2|D3|D4|D5] [--trace '{...}'] [--allow-missing-trace] [--notes 備註]")
+        print(
+            '用法：video-ops.py quick-add --topic "主題" --tag "標籤" --title "標題" [--status 待拍|剪輯中|已上線] [--initial-status 待拍|剪輯中|已上線] [--hook-type B1|B2|B3|D1|D2|D3|D4|D5] [--trace \'{...}\'] [--allow-missing-trace] [--notes 備註]'
+        )
         sys.exit(1)
     initial_status = kv.get("initial_status") or kv.get("status", "剪輯中")
-    allowed_statuses = set(ctx["data"].get("_meta", {}).get("statuses", {}).get("video") or ["待拍", "剪輯中", "已上線"])
+    allowed_statuses = set(
+        ctx["data"].get("_meta", {}).get("statuses", {}).get("video")
+        or ["待拍", "剪輯中", "已上線"]
+    )
     if initial_status not in allowed_statuses:
-        print(f"❌ quick-add 只允許 --status/--initial-status {', '.join(sorted(allowed_statuses))}（收到：{initial_status}）")
+        print(
+            f"❌ quick-add 只允許 --status/--initial-status {', '.join(sorted(allowed_statuses))}（收到：{initial_status}）"
+        )
         sys.exit(1)
 
     generation_trace = None
     if initial_status in _trace_required_statuses(ctx):
         raw_trace = kv.get("trace") or kv.get("generation_trace")
         if raw_trace:
-            generation_trace = _parse_and_validate_trace(raw_trace, ctx["data"].get("_meta", {}))
+            generation_trace = _parse_and_validate_trace(
+                raw_trace, ctx["data"].get("_meta", {})
+            )
         elif allow_missing_trace:
             generation_trace = _manual_backfill_trace("quick-add bypass")
         else:
@@ -602,7 +680,9 @@ def _cmd_quick_add(ctx):
     hook_type = kv.get("hook_type")
     try:
         vid = add_video(
-            ctx["data"], topic, tag,
+            ctx["data"],
+            topic,
+            tag,
             source_inspiration=kv.get("source_inspiration", topic),
             title=title,
             source="quick-shot",
@@ -615,16 +695,24 @@ def _cmd_quick_add(ctx):
         if generation_trace is not None:
             _idx, video = find_video(ctx["data"], vid)
             video["generation_trace"] = generation_trace
-            save_tracking(ctx["data"], tracking_json=ctx.get("op_paths", {}).get("tracking_json"))
-        status_icon = {"待拍": "🎬", "剪輯中": "✂️", "已上線": "✅"}.get(initial_status, "🎬")
+            save_tracking(
+                ctx["data"], tracking_json=ctx.get("op_paths", {}).get("tracking_json")
+            )
+        status_icon = {"待拍": "🎬", "剪輯中": "✂️", "已上線": "✅"}.get(
+            initial_status, "🎬"
+        )
         hook_suffix = f" hook={hook_type}" if hook_type else ""
-        print(f"✅ 快拍補登 {vid}：{topic}（{tag}）{status_icon} [{initial_status}]{hook_suffix}")
+        print(
+            f"✅ 快拍補登 {vid}：{topic}（{tag}）{status_icon} [{initial_status}]{hook_suffix}"
+        )
     except ValueError as e:
         print(f"❌ {e}")
         sys.exit(1)
 
+
 def _cmd_batch_quick_add(ctx):
     import json as _json
+
     raw = None
     kv = _parse_kv_args(sys.argv)
     file_path = kv.get("file")
@@ -639,8 +727,12 @@ def _cmd_batch_quick_add(ctx):
             raw = sys.stdin.read()
         else:
             print("用法：video-ops.py batch-quick-add --file items.json")
-            print("  或：echo '[{\"topic\":\"X\",\"tag\":\"Y\",\"title\":\"Z\"}]' | video-ops.py batch-quick-add")
-            print("JSON 格式：[{\"topic\": \"主題\", \"tag\": \"標籤\", \"title\": \"標題\", \"status\": \"剪輯中\", \"hook_type\": \"B2\"}]")
+            print(
+                '  或：echo \'[{"topic":"X","tag":"Y","title":"Z"}]\' | video-ops.py batch-quick-add'
+            )
+            print(
+                'JSON 格式：[{"topic": "主題", "tag": "標籤", "title": "標題", "status": "剪輯中", "hook_type": "B2"}]'
+            )
             sys.exit(1)
     try:
         items = _json.loads(raw)
@@ -667,7 +759,9 @@ def _cmd_batch_quick_add(ctx):
             sys.exit(1)
         try:
             vid = add_video(
-                ctx["data"], topic, tag,
+                ctx["data"],
+                topic,
+                tag,
                 source_inspiration=it.get("source_inspiration", topic),
                 title=title,
                 source="quick-shot",
@@ -703,19 +797,25 @@ def _cmd_query_pending_scripts(ctx):
             days = item["days_pending"]
             icon = "🔴" if days >= 14 else "🟡" if days >= 7 else "📝"
             transcript = " 📄有逐字稿" if item["has_transcript"] else ""
-            print(f"  {icon} {item['vid']} | {item['topic']} | {item['status']} | 待補 {days} 天{transcript}")
+            print(
+                f"  {icon} {item['vid']} | {item['topic']} | {item['status']} | 待補 {days} 天{transcript}"
+            )
 
 
 def _cmd_add_idea(_ctx):
     kv = _parse_kv_args(sys.argv)
     title = kv.get("title")
     if not title:
-        print("用法：video-ops.py add-idea --title \"靈感\" [--tags \"#標籤\"] [--shelf-life evergreen|timely|trending]")
+        print(
+            '用法：video-ops.py add-idea --title "靈感" [--tags "#標籤"] [--shelf-life evergreen|timely|trending]'
+        )
         sys.exit(1)
     pdata = load_pipeline()
     shelf_life = kv.get("shelf_life")
     try:
-        idea_id = pipeline_add_item(pdata, title, tags=kv.get("tags", ""), shelf_life=shelf_life)
+        idea_id = pipeline_add_item(
+            pdata, title, tags=kv.get("tags", ""), shelf_life=shelf_life
+        )
     except ValueError as e:
         print(f"❌ {e}")
         sys.exit(1)
@@ -727,8 +827,13 @@ def _cmd_list_ideas(_ctx):
     pdata = load_pipeline()
     thresholds = pdata.get("_meta", {}).get("thresholds", {})
     status_icons = {
-        "inbox": "📥", "selected": "⭐", "cooldown": "❄️",
-        "待拍": "📋", "剪輯中": "✂️", "已上線": "✅", "archived": "🗄️",
+        "inbox": "📥",
+        "selected": "⭐",
+        "cooldown": "❄️",
+        "待拍": "📋",
+        "剪輯中": "✂️",
+        "已上線": "✅",
+        "archived": "🗄️",
     }
     idea_statuses = {"inbox", "selected", "cooldown"}
     ideas = [i for i in pdata["items"] if i["status"] in idea_statuses]
@@ -746,7 +851,9 @@ def _cmd_list_ideas(_ctx):
         vid_note = f" → {item['vid']}" if item.get("vid") else ""
         sl_note = f" [{item['shelf_life']}]" if item.get("shelf_life") else ""
         tag = freshness_tag.get(label, "")
-        print(f"  {icon} {item['idea_id']} | {item['status']:9s} | {item['topic']}{vid_note}{sl_note}{tag}")
+        print(
+            f"  {icon} {item['idea_id']} | {item['status']:9s} | {item['topic']}{vid_note}{sl_note}{tag}"
+        )
 
 
 def _cmd_transition_idea(_ctx):
@@ -762,13 +869,17 @@ def _cmd_transition_idea(_ctx):
 
 def _cmd_confirm(_ctx):
     if len(sys.argv) < 3:
-        print("用法：video-ops.py confirm IDEA-NNN [--title \"封面標題\"] [--skill generation --mode dual-track]")
+        print(
+            '用法：video-ops.py confirm IDEA-NNN [--title "封面標題"] [--skill generation --mode dual-track]'
+        )
         sys.exit(1)
     idea_id = sys.argv[2]
     kv = _parse_kv_args(sys.argv, start=3)
     pdata = load_pipeline()
     ok, msg, _vid_assigned = pipeline_transition_item(
-        pdata, idea_id, "待拍",
+        pdata,
+        idea_id,
+        "待拍",
         title=kv.get("title"),
         skill_used=kv.get("skill"),
         source_inspiration=kv.get("source_inspiration"),
@@ -784,7 +895,9 @@ def _cmd_save(ctx):
     quiet = "--quiet" in sys.argv
     argv = _argv_without_flags(sys.argv, ["--quiet"])
     if len(argv) < 3:
-        print("用法：video-ops.py save VID-NNN --script-path PATH --title-type T1 --hook-type B2 --version B2 --verifier-prediction high --trace JSON [--quiet]")
+        print(
+            "用法：video-ops.py save VID-NNN --script-path PATH --title-type T1 --hook-type B2 --version B2 --verifier-prediction high --trace JSON [--quiet]"
+        )
         sys.exit(1)
     vid = argv[2]
     kv = _parse_kv_args(argv, start=3)
@@ -850,7 +963,8 @@ def _cmd_save(ctx):
         before_save_snapshot = copy.deepcopy(ctx["data"])
 
     ok, msg = save_script(
-        ctx["data"], vid,
+        ctx["data"],
+        vid,
         script_path=kv["script_path"],
         title_type=kv["title_type"],
         hook_type=kv["hook_type"],
@@ -867,23 +981,36 @@ def _cmd_save(ctx):
             ok_vs, msg_vs = record_verifier_scores(ctx["data"], vid, verifier_scores)
             if not ok_vs:
                 print(f"❌ {msg_vs}")
-                _rollback_save_after_verifier_failure(ctx, before_save_snapshot, "verifier_scores 寫入失敗")
-                print("⚠️ save 已完成，但 verifier_scores 未成功寫入，請修正後重試 record-verifier-scores")
+                _rollback_save_after_verifier_failure(
+                    ctx, before_save_snapshot, "verifier_scores 寫入失敗"
+                )
+                print(
+                    "⚠️ save 已完成，但 verifier_scores 未成功寫入，請修正後重試 record-verifier-scores"
+                )
                 sys.exit(1)
             if not quiet:
                 _, saved_video = find_video(ctx["data"], vid)
-                _print_save_stdout_summary(saved_video or {"vid": vid}, generation_trace, kv, msg)
+                _print_save_stdout_summary(
+                    saved_video or {"vid": vid}, generation_trace, kv, msg
+                )
                 _print_verifier_stdout_summary(vid, verifier_scores, msg_vs)
         except Exception as e:
-            _rollback_save_after_verifier_failure(ctx, before_save_snapshot, "verifier_scores 寫入例外")
+            _rollback_save_after_verifier_failure(
+                ctx, before_save_snapshot, "verifier_scores 寫入例外"
+            )
             print(f"❌ verifier_scores 寫入發生例外：{e}")
             sys.exit(1)
         return
     _, saved_video = find_video(ctx["data"], vid)
     if not quiet:
-        _print_save_stdout_summary(saved_video or {"vid": vid}, generation_trace, kv, msg)
+        _print_save_stdout_summary(
+            saved_video or {"vid": vid}, generation_trace, kv, msg
+        )
         if saved_video is not None and not saved_video.get("verifier_scores"):
-            print("提醒：尚未記錄 verifier_scores；請執行 record-verifier-scores 完成體檢摘要。")
+            print(
+                "提醒：尚未記錄 verifier_scores；請執行 record-verifier-scores 完成體檢摘要。"
+            )
+
 
 def _extract_fenced_json_from_stdin(stdin_text):
     stripped = stdin_text.strip()
@@ -895,8 +1022,6 @@ def _extract_fenced_json_from_stdin(stdin_text):
             raise ValueError("fenced JSON block 缺少結尾 ```")
         return "\n".join(lines[1:-1]).strip()
     return stripped
-
-
 
 
 def _load_json_object_from_stdin(flag_name):
@@ -914,9 +1039,12 @@ def _load_json_object_from_stdin(flag_name):
         sys.exit(1)
     return payload
 
+
 def _cmd_save_with_trace_from_stdin(ctx):
     if len(sys.argv) < 3:
-        print("用法：video-ops.py save-with-trace-from-stdin VID-NNN --script-path \"路徑\" --title-type T1 --hook-type B2 --version B2 --verifier-prediction high")
+        print(
+            '用法：video-ops.py save-with-trace-from-stdin VID-NNN --script-path "路徑" --title-type T1 --hook-type B2 --version B2 --verifier-prediction high'
+        )
         sys.exit(1)
     raw = sys.stdin.read()
     if not raw.strip():
@@ -939,10 +1067,15 @@ def _cmd_save_with_trace_from_stdin(ctx):
         print("❌ stdin JSON 需包含 generation_trace object")
         sys.exit(1)
     compact_trace = json.dumps(generation_trace, ensure_ascii=False)
-    sys.argv = [sys.argv[0], "save", sys.argv[2], *sys.argv[3:], "--trace", compact_trace]
+    sys.argv = [
+        sys.argv[0],
+        "save",
+        sys.argv[2],
+        *sys.argv[3:],
+        "--trace",
+        compact_trace,
+    ]
     _cmd_save(ctx)
-
-
 
 
 def _load_vid_inference_entries(log_path: Path):
@@ -982,17 +1115,22 @@ def _cmd_vid_inference_stats():
             if d >= since:
                 scoped.append(r)
         fenced = sum(1 for r in scoped if r.get("had_fenced"))
-        inferred = sum(1 for r in scoped if r.get("had_fenced") and r.get("vid_inferred"))
+        inferred = sum(
+            1 for r in scoped if r.get("had_fenced") and r.get("vid_inferred")
+        )
         miss_rate = 0.0 if fenced == 0 else ((fenced - inferred) / fenced) * 100.0
         return fenced, inferred, miss_rate
 
     for days in (7, 30):
         fenced, inferred, miss_rate = _window(days)
-        print(f"last {days}d:  fenced_blocks={fenced}, vid_inferred={inferred}, miss_rate={miss_rate:.1f}%")
+        print(
+            f"last {days}d:  fenced_blocks={fenced}, vid_inferred={inferred}, miss_rate={miss_rate:.1f}%"
+        )
 
     _fenced30, _inferred30, miss30 = _window(30)
     if miss30 > 10.0:
         print("alert: ⚠️ miss_rate > 10% (last 30d) — consider making VID required")
+
 
 def _cmd_adoption_stats(ctx):
     kv = _parse_kv_args(sys.argv, start=2)
@@ -1011,7 +1149,11 @@ def _cmd_adoption_stats(ctx):
         return (hit / len(rows)) * 100.0, hit, len(rows)
 
     print(f"📊 adoption-stats（已上線近 {recent_n} 支）")
-    for label, key in [("hook_type", "hook_type"), ("generation_trace", "generation_trace"), ("verifier_scores", "verifier_scores")]:
+    for label, key in [
+        ("hook_type", "hook_type"),
+        ("generation_trace", "generation_trace"),
+        ("verifier_scores", "verifier_scores"),
+    ]:
         pct, hit, total = _coverage(subset, key)
         print(f"- {label}: {hit}/{total} ({pct:.1f}%)")
 
@@ -1028,14 +1170,20 @@ def _cmd_adoption_stats(ctx):
             if d >= since:
                 window.append(v)
         print(f"\n📈 {days} 日趨勢（{since} ~ {today}）")
-        for label, key in [("hook_type", "hook_type"), ("generation_trace", "generation_trace"), ("verifier_scores", "verifier_scores")]:
+        for label, key in [
+            ("hook_type", "hook_type"),
+            ("generation_trace", "generation_trace"),
+            ("verifier_scores", "verifier_scores"),
+        ]:
             pct, hit, total = _coverage(window, key)
             print(f"- {label}: {hit}/{total} ({pct:.1f}%)")
 
 
 def _cmd_convert_idea(_ctx):
     if len(sys.argv) < 4:
-        print("⚠️ convert-idea 已廢除，請改用：video-ops.py confirm IDEA-NNN --title \"標題\"")
+        print(
+            '⚠️ convert-idea 已廢除，請改用：video-ops.py confirm IDEA-NNN --title "標題"'
+        )
         sys.exit(1)
     idea_id = sys.argv[2]
     pdata = load_pipeline()
@@ -1050,7 +1198,9 @@ def _cmd_convert_idea(_ctx):
 
 def _cmd_backfill(ctx):
     if len(sys.argv) < 4:
-        print("用法：video-ops.py backfill VID-NNN --views N --retention-3s N --completion-rate N [--engagement-rate N] [--profile-clicks N] [--likes N] [--comments N] [--shares N] [--saves N]")
+        print(
+            "用法：video-ops.py backfill VID-NNN --views N --retention-3s N --completion-rate N [--engagement-rate N] [--profile-clicks N] [--likes N] [--comments N] [--shares N] [--saves N]"
+        )
         sys.exit(1)
     vid = sys.argv[2]
     kwargs = {}
@@ -1089,7 +1239,9 @@ def _cmd_backfill(ctx):
     required = ["views", "retention_3s", "completion_rate"]
     missing = [k for k in required if k not in kwargs]
     if missing:
-        print(f"❌ 缺少必填參數：{', '.join('--' + k.replace('_', '-') for k in missing)}")
+        print(
+            f"❌ 缺少必填參數：{', '.join('--' + k.replace('_', '-') for k in missing)}"
+        )
         sys.exit(1)
 
     ok, msg, result = backfill_video(ctx["data"], vid, **kwargs)
@@ -1099,14 +1251,20 @@ def _cmd_backfill(ctx):
         for w in r.get("warnings", []):
             print(f"  ⚠️ {w}")
         print(f"✅ {vid} 回填完成")
-        print(f"📊 觀看 {r['views']:,} | 3秒留存 {r['retention_3s']}% | 完播 {r['completion_rate']}%")
+        print(
+            f"📊 觀看 {r['views']:,} | 3秒留存 {r['retention_3s']}% | 完播 {r['completion_rate']}%"
+        )
         path_note = f"路徑 {r['path']}" if r["path"] else ""
-        print(f"{icons.get(r['level'], '?')} 判定：{r['level']}（{r['reason']}）{path_note}")
+        print(
+            f"{icons.get(r['level'], '?')} 判定：{r['level']}（{r['reason']}）{path_note}"
+        )
         al = r.get("auto_learning")
         if al:
             action = al["action"]
             if action == "auto_high":
-                print(f"🎓 自動提取（高表現）：opening={al.get('opening', '—')} cta={al.get('cta', '—')}")
+                print(
+                    f"🎓 自動提取（高表現）：opening={al.get('opening', '—')} cta={al.get('cta', '—')}"
+                )
             elif action == "auto_low":
                 print(f"🎓 自動提取（低表現）：{al['failure_mode']}")
             elif action == "skip_normal":
@@ -1114,9 +1272,13 @@ def _cmd_backfill(ctx):
             elif action in ("need_manual_high", "need_manual_low"):
                 print(f"⚠️ {al['msg']}")
         elif r["level"] == "high":
-            print(f"→ 建議執行：video-ops.py auto-extract {vid}（自動解析）或 extract-learning {vid} --opening CODE --cta CODE --formula \"...\"")
+            print(
+                f'→ 建議執行：video-ops.py auto-extract {vid}（自動解析）或 extract-learning {vid} --opening CODE --cta CODE --formula "..."'
+            )
         elif r["level"] == "low":
-            print(f"→ 建議執行：video-ops.py extract-learning {vid} --failure-mode \"原因\"")
+            print(
+                f'→ 建議執行：video-ops.py extract-learning {vid} --failure-mode "原因"'
+            )
         g3 = r.get("lite_g3")
         if g3:
             if g3["pass"]:
@@ -1160,10 +1322,16 @@ def _cmd_backfill(ctx):
         cache_dir = PROJECT_ROOT / "data" / ".cache"
         cache_dir.mkdir(parents=True, exist_ok=True)
         cache_path = cache_dir / "last-backfill-context.json"
-        cache_path.write_text(json.dumps(context, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(f"🧠 sedimentation context 已準備（cache: {cache_path.relative_to(PROJECT_ROOT)}）")
+        cache_path.write_text(
+            json.dumps(context, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        print(
+            f"🧠 sedimentation context 已準備（cache: {cache_path.relative_to(PROJECT_ROOT)}）"
+        )
         # 雙路徑交棒：cache 保留機讀；stdout 提供 Claude 當前對話可直接吸收
-        print(f"🧠 sedimentation_context_json={json.dumps(context, ensure_ascii=False)}")
+        print(
+            f"🧠 sedimentation_context_json={json.dumps(context, ensure_ascii=False)}"
+        )
         if pending:
             print(f"🧪 sedimentation proposals（待確認 {len(pending)} 條）：")
             for p in pending:
@@ -1178,15 +1346,23 @@ def _cmd_backfill(ctx):
 
 def _cmd_extract_learning(ctx):
     if len(sys.argv) < 4:
-        print("用法：video-ops.py extract-learning VID-NNN --opening CODE --cta CODE [--hook \"...\"] [--formula \"...\"]")
-        print("  低表現：video-ops.py extract-learning VID-NNN --failure-mode \"原因\" [--failure-detail \"...\"]")
+        print(
+            '用法：video-ops.py extract-learning VID-NNN --opening CODE --cta CODE [--hook "..."] [--formula "..."]'
+        )
+        print(
+            '  低表現：video-ops.py extract-learning VID-NNN --failure-mode "原因" [--failure-detail "..."]'
+        )
         sys.exit(1)
     vid = sys.argv[2]
     kwargs = {}
     str_args = {
-        "--opening": "opening", "--hook": "hook", "--turning-point": "turning_point",
-        "--cta": "cta", "--formula": "formula",
-        "--failure-mode": "failure_mode", "--failure-detail": "failure_detail",
+        "--opening": "opening",
+        "--hook": "hook",
+        "--turning-point": "turning_point",
+        "--cta": "cta",
+        "--formula": "formula",
+        "--failure-mode": "failure_mode",
+        "--failure-detail": "failure_detail",
     }
     skip_flag = False
     i = 3
@@ -1234,7 +1410,9 @@ def _cmd_cleanup_formulas(_ctx):
 
 def _cmd_record_deviation(ctx):
     if len(sys.argv) < 4:
-        print("用法：video-ops.py record-deviation VID-NNN --level minimal|moderate|significant [--changes '[{...}]']")
+        print(
+            "用法：video-ops.py record-deviation VID-NNN --level minimal|moderate|significant [--changes '[{...}]']"
+        )
         sys.exit(1)
     vid = sys.argv[2]
     kv = _parse_kv_args(sys.argv, start=3)
@@ -1246,6 +1424,7 @@ def _cmd_record_deviation(ctx):
     raw_changes = kv.get("changes")
     if raw_changes:
         import json as _json
+
         try:
             changes = _json.loads(raw_changes)
         except _json.JSONDecodeError as e:
@@ -1268,7 +1447,9 @@ def _cmd_record_deviation(ctx):
 
 def _cmd_diff_script(_ctx):
     if len(sys.argv) < 4:
-        print("用法：video-ops.py diff-script VID-NNN --subtitle '字幕全文' 或 --file subtitle.txt")
+        print(
+            "用法：video-ops.py diff-script VID-NNN --subtitle '字幕全文' 或 --file subtitle.txt"
+        )
         sys.exit(1)
     vid = sys.argv[2]
     kv = _parse_kv_args(sys.argv, start=3)
@@ -1287,7 +1468,9 @@ def _cmd_diff_script(_ctx):
     if ok:
         print(f"✅ {vid} 偏差自動比對完成")
         print(f"📊 {result['summary']}")
-        print(f"   等級：{result['level']}（相似度 {round(result['similarity'] * 100)}%）")
+        print(
+            f"   等級：{result['level']}（相似度 {round(result['similarity'] * 100)}%）"
+        )
         changes = result["changes"]
         if changes:
             print(f"\n🔍 具體改動（{len(changes)} 處）：")
@@ -1316,11 +1499,15 @@ def _cmd_analyze_deviations(_ctx):
         print(f"📊 已收集 {report['total']} 筆偏差記錄（需 ≥ 10 筆才觸發完整分析）")
         print(f"  有改動：{report['with_changes']} 筆")
         dist = report["level_dist"]
-        print(f"  等級分佈：minimal={dist['minimal']} moderate={dist['moderate']} significant={dist['significant']}")
+        print(
+            f"  等級分佈：minimal={dist['minimal']} moderate={dist['moderate']} significant={dist['significant']}"
+        )
     else:
         print(f"📊 偏差分析（基於 {report['total']} 支影片）\n")
         dist = report["level_dist"]
-        print(f"等級分佈：minimal={dist['minimal']} moderate={dist['moderate']} significant={dist['significant']}")
+        print(
+            f"等級分佈：minimal={dist['minimal']} moderate={dist['moderate']} significant={dist['significant']}"
+        )
         print(f"有改動記錄：{report['with_changes']} 筆\n")
         print("等級 × 表現交叉：")
         for lv in ("minimal", "moderate", "significant"):
@@ -1332,7 +1519,9 @@ def _cmd_analyze_deviations(_ctx):
             for item in originals[:10]:
                 perfs = item["performances"]
                 high_pct = round(perfs.count("high") / len(perfs) * 100) if perfs else 0
-                print(f"  • 「{item['original']}」— 改動 {item['count']} 次（高表現佔 {high_pct}%）")
+                print(
+                    f"  • 「{item['original']}」— 改動 {item['count']} 次（高表現佔 {high_pct}%）"
+                )
         reasons = report.get("frequent_reasons", [])
         if reasons:
             print("\n📝 常見改動原因：")
@@ -1341,13 +1530,21 @@ def _cmd_analyze_deviations(_ctx):
         trend = report.get("trend", "insufficient")
         if trend != "insufficient":
             td = report["trend_detail"]
-            labels = {"improving": "📈 改善中", "worsening": "📉 變多", "stable": "➡️ 穩定"}
-            print(f"\n趨勢：{labels.get(trend, trend)}（最近5支 avg={td['recent_avg']} vs 之前 avg={td['earlier_avg']}）")
+            labels = {
+                "improving": "📈 改善中",
+                "worsening": "📉 變多",
+                "stable": "➡️ 穩定",
+            }
+            print(
+                f"\n趨勢：{labels.get(trend, trend)}（最近5支 avg={td['recent_avg']} vs 之前 avg={td['earlier_avg']}）"
+            )
 
 
 def _cmd_lessons(ctx):
     if len(sys.argv) < 3:
-        print("用法：video-ops.py lessons <list|add|add-evidence|stats|propose-hardening|archive> ...")
+        print(
+            "用法：video-ops.py lessons <list|add|add-evidence|stats|propose-hardening|archive> ..."
+        )
         sys.exit(1)
     sub = sys.argv[2]
     operator = ctx["op_paths"]["operator"]
@@ -1373,7 +1570,9 @@ def _cmd_lessons(ctx):
         origin = (kv.get("origin") or "").strip()
         stage = (kv.get("stage") or "soft").strip()
         if not pattern or not origin:
-            print('用法：video-ops.py lessons add --pattern "..." --origin <mistake|humanizer|quality|verifier|deviation|manual> [--stage soft] [--scope "generation"] [--counter-pattern "..."] [--evidence-vid VID-001] [--notes "..."]')
+            print(
+                '用法：video-ops.py lessons add --pattern "..." --origin <mistake|humanizer|quality|verifier|deviation|manual> [--stage soft] [--scope "generation"] [--counter-pattern "..."] [--evidence-vid VID-001] [--notes "..."]'
+            )
             sys.exit(1)
         scope_raw = kv.get("scope")
         scope = []
@@ -1419,7 +1618,7 @@ def _cmd_lessons(ctx):
 
     if sub == "archive":
         if len(sys.argv) < 4:
-            print("用法：video-ops.py lessons archive L-XXXX [--reason \"說明\"]")
+            print('用法：video-ops.py lessons archive L-XXXX [--reason "說明"]')
             sys.exit(1)
         lesson_id = sys.argv[3]
         kv = _parse_kv_args(sys.argv, start=4)
@@ -1453,16 +1652,20 @@ def _cmd_lessons(ctx):
         if not result["added"]:
             print(f"✅ already in evidence: {lesson_id} has {vid}")
             return
-        print(f"✅ lessons add-evidence: {lesson_id} += {vid} (now {result['evidence_count']} evidence)")
+        print(
+            f"✅ lessons add-evidence: {lesson_id} += {vid} (now {result['evidence_count']} evidence)"
+        )
         return
 
-    print("❌ 用法：video-ops.py lessons <list|add|add-evidence|stats|propose-hardening|archive> ...")
+    print(
+        "❌ 用法：video-ops.py lessons <list|add|add-evidence|stats|propose-hardening|archive> ..."
+    )
     sys.exit(1)
 
 
 def _cmd_record_mistake(ctx):
     if len(sys.argv) < 3:
-        print("用法：video-ops.py 記錯 \"描述\" 或 video-ops.py record-mistake \"描述\"")
+        print('用法：video-ops.py 記錯 "描述" 或 video-ops.py record-mistake "描述"')
         sys.exit(1)
     description = sys.argv[2]
     lesson_id = record_mistake(
@@ -1475,10 +1678,11 @@ def _cmd_record_mistake(ctx):
     print(f"✅ 已記錯並寫入 lessons：{lesson_id}")
 
 
-
 def _cmd_todo(ctx):
     if len(sys.argv) < 3:
-        print("用法：video-ops.py todo <add|list|close|reopen|archive|update|auto-close> ...")
+        print(
+            "用法：video-ops.py todo <add|list|close|reopen|archive|update|auto-close> ..."
+        )
         sys.exit(1)
 
     sub = sys.argv[2]
@@ -1487,7 +1691,9 @@ def _cmd_todo(ctx):
     if sub == "add":
         kv = _parse_kv_args(sys.argv, start=3)
         if not kv.get("title"):
-            print('用法：video-ops.py todo add --title "..." [--priority high] [--due YYYY-MM-DD] [--related-vid VID-001] [--related-lesson L-0001] [--tags t1,t2] [--notes "..."]')
+            print(
+                '用法：video-ops.py todo add --title "..." [--priority high] [--due YYYY-MM-DD] [--related-vid VID-001] [--related-lesson L-0001] [--tags t1,t2] [--notes "..."]'
+            )
             sys.exit(1)
         todo_id = add_todo(
             operator=operator,
@@ -1515,7 +1721,9 @@ def _cmd_todo(ctx):
         print(f"📋 todos（{len(rows)}）")
         for item in rows:
             due = item.get("due") or "-"
-            print(f"  • {item.get('id')} | {item.get('state')} | {item.get('priority')} | due={due} | {item.get('title')}")
+            print(
+                f"  • {item.get('id')} | {item.get('state')} | {item.get('priority')} | due={due} | {item.get('title')}"
+            )
         return
 
     if sub == "close":
@@ -1561,7 +1769,6 @@ def _cmd_todo(ctx):
             sys.exit(1)
         return
 
-
     if sub == "auto-close":
         dry_run = "--dry-run" in sys.argv[3:]
         todos = query_todos(operator=operator, state="pending")
@@ -1590,7 +1797,9 @@ def _cmd_todo(ctx):
 
     if sub == "update":
         if len(sys.argv) < 4:
-            print("用法：video-ops.py todo update T-0001 [--title ...] [--priority ...] [--due ...] [--tags ...] [--notes ...]")
+            print(
+                "用法：video-ops.py todo update T-0001 [--title ...] [--priority ...] [--due ...] [--tags ...] [--notes ...]"
+            )
             sys.exit(1)
         todo_id = sys.argv[3]
         kv = _parse_kv_args(sys.argv, start=4)
@@ -1621,13 +1830,11 @@ def _cmd_todo(ctx):
     sys.exit(1)
 
 
-
-
-
-
 def _cmd_retrieval(ctx):
     if len(sys.argv) < 4:
-        print("用法：video-ops.py retrieval similar-vids VID-NNN [--limit 5] [--include-fields f1,f2]")
+        print(
+            "用法：video-ops.py retrieval similar-vids VID-NNN [--limit 5] [--include-fields f1,f2]"
+        )
         sys.exit(1)
     sub = sys.argv[2]
     if sub != "similar-vids":
@@ -1636,13 +1843,25 @@ def _cmd_retrieval(ctx):
     vid = sys.argv[3]
     kv = _parse_kv_args(sys.argv, start=4)
     limit = int(kv.get("limit", 5))
-    include_fields = [x.strip() for x in kv.get("include_fields", "hook_type,verifier_scores,actual_views,deviation_score").split(",") if x.strip()]
+    include_fields = [
+        x.strip()
+        for x in kv.get(
+            "include_fields", "hook_type,verifier_scores,actual_views,deviation_score"
+        ).split(",")
+        if x.strip()
+    ]
     try:
-        rows = get_similar_vids(vid=vid, limit=limit, include_fields=include_fields, pipeline_path=ctx["op_paths"]["tracking_json"])
+        rows = get_similar_vids(
+            vid=vid,
+            limit=limit,
+            include_fields=include_fields,
+            pipeline_path=ctx["op_paths"]["tracking_json"],
+        )
     except ValueError as e:
         print(f"❌ {e}")
         sys.exit(1)
     print(json.dumps(rows, ensure_ascii=False, indent=2))
+
 
 def _fix_learning_field(data):
     """修復 learning_extracted=true 但缺 learning 欄位的歷史資料。"""
@@ -1664,7 +1883,13 @@ def _fix_learning_field(data):
                 opening = (extracted or {}).get("opening_guess")
                 cta = (extracted or {}).get("cta_guess")
                 if opening or cta:
-                    ok, _ = extract_learning(data, vid, opening=opening, cta=cta, hook=(extracted or {}).get("hook"))
+                    ok, _ = extract_learning(
+                        data,
+                        vid,
+                        opening=opening,
+                        cta=cta,
+                        hook=(extracted or {}).get("hook"),
+                    )
                     if ok:
                         fixed.append((vid, "extract-learning"))
                         continue
@@ -1679,6 +1904,15 @@ def _fix_learning_field(data):
             v["backfill"] = bf
             fixed.append((vid, "set-learning_extracted-false"))
     return fixed
+
+
+def _cmd_health(ctx):
+    """大腦健康度單行可視化（per-dimension 原始數字、不算 overall score）。"""
+    from lib.health import compute_health, format_health_report
+
+    operator = ctx["op_paths"]["operator"]
+    report = format_health_report(compute_health(operator))
+    print(report)
 
 
 SIMPLE_COMMAND_HANDLERS = {
@@ -1716,10 +1950,12 @@ SIMPLE_COMMAND_HANDLERS = {
     "記錯": _cmd_record_mistake,
     "todo": _cmd_todo,
     "retrieval": _cmd_retrieval,
+    "health": _cmd_health,
 }
 
 
 # ── CLI 主程式 ────────────────────────────────────────────
+
 
 def _extract_operator(argv):
     """從 argv 中提取 --operator 參數並移除。回傳 (operator, cleaned_argv)。"""
@@ -1730,7 +1966,9 @@ def _extract_operator(argv):
         if argv[i] == "--operator" and i + 1 < len(argv):
             operator = argv[i + 1].lower()
             if operator not in VALID_OPERATORS:
-                print(f"❌ 未知操作員：{operator}（合法值：{', '.join(sorted(VALID_OPERATORS))}）")
+                print(
+                    f"❌ 未知操作員：{operator}（合法值：{', '.join(sorted(VALID_OPERATORS))}）"
+                )
                 sys.exit(1)
             i += 2
         else:
@@ -1773,8 +2011,13 @@ def main():
     if cmd == "list-topics":
         pdata = load_pipeline()
         status_icons = {
-            "inbox": "📥", "selected": "⭐", "cooldown": "❄️",
-            "待拍": "📋", "剪輯中": "✂️", "已上線": "✅", "archived": "🗄️",
+            "inbox": "📥",
+            "selected": "⭐",
+            "cooldown": "❄️",
+            "待拍": "📋",
+            "剪輯中": "✂️",
+            "已上線": "✅",
+            "archived": "🗄️",
         }
         # 影片階段
         videos = [i for i in pdata["items"] if i.get("vid")]
@@ -1786,7 +2029,11 @@ def main():
         if not videos:
             print("  （無）")
         # 靈感階段
-        ideas = [i for i in pdata["items"] if i["status"] in ("inbox", "selected", "cooldown")]
+        ideas = [
+            i
+            for i in pdata["items"]
+            if i["status"] in ("inbox", "selected", "cooldown")
+        ]
         print("\n━━ 💡 靈感 ━━")
         for idea in ideas:
             icon = status_icons.get(idea["status"], "?")
@@ -1811,7 +2058,9 @@ def main():
                 print(f"  • {e}")
             sys.exit(1)
         else:
-            print(f"✅ 驗證通過（{len(data['videos'])} 支影片，{len(warnings)} 項警告）")
+            print(
+                f"✅ 驗證通過（{len(data['videos'])} 支影片，{len(warnings)} 項警告）"
+            )
 
     elif cmd == "validate-all":
         auto_migrate = "--auto-migrate" in sys.argv
@@ -1830,12 +2079,16 @@ def main():
                         print(f"  • {c['vid']}：{c['field']}")
             else:
                 total_fields = sum(len(fields) for _, fields in mc)
-                print(f"\n💡 {len(mc)} 支影片可跑 migrate 補齊 {total_fields} 個欄位（加 --auto-migrate 自動修復）")
+                print(
+                    f"\n💡 {len(mc)} 支影片可跑 migrate 補齊 {total_fields} 個欄位（加 --auto-migrate 自動修復）"
+                )
         drifts = collect_schema_drifts()
         b = [d for d in drifts if d["level"] == "breaking"]
         nb = [d for d in drifts if d["level"] == "non-breaking"]
         info = [d for d in drifts if d["level"] == "info"]
-        print(f"\n🔍 Schema drift: {len(b)} breaking, {len(nb)} non-breaking, {len(info)} info")
+        print(
+            f"\n🔍 Schema drift: {len(b)} breaking, {len(nb)} non-breaking, {len(info)} info"
+        )
         for d in b:
             print(f"❌ BREAKING: {d['file']} {d['field']} {d['detail']}")
         for d in nb:
@@ -1845,7 +2098,9 @@ def main():
 
     elif cmd == "renumber":
         dry_run = "--dry-run" in sys.argv
-        vid_map = renumber_videos(data, vid_prefix=op_paths["vid_prefix"], dry_run=dry_run)
+        vid_map = renumber_videos(
+            data, vid_prefix=op_paths["vid_prefix"], dry_run=dry_run
+        )
         if not vid_map:
             print("✅ VID 編號已按 publish_date 排序，無需重新編號")
         elif dry_run:
@@ -1881,7 +2136,9 @@ def main():
             vids_changed = {}
             for c in changes:
                 vids_changed.setdefault(c["vid"], []).append(c["field"])
-            print(f"✅ 遷移完成（{len(vids_changed)} 支影片，{len(changes)} 個欄位補齊）：")
+            print(
+                f"✅ 遷移完成（{len(vids_changed)} 支影片，{len(changes)} 個欄位補齊）："
+            )
             for vid, fields in vids_changed.items():
                 print(f"  • {vid}：{', '.join(fields)}")
             print("\n🔍 遷移後驗證：")
@@ -1898,22 +2155,33 @@ def main():
                 for vid, action in learning_changes:
                     print(f"  • {vid}：{action}")
 
-
     elif cmd == "pipeline-stats":
         pdata = load_pipeline()
         stats = pipeline_stats(pdata)
         sc = stats["status_counts"]
         print("📊 轉化漏斗")
         print(f"  總靈感數：{stats['total_ideas']}")
-        print(f"  📥 inbox: {sc.get('inbox', 0)}  ⭐ selected: {sc.get('selected', 0)}  ❄️ cooldown: {sc.get('cooldown', 0)}  🗄️ archived: {stats['archived']}")
-        print(f"  📋 待拍: {sc.get('待拍', 0)}  ✂️ 剪輯中: {sc.get('剪輯中', 0)}  ✅ 已上線: {stats['published']}  📊 已回填: {stats['backfilled']}")
+        print(
+            f"  📥 inbox: {sc.get('inbox', 0)}  ⭐ selected: {sc.get('selected', 0)}  ❄️ cooldown: {sc.get('cooldown', 0)}  🗄️ archived: {stats['archived']}"
+        )
+        print(
+            f"  📋 待拍: {sc.get('待拍', 0)}  ✂️ 剪輯中: {sc.get('剪輯中', 0)}  ✅ 已上線: {stats['published']}  📊 已回填: {stats['backfilled']}"
+        )
         print()
         print("📈 轉化率")
-        print(f"  靈感 → 影片：{stats['idea_to_vid_pct']}%（{stats['has_vid']}/{stats['total_ideas']}）")
-        print(f"  影片 → 上線：{stats['vid_to_publish_pct']}%（{stats['published']}/{stats['has_vid']}）")
-        print(f"  靈感 → 上線：{stats['idea_to_publish_pct']}%（{stats['published']}/{stats['total_ideas']}）")
+        print(
+            f"  靈感 → 影片：{stats['idea_to_vid_pct']}%（{stats['has_vid']}/{stats['total_ideas']}）"
+        )
+        print(
+            f"  影片 → 上線：{stats['vid_to_publish_pct']}%（{stats['published']}/{stats['has_vid']}）"
+        )
+        print(
+            f"  靈感 → 上線：{stats['idea_to_publish_pct']}%（{stats['published']}/{stats['total_ideas']}）"
+        )
         if stats["avg_cycle_days"] is not None:
-            print(f"\n⏱️ 平均週期：{stats['avg_cycle_days']} 天（靈感→上線，樣本 {stats['cycle_sample_size']} 支）")
+            print(
+                f"\n⏱️ 平均週期：{stats['avg_cycle_days']} 天（靈感→上線，樣本 {stats['cycle_sample_size']} 支）"
+            )
         if stats["longest_wait"]:
             lw = stats["longest_wait"]
             print(f"\n⚠️ 等最久：{lw['vid']}「{lw['topic']}」已等 {lw['days']} 天")
@@ -1922,7 +2190,9 @@ def main():
         quiet = "--quiet" in sys.argv
         argv = _argv_without_flags(sys.argv, ["--quiet"])
         if len(argv) < 3:
-            print("用法：video-ops.py record-verifier-scores VID-NNN --conflict-score N --retention-prediction LEVEL --ai-residue-count N --data-consistency true|false --format-complete true|false --pass-count N/5 [--quiet]")
+            print(
+                "用法：video-ops.py record-verifier-scores VID-NNN --conflict-score N --retention-prediction LEVEL --ai-residue-count N --data-consistency true|false --format-complete true|false --pass-count N/5 [--quiet]"
+            )
             sys.exit(1)
         vid = argv[2]
         kv = _parse_kv_args(argv, start=3)
@@ -1984,7 +2254,9 @@ def main():
                 "format_complete": "--format-complete",
                 "pass_count": "--pass-count",
             }
-            missing_flags = [flag for key, flag in required_flags.items() if key not in scores]
+            missing_flags = [
+                flag for key, flag in required_flags.items() if key not in scores
+            ]
             if missing_flags:
                 print(f"❌ 缺少必填參數：{', '.join(missing_flags)}")
                 sys.exit(1)
@@ -1999,7 +2271,6 @@ def main():
             sys.exit(1)
         if not quiet:
             _print_verifier_stdout_summary(vid, scores, msg)
-
 
     else:
         print(f"未知指令：{cmd}")
