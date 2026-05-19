@@ -132,7 +132,7 @@ mistake 發生
 
 **反例記憶錨**：
 - v1.5 PR #348（CLI 強制）+ v5.87（SKILL.md 動詞硬化）：trace 0/30 over 30 days、規則寫了 30+ 天、行為仍 0。每升一層規則、下層的「行為退化」就跑到下下層。
-- v4.21 owner 分流（禁令 #11）：B1-B5 + T1 + M1 警告印出無人動、加 owner 分流是治標、根因在「員工事卡 Kai」這個流程層問題、不是規則層問題。
+- v4.21 owner 分流（原 KaiOS 禁令 #11、quickshot template 未保留；對應原則合併進本檔 §設計原則 Mode Y 警告四階段）：B1-B5 + T1 + M1 警告印出無人動、加 owner 分流是治標、根因在「員工事卡 Kai」這個流程層問題、不是規則層問題。
 - v5.87 path coverage 發現：trace 0/61 真實主因是 quick-add path bypass + 大量舊存量繞過 generation skill、不是 §Output Contract 動詞模糊。動詞硬化只覆蓋 path A、是治表的 follow-up。
 
 **與工作模式 X / Y 的關係**：
@@ -141,9 +141,9 @@ mistake 發生
 - **工作模式 W**：規則 / 警告 / 契約上線後 1 個月看真實 metric、0 = 未上線、追行為 / 機械 / 流程三層、不再加規則
 - X 管「規則前怎麼累積證據」、Y 管「警告型治理怎麼設計」、**W 管「規則上線後怎麼驗證有效」**
 
-**與禁令 #11、#13 的關係**：
-- 禁令 #11「警告型 hook 不能單獨上線」+ 工作模式 W = 警告類機制必同時有「四階段 + 1 個月 metric 驗證」、缺一不可
-- 禁令 #13「skill 不該被新增、應該被識別」+ 工作模式 W = skill 上線後 1 個月若無使用、視同未識別、降級回對話準則 / hook / command（如 Phase 6 第二輪退役對 Orientation / Distillation 的處置）
+**與工作模式 Y、禁令 #9 的關係**：
+- 工作模式 Y「警告 → 自動修復 → 通知 → gate 四階段」（原 KaiOS 禁令 #11、quickshot 未保留、概念合併進本檔 §Mode Y）+ 工作模式 W = 警告類機制必同時有「四階段 + 1 個月 metric 驗證」、缺一不可
+- 禁令 #9「skill 不該被新增、應該被識別」+ 工作模式 W = skill 上線後 1 個月若無使用、視同未識別、降級回對話準則 / hook / command（如 Phase 6 第二輪退役對 Orientation / Distillation 的處置）
 
 **為什麼這條不寫進 CLAUDE.md 禁令**：v5.87 commit message 引述 v1.5 補注原文「不再加禁令」— 若把本規則寫成「禁令 #15」、就變成「禁令本身禁止再加禁令」自相矛盾。本規則改寫進 workflow.md §設計原則 Mode W、與 X / Y / Z 同層、是「設計原則 / 對話流程行為規則」、不是禁令、避開矛盾。
 
@@ -245,7 +245,7 @@ Claude 對話中觸發 lesson 時直接呼叫此 CLI、單行完事。
   動: .claude/hooks/session-start.sh + workflow.md + CHANGELOG
   禁: 其他 .claude/* (Kai 未授權)
   讀: brain-loading.md、lessons.json schema (on-demand)；brand.md (auto, 跳過、與任務無關)
-  active: 禁令 #11 hook 四階段
+  active: 工作模式 Y hook 四階段
   驗: rules-lint + engine-version-check + bash -n + 本地 hook 跑、Kai merge PR
 ```
 
@@ -292,7 +292,7 @@ contract.active_rules (預測) vs 實際 (觸發 / 被 Kai 修正)
 - 三層強度判斷不穩、需 LLM 推理框架
 - 跨系統接口（Obsidian / Mode S 等）需 hook point 規格
 
-重升級觸發：Kai 確認 + 跑準則 F 4 層退場測試 + 過 CLAUDE.md 禁令 #12「skill 成立 10 條件」。
+重升級觸發：Kai 確認 + 跑準則 F 4 層退場測試 + 過 CLAUDE.md 禁令 #8「skill 成立 10 條件」。
 
 ---
 
