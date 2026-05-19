@@ -6,9 +6,9 @@
 
 | 層級 | Skill | 版本 | 用途 |
 |------|-------|------|------|
-| **Core** | `orientation` | v2.0（stub）| 任務定型 — 第二輪退役、邏輯落於 `.claude/rules/workflow.md` §Orientation（規則層）|
+| **Core** | `orientation` | v2.1（stub）| 任務定型 — 第二輪退役、邏輯落於 `.claude/rules/workflow.md` §Orientation（規則層）|
 | **Core** | `discovery` | v1.0 | 選題發現（外部熱點 + 大腦交互、3 modes：discover-week/month/trend）|
-| **Core** | `generation` | v1.3 | 內容生產（5 modes：dual-track / variant / series / interview / viral）|
+| **Core** | `generation` | v1.4 | 內容生產（5 modes：dual-track / variant / series / interview / viral）|
 | **Core** | `quality` | v1.3 | 驗證 + 修（quality-loop pattern、phase=check + phase=fix）|
 | **Core** | `distillation` | v2.0（stub）| 經驗沉澱 — 第二輪退役、三 phase 拆三層：collect-evidence 進 workflow.md §Distillation 對話準則 / propose 進 session-start hook / harden 進 `/harden` command |
 

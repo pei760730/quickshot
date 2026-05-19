@@ -763,6 +763,84 @@ def check_skill_description_version_sync(errors):
                 )
 
 
+def check_skill_stub_readme_version_sync(errors):
+    """Cross-check SKILL.md frontmatter version against
+       (1) .claude/skills/<name>.md stub description inline vX.Y
+       (2) 02-skill-factory/README.md skill table inline vX.Y
+
+    Catches the failure mode that slipped past check_skill_description_version_sync:
+    that check only validated SKILL.md description ↔ its own frontmatter version,
+    leaving stub descriptions and the README table free to drift independently
+    (e.g. PR #12 / #13 follow-up: generation README v1.3 vs SKILL v1.4,
+    orientation stub v2.0 vs SKILL v2.1, harden stub v2.0 vs SKILL v2.1).
+    """
+    skill_dir = REPO_ROOT / "02-skill-factory"
+    stub_dir = REPO_ROOT / ".claude" / "skills"
+    readme_path = skill_dir / "README.md"
+    if not skill_dir.is_dir():
+        return
+
+    skill_versions = {}
+    for sub in skill_dir.iterdir():
+        if not sub.is_dir() or sub.name in {"shared-references", "skill-creator"}:
+            continue
+        skill_md = sub / "SKILL.md"
+        if not skill_md.exists():
+            continue
+        text = skill_md.read_text(encoding="utf-8", errors="ignore")
+        front_m = re.search(r"^---\s*\n(.+?)\n---", text, re.DOTALL | re.MULTILINE)
+        if not front_m:
+            continue
+        ver_m = re.search(r"^version:\s*([\d.]+)\s*$", front_m.group(1), re.MULTILINE)
+        if ver_m:
+            skill_versions[sub.name] = ver_m.group(1).strip()
+
+    # (1) Stubs
+    if stub_dir.is_dir():
+        for name, actual in skill_versions.items():
+            stub = stub_dir / f"{name}.md"
+            if not stub.exists():
+                continue
+            stub_text = stub.read_text(encoding="utf-8", errors="ignore")
+            front_m = re.search(
+                r"^---\s*\n(.+?)\n---", stub_text, re.DOTALL | re.MULTILINE
+            )
+            if not front_m:
+                continue
+            desc_m = re.search(r"^description:\s*(.+)$", front_m.group(1), re.MULTILINE)
+            if not desc_m:
+                continue
+            for found in re.findall(r"[vV](\d+\.\d+)", desc_m.group(1)):
+                if found != actual:
+                    errors.append(
+                        {
+                            "file": str(stub),
+                            "line": 0,
+                            "severity": "ERROR",
+                            "check": "skill_stub_version_drift",
+                            "message": f"{name}: stub description 寫 v{found}、SKILL.md frontmatter version 是 {actual}",
+                        }
+                    )
+
+    # (2) README table
+    if readme_path.exists():
+        readme = readme_path.read_text(encoding="utf-8", errors="ignore")
+        for name, actual in skill_versions.items():
+            # Match `\`<name>\`` followed (within table row) by `v<num>`
+            row_re = re.compile(r"`" + re.escape(name) + r"`\s*\|\s*v(\d+\.\d+)")
+            for found in row_re.findall(readme):
+                if found != actual:
+                    errors.append(
+                        {
+                            "file": str(readme_path),
+                            "line": 0,
+                            "severity": "ERROR",
+                            "check": "skill_readme_version_drift",
+                            "message": f"{name}: README 表格寫 v{found}、SKILL.md frontmatter version 是 {actual}",
+                        }
+                    )
+
+
 def check_ai_patterns_warnings(errors):
     """Skip AI-pattern warnings for ready-to-shoot drafts.
 
@@ -897,6 +975,7 @@ def main():
     check_template_schema_alignment(all_errors)
     check_pipeline_regression_guard(all_errors)
     check_skill_description_version_sync(all_errors)
+    check_skill_stub_readme_version_sync(all_errors)
     check_skill_io_contract(all_errors)
     check_brand_ref_contract(all_errors)
     check_ai_patterns_warnings(all_errors)
