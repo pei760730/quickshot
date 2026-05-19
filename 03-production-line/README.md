@@ -6,19 +6,19 @@
 
 ```
 03-production-line/
-├── 01-inspiration-inbox/       # （已廢除，靈感由 pipeline.json 管理）
+├── 01-inspiration-inbox/       # （已廢除，靈感由 pipeline sharded SSoT 管理）
 ├── 02-ready-to-shoot/          # QA 通過、等待拍攝的腳本
 │   └── {operator}/             # 每 operator 一個子目錄
 └── 03-done/                    # 已上線存檔
     └── {operator}/
 ```
 
-**配套追蹤**：`data/{operator}/pipeline.json`（統一管線 SSoT，靈感+影片同一條管線）
+**配套追蹤**：`data/{operator}/pipeline/`（sharded SSoT — `_meta.json` + `items/VID-NNN.json` / `IDEA-NNN.json`、見 `docs/contracts/pipeline-schema.md` v2.1+。legacy 單檔 `pipeline.json` 已退役、`.gitignore` 防誤建）
 
 ## 工作流程
 
 ```
-0. 靈感捕捉  → pipeline.json [inbox]（隨時丟）
+0. 靈感捕捉  → pipeline [inbox]（隨時丟）
 1. 靈感整理  → [inbox] → [selected]（整理靈感）/ [cooldown]（暫緩）
 2. 確認要拍  → 說「確認要拍：XXXX」→ 生成 VID-NNN + 生成腳本
                → humanizer → hook-killer → script-verifier（存檔前）
@@ -44,7 +44,7 @@
 
 ## 孤兒檔案處理 SOP
 
-> 「孤兒」= 磁碟上有 `.md` 腳本檔，但 `pipeline.json` 無 VID 指向（或反之）。
+> 「孤兒」= 磁碟上有 `.md` 腳本檔，但 pipeline 無 VID 指向（或反之）。
 > 2026-04-17 首次全面清理（PR #124、#129），kai 區從 32+5 orphan 降為 0。
 
 ### 兩類孤兒
@@ -60,7 +60,7 @@
 python3 scripts/ops/video-ops.py list-orphans
 ```
 
-CLI 已實作、取代過去的 one-liner 臨時檢查。**不要手改 pipeline.json** — 所有 orphan 處置用下方 CLI 子命令。
+CLI 已實作、取代過去的 one-liner 臨時檢查。**不要手改 pipeline 檔案**（`pipeline/items/*.json` shards）— 所有 orphan 處置用下方 CLI 子命令。
 
 ### 處置決策樹
 
