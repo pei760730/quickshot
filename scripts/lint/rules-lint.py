@@ -28,7 +28,11 @@ REGISTRY_PATH = REPO_ROOT / "scripts" / "lint" / "canonical-registry.json"
 
 RULES_PATHS = [
     REPO_ROOT / "CLAUDE.md",
+    REPO_ROOT / "CLAUDE.local.md",
+    REPO_ROOT / "README.md",
+    REPO_ROOT / "01-data-brain" / "template" / "CLAUDE.local.md",
     *(REPO_ROOT / ".claude" / "rules").glob("*.md"),
+    *(REPO_ROOT / ".claude" / "commands").glob("*.md"),
 ]
 
 # ─── Load Registry ────────────────────────────────────────────────────────────

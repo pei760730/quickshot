@@ -11,8 +11,7 @@
 
 ## 品牌速查
 
-完整精華見 `01-data-brain/brand-summary.md`（每次對話由 SessionStart hook 自動注入 context）。
-細節 brand.md 在 `01-data-brain/brand.md`（lazy load、skill 跑時 brain_loader 載 / 對話需要時 Read）。
+brand.md 在 `01-data-brain/brand.md`（lazy load、skill 跑時 brain_loader 載 / 對話需要時 Read）。v4.62 起 SessionStart hook 不再 cat 全文、每 session 省 ~27k token。
 
 ## 使用者習慣（可選填）
 
