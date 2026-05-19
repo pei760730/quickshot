@@ -462,6 +462,7 @@ v1.2 三大發現 + 4-5 核心 skill 主結構正確、Discovery 是補一個漏
 
 3 Command（.claude/commands/）：
   /harden / /scan / /sync-engine
+  注：quickshot template 已不含 /sync-engine（README §砍掉的 3 大模組）、本表為 KaiOS 主引擎觀察期目標架構
 
 Tool / Data / Governance 層維持不變
 ```
