@@ -1,8 +1,22 @@
+# pre-commit framework config (opt-in、跑 `pre-commit install` 才啟用)
+#
+# 短期客戶 template 不從 KaiOS 帶 engine-version-gate（該 gate 對應 KaiOS 雙引擎同步、本 template 不適用）。
+# 留 hook list 為以下兩道與 GitHub Actions `rules-lint.yml` 對齊的本機檢查；都是讀取式、無副作用。
+# 不想跑可以 `git commit --no-verify`。
+#
+# 真正在每次 commit 必跑、與分支白名單對齊的領土守衛、見 `.githooks/pre-commit`
+# （透過 `git config core.hooksPath .githooks` 啟用）。
+
 repos:
   - repo: local
     hooks:
-      - id: engine-version-gate
-        name: engine version gate
-        entry: python scripts/lint/pre-commit-engine-check.py
+      - id: rules-lint-ci
+        name: rules-lint (CI mode)
+        entry: python scripts/lint/rules-lint.py --ci
+        language: system
+        pass_filenames: false
+      - id: brand-ref-lint
+        name: brand-ref lint
+        entry: python scripts/lint/brand_ref_lint.py
         language: system
         pass_filenames: false
