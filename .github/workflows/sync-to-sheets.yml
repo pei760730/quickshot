@@ -28,7 +28,6 @@ on:
     paths:
       - "data/**"
       - "03-production-line/**"
-      - "00-control-center/**"
       - "scripts/**"
 
 jobs:
