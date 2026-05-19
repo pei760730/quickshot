@@ -4,7 +4,7 @@
 >
 > 標記：🔧 引擎（Skill / script / rule，跨客戶通用）｜📦 資料（品牌知識 / 腳本 / 回填，客戶專屬）
 >
-> **歷史版本**：本檔保留 v5.50+（最近約 1 週）。v5.00 ~ v5.49 見 [CHANGELOG-archive-v5.x.md](./CHANGELOG-archive-v5.x.md)、v1.1 ~ v4.99 見 [CHANGELOG-archive-v4.x.md](./CHANGELOG-archive-v4.x.md)。切檔於 v5.72（2026-04-30）。
+> **歷史版本**：本檔保留 v5.51+。v5.05 ~ v5.50 見 [CHANGELOG-archive-v5.x.md](./CHANGELOG-archive-v5.x.md)；v1.1 ~ v5.00（含 v5.00 milestone）見 [CHANGELOG-archive-v4.x.md](./CHANGELOG-archive-v4.x.md)。切檔於 v5.51（2026-04-26、主 ↔ v5.x archive）與 v5.05（2026-04-24、v5.x ↔ v4.x archive）。
 
 ---
 
