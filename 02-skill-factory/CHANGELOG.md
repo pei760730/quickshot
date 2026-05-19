@@ -5,6 +5,35 @@
 
 ---
 
+## 2026-05-17 — generation v1.3 → v1.4（§通用 Output 規格 + §強標題優先協議）
+
+**主題**：A/B/C/D 4 切角從 dual-track 專屬 → 跨所有 mode 強制 + 偏離度預算對應；強標題優先協議落地（每切角 ≥ 5 候選、依 title-rules.md 5 類心理觸發評分、Hook echo 推薦標題）。
+
+### 變更
+- generation/SKILL.md frontmatter version 1.3 → 1.4、last_updated 2026-05-17
+- §通用 Output 規格硬化：4 切角偏離度預算 → A GREEN / B ORANGE / C/D YELLOW
+- §強標題優先協議新增：4 必含逐項評分、⭐ 推薦標籤、不套 30s 默認
+- 保留 v1.3 §Output Contract 動詞硬化（Bash tool 直接執行、禁止印命令給 Kai 抄、trace inline）
+
+### 對應 CHANGELOG / PR
+PR #12（chore: 修 stub/README 版本 drift + 加 lint）順手把 02-skill-factory/README.md 表格從 generation v1.3 同步至 v1.4、避免 cross-file drift。
+
+---
+
+## 2026-05-15 — orientation v2.0 → v2.1（stub description 收斂）
+
+**主題**：v2.0 stub description 含 v1.0 task contract 完整邏輯（5 必含 + 1 條件元素 / 三層強度 Micro/Standard/Plan）冗述；v2.1 收斂為純 redirect 至 workflow.md §Orientation、避免 description 內維護重複邏輯漂移。
+
+### 變更
+- orientation/SKILL.md frontmatter version 2.0 → 2.1、last_updated 2026-05-15
+- description 從「真實邏輯回歸 workflow.md ... 每個新 task ... 5 必含 ...」（描述完整規則）→「真實邏輯回歸 workflow.md §Orientation（規則層、不在 skill 層）。本檔保留為 stub 維持 lint invariant + brain_loader 引用穩定。實際 task contract 規則見 workflow.md。」（純 pointer）
+- 對應 PR #12：02-skill-factory/README.md 表格 v2.0 → v2.1 同步、`.claude/skills/orientation.md` stub description v2.0 → v2.1
+
+### 為什麼
+v2.0 stub description 內維護完整邏輯描述、與 workflow.md §Orientation 主規則層形成「雙寫漂移源」（每次規則改 Claude 都要記得同步兩處）。v2.1 後 description 只說「規則在 workflow.md」、單一 SSoT、未來邏輯演進無需動 stub。
+
+---
+
 ## 2026-05-05 — generation v1.2 → v1.3 + quality v1.2 → v1.3（trace/verifier 0/30 採用閉環行為層補）
 
 **主題：「呼叫 CLI」模糊動詞 → 硬性「Bash tool 執行、禁止印命令給 Kai 抄」**
