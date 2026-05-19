@@ -77,13 +77,17 @@ quickshot/
 | `上線：VID-NNN` | 狀態 → 已上線 |
 | `回填` + IG 截圖 | 讀數字 → 分類 → 回填 → 洞察 |
 
-### 短期客戶 onboarding（冷啟動）
+### 短期客戶 onboarding（day-1）
+
+新 clone 第一次跑：
 
 | 輸入 | 動作 |
 |------|------|
-| `冷啟動：[音檔/文章/連結]` | Claude 一次轉譯、跨篇盤點、出候選清單供 Kai 三色標記 |
+| `/init` / `新客戶開始` / `onboarding` | 5-step bootstrap：品牌名 → operator 註冊 → persona → brand.md MVP → 歷史素材冷啟動 |
+| `冷啟動：[音檔/文章/連結]` | Claude 一次轉譯、跨篇盤點、出候選清單供 Kai 三色標記（也可在 `/init` Step 5 觸發）|
 
-詳見 `.claude/rules/workflow.md` §冷啟動萃取。
+完成後跑 `/check` 看大腦健康度、再走 `確認要拍：[第一支主題]` 開拍。
+詳見 `.claude/commands/init.md`、`.claude/rules/workflow.md` §冷啟動萃取。
 
 ### 系統指令
 

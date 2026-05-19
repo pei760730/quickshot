@@ -56,7 +56,7 @@
 問 Kai：「**主要創作者叫什麼？**（會建 `01-data-brain/personas/{name}.md`、是腳本對齊的人格參考）」
 
 收到答覆後：
-1. 把名字轉成檔名格式（lowercase、空格換 `-`、例：`Alex Wang` → `alex-wang.md`）
+1. 把名字轉成檔名格式（lowercase、空格換 `-`、例：「Alex Wang」→ alex-wang.md）
 2. 複製 `01-data-brain/template/personas/PRIMARY.md` → `01-data-brain/personas/{filename}`
 3. 把 `{{PERSONA_NAME}}` 替換成 Kai 給的名字
 4. Edit `data/.operators.json` 該 operator 加 `"primary_persona_file": "{filename}"`
