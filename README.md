@@ -55,7 +55,7 @@ quickshot/
 │   │   └── hardening-archive.json
 │   └── template/               # 新客戶 bootstrap 模板
 │
-├── 02-skill-factory/           # 8 個 Skill（generation / quality / discovery / harden / ...）
+├── 02-skill-factory/           # 7 個 Skill（generation / quality / discovery / orientation / distillation / harden / skill-creator）
 ├── 03-production-line/         # 腳本（ready-to-shoot / done）
 ├── docs/contracts/             # 共享 schema（pipeline / lessons / todos / ...）
 ├── scripts/                    # ops CLI + utils + lint

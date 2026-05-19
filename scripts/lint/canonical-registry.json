@@ -1,7 +1,7 @@
 {
-  "_version": "2.5",
+  "_version": "2.6",
   "_description": "系統唯一真相來源。Cross-file lint 和 CI 從此檔讀取合法值。",
-  "_updated": "2026-04-25",
+  "_updated": "2026-05-19",
 
   "valid_states": {
     "idea": ["inbox", "selected", "cooldown"],
@@ -11,7 +11,7 @@
   },
 
   "rules_files": {
-    "CLAUDE.md": "系統總指南（7 條禁令 + 資料地圖）",
+    "CLAUDE.md": "系統總指南（9 條禁令 + 資料地圖）",
     ".claude/rules/workflow.md": "工作流程（合併自 production + commands + daily-scan）",
     ".claude/rules/permissions.md": "路徑守衛"
   },
@@ -45,7 +45,7 @@
   "valid_sources": ["pipeline", "quick-shot"],
 
   "ssot_files": {
-    "pipeline": "data/{operator}/pipeline.json",
+    "pipeline": "data/{operator}/pipeline/ (sharded: _meta.json + items/VID-NNN.json)",
     "performance_patterns": "data/{operator}/performance-patterns.json",
     "brain_index": "01-data-brain/index.md"
   }

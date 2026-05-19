@@ -28,7 +28,7 @@
 | # | 路徑 | 內容 | 載入時機 |
 |---|------|------|---------|
 | 8 | `01-data-brain/transcripts/` | Kai 的語音筆記 / 文字原文完整保留 | 沉澱分析時才讀（每累積 5 篇觸發） |
-| 9 | `01-data-brain/interview-bank.md` | 訪談題目庫（Q-Bank、Q22~Q130 原文 + 內容價值）| `generation` skill mode=interview 載入；其他 skill 找「Kai 對某題真實回答」時參考 |
+| 9 | `01-data-brain/interview-bank.md` | 訪談題目庫（Q-Bank、Q22~Q130 原文 + 內容價值）| `generation` skill mode=interview 載入；其他 skill 找「Kai 對某題真實回答」時參考。**短期客戶 template 預設不附**、客戶有訪談素材時手動建立 |
 
 ### 知識儲存分工
 
