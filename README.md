@@ -59,7 +59,7 @@ quickshot/
 ├── 03-production-line/         # 腳本（ready-to-shoot / done）
 ├── docs/contracts/             # 共享 schema（pipeline / lessons / todos / ...）
 ├── scripts/                    # ops CLI + utils + lint
-├── tests/                      # 503 cases pytest
+├── tests/                      # pytest suite（lint + JSON 一致性 + e2e、跑 `pytest tests/`）
 └── .github/workflows/rules-lint.yml   # Lint + pytest + validate-all
 ```
 
@@ -98,7 +98,7 @@ quickshot/
 ## 測試 + CI
 
 ```bash
-pytest tests/                                # 503 cases
+pytest tests/                                # 全部 pytest（lint + JSON + e2e）
 python scripts/lint/rules-lint.py --ci       # 跨檔 lint
 python scripts/lint/brand_ref_lint.py        # brand.md section 引用
 python scripts/ops/video-ops.py validate-all # JSON 一致性

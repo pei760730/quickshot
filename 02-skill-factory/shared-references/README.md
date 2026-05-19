@@ -22,7 +22,7 @@
 | `blood-bag-evaluation.md` | **血包三件套（A 段落驗證）**（Phase 5 從 interview-navigator/evals 抽出）| generation skill mode=interview | — |
 | `templates/hook-templates.md` | **17 條 H/HD 三秒金句模板**（Phase 2 從 hook-killer 降級）| generation 短文案輸出 + quality phase=check | — |
 | `title-rules.md` | **5 類心理觸發 + 5 條原則 + gotcha**（Phase 2 從 title-generator 降級）| generation 短文案輸出 + quality phase=check | personas/kai.md [1] 上游對齊 |
-| `skill-design-principles.md` | **Skill 該不該存在 / 該長什麼樣的設計準則**（A/B/C/D/E/F 六準則） | 新增 / 重設計 skill 時的 Claude / Kai | CLAUDE.md 禁令 #12 + skill-architecture-principles.md |
+| `skill-design-principles.md` | **Skill 該不該存在 / 該長什麼樣的設計準則**（A/B/C/D/E/F 六準則） | 新增 / 重設計 skill 時的 Claude / Kai | CLAUDE.md 禁令 #8（quickshot template；對應 KaiOS 禁令 #12）+ skill-architecture-principles.md |
 
 ---
 

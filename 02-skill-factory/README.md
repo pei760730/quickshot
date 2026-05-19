@@ -38,7 +38,7 @@
 - `docs/references/skill-architecture-principles.md` v1.3+ §vNext（必要能力 A-G + 失敗模式 F1-F7 + 5 核心 skill 推導）
 - `docs/references/skill-consolidation-map.md` v1.1+（14 → 5 完整對應 map）
 - `02-skill-factory/shared-references/skill-design-principles.md` v1.5+（A/B/C/D/E/F 六準則、F 為 4.7 mature 視角新增）
-- `CLAUDE.md` 禁令 #12（skill 成立 10 條件）
+- `CLAUDE.md` 禁令 #8（skill 成立 10 條件、quickshot template 編號；對應 KaiOS 禁令 #12）
 
 ---
 

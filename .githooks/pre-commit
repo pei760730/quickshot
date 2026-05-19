@@ -1,19 +1,21 @@
 #!/usr/bin/env bash
 # .githooks/pre-commit — territory check (agent-agnostic、本地版)
 #
-# 對齊 .github/workflows/territory-lint.yml v2 的白名單規則。
+# 來源：KaiOS-ContentSystem 雙 agent territory-lint。短期客戶 template 仍保留以便
+# Claude / Codex 分支白名單限制；CI 層的 territory-lint.yml 與 agent-collaboration.md
+# 已隨雙 agent 協作模組於 README 「砍掉的 3 大模組」一同退役。
 # 在 commit 前擋下違規、不浪費 push + CI 一輪。
 #
 # 適用場景：
-#   - Claude Code 在本機 commit
-#   - Codex CLI 在本機 commit
-#   - Kai 手動 commit
+#   - Claude Code 在本機 commit（claude/* 分支）
+#   - Codex CLI 在本機 commit（codex/* 分支、quickshot 預設不啟用）
+#   - Kai 手動 commit（非 claude/* / codex/* 分支不擋）
 #
 # 啟用方式（每個 clone 跑一次）：
 #   git config core.hooksPath .githooks
 #
 # 跳過方式（緊急、留 audit trail）：
-#   git commit --no-verify  # 不建議、territory-lint CI 還是會擋
+#   git commit --no-verify
 
 set -e
 
@@ -25,16 +27,16 @@ if [[ "$BRANCH" != claude/* && "$BRANCH" != codex/* ]]; then
   exit 0
 fi
 
-# 取本次 commit 的 staged 檔（含 deletions，與 territory-lint.yml CI 對齊）
-# 不加 --diff-filter；CI 用 `git diff --name-only` 無 filter、本地需一致
-# 否則「刪對方領土的檔」會本地放行、push 後 CI fail（PR #397 Codex review 指出）
+# 取本次 commit 的 staged 檔（含 deletions、與 KaiOS territory-lint.yml 對齊原則）
+# 不加 --diff-filter；保持與「刪對方領土的檔」也視為越界一致（PR #397 Codex review）
 CHANGED=$(git diff --cached --name-only)
 
 if [[ -z "$CHANGED" ]]; then
   exit 0
 fi
 
-# 白名單（對齊 .github/workflows/territory-lint.yml v2、必同步更新兩邊）
+# 白名單（quickshot short-term template 範圍；KaiOS 專屬 engine-manifest.json /
+# HOME.md / AGENTS.md / 00-control-center/ 保留 regex 為向後相容、本 template 無對應檔不會匹配）
 CLAUDE_OK='^(02-skill-factory/|\.claude/|CLAUDE\.md|CLAUDE\.local\.md|01-data-brain/|03-production-line/|07-changelog/|dashboard/|docs/|engine-manifest\.json|README\.md|HOME\.md|AGENTS\.md|\.githooks/|\.github/|00-control-center/|data/)'
 CODEX_OK='^(scripts/|tests/|data/|docs/contracts/|docs/references/|engine-manifest\.json|\.github/|AGENTS\.md|\.githooks/)'
 
@@ -62,10 +64,9 @@ if [[ -n "$violations" ]]; then
   echo ""
   echo "解法："
   echo "  1. 把越界的檔案 unstage、交給對方代理處理"
-  echo "  2. 或 commit 後在 PR body 寫 'territory override justified by: <原因>'（CI 會放行）"
-  echo "  3. 或臨時 bypass：git commit --no-verify（但 GitHub CI 仍會擋）"
+  echo "  2. 或臨時 bypass：git commit --no-verify"
   echo ""
-  echo "白名單來源：.github/workflows/territory-lint.yml + docs/contracts/agent-collaboration.md §9.3"
+  echo "白名單來源：本檔內 CLAUDE_OK / CODEX_OK regex（quickshot template 已無 CI 端 territory-lint）"
   exit 1
 fi
 
