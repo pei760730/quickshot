@@ -92,7 +92,7 @@ candidate skill 名字含以下字眼 → 高機率是補洞型：
 
 ### 條文
 
-新增 skill 前、過 `CLAUDE.md` 禁令 #7「硬化優先」三層自問：
+新增 skill 前、過 `CLAUDE.md` 禁令 #6「硬化優先」三層自問：
 
 | 層 | 自問 | 通過則 |
 |---|------|-------|
@@ -168,7 +168,7 @@ A/B/C/D 缺一不可。
 
 ---
 
-## 準則 E：能力 vs 規則 vs 模板 vs 工具的分層判斷（v1.2+、對應 CLAUDE.md 禁令 #12）
+## 準則 E：能力 vs 規則 vs 模板 vs 工具的分層判斷（v1.2+、對應 CLAUDE.md 禁令 #8）
 
 ### 條文
 
@@ -178,7 +178,7 @@ A/B/C/D 缺一不可。
 2. 是「**模板**」嗎？（task 寫 artifact 時 reference）→ 寫 `shared-references/templates/<name>.md`
 3. 是「**工具**」嗎？（呼叫式、有明確 input/output）→ 寫 `scripts/` + 在 skill 內呼叫
 4. 是「**Local workflow**」嗎？（單次 / 偶發、不跨 task 重用）→ 寫 `.claude/rules/workflow.md` 段落
-5. **以上四層都不是**、需要 AI 判斷 + 跨 task 重用 + 獨立邊界 + 過了 CLAUDE.md 禁令 #12 「skill 成立 10 條件」 → 才考慮 skill
+5. **以上四層都不是**、需要 AI 判斷 + 跨 task 重用 + 獨立邊界 + 過了 CLAUDE.md 禁令 #8 「skill 成立 10 條件」 → 才考慮 skill
 
 ### 為什麼這條準則
 
@@ -196,7 +196,7 @@ A/B/C/D 缺一不可。
 | `trend-adapter` Reels 解析 | 工具 | 同上 |
 | `metadata-completer`（已退役）| 工具 + hook | 已正確處理（CLI 接管）|
 
-### 正例（真 skill、過了準則 E + 禁令 #12）
+### 正例（真 skill、過了準則 E + 禁令 #8）
 
 | Skill | 為什麼是 skill |
 |-------|--------------|
@@ -240,7 +240,7 @@ A/B/C/D 守 skill **數量**邊界、**E 守 skill 層級**邊界。五準則互
 3. 能停留在「**command**」（`/X`、Kai 或 Claude 顯式呼叫）嗎？能就停。
 4. 能停留在「**shared-references 規則**」（內容 SSoT、skill 引用而非內化）嗎？能就停。
 
-四層**都不能停**、且符合 CLAUDE.md 禁令 #12「skill 成立 10 條件」、才升 skill。
+四層**都不能停**、且符合 CLAUDE.md 禁令 #8「skill 成立 10 條件」、才升 skill。
 
 ### 為什麼這條準則
 
@@ -275,7 +275,7 @@ A/B/C/D 守 skill **數量**邊界、**E 守 skill 層級**邊界。五準則互
 
 **處置**：vNext 5 → 觀察 1-2 月實踐命中率、再決定是否第二輪退役。**v1.4 不立即拆**、避免在剛 Phase 5 退役後再大重組。
 
-### Owner 對應（v1.5+、配 CLAUDE.md 禁令 #11 owner 分流 + workflow.md v2.24 §Adoption-gate）
+### Owner 對應（v1.5+；原 KaiOS 禁令 #11 owner 分流 + workflow.md v2.24 §Adoption-gate、quickshot template 未保留，概念合併進 workflow.md §設計原則 Mode Y 警告四階段）
 
 準則 F 的 4 層退場測試**還必須過 owner 過濾**：
 
@@ -307,7 +307,7 @@ A/B/C/D 守 skill **數量**邊界、**E 守 skill 層級**邊界。五準則互
 
 ### 實作層連動
 
-- CLAUDE.md 禁令 #12「skill 成立 10 條件」是準則 E 的硬化版（10 條件全符合才得進 skill 層）
+- CLAUDE.md 禁令 #8「skill 成立 10 條件」是準則 E 的硬化版（10 條件全符合才得進 skill 層）
 - 準則 E 是 10 條件的決策樹（先過 4 層降級、再考慮 10 條件）
 - `docs/references/skill-consolidation-map.md`（v1.2 新增）依準則 E 分類 14 個既有 skill 處置
 
