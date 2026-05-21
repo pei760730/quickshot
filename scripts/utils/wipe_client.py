@@ -139,7 +139,7 @@ def filter_lessons(lessons_data, operator, brand_name):
             continue
 
         text_blob = " ".join(
-            str(lesson.get(k, "")) for k in ("pattern", "counter_pattern", "title")
+            str(lesson.get(k, "")) for k in ("pattern", "counter_pattern")
         ).lower()
         matched = [kw for kw in keywords if kw and kw in text_blob]
         if matched:
@@ -163,14 +163,14 @@ def get_archive_count(project_root, operator):
         return 0
     try:
         d = json.loads(p.read_text(encoding="utf-8"))
-        if isinstance(d, list):
-            return len(d)
-        if isinstance(d, dict):
-            for key in ("items", "entries", "records", "archive"):
-                if isinstance(d.get(key), list):
-                    return len(d[key])
-    except Exception:
+    except json.JSONDecodeError:
+        print(
+            f"⚠️  hardening-archive.json parse failed for {operator}; reporting 0",
+            file=sys.stderr,
+        )
         return 0
+    if isinstance(d, dict) and isinstance(d.get("items"), list):
+        return len(d["items"])
     return 0
 
 
@@ -199,8 +199,11 @@ git checkout {tag}
 
 """
     src = p.read_text(encoding="utf-8")
-    # Insert before the first "---" separator (after intro block)
-    new = re.sub(r"^---\n", entry + "---\n", src, count=1, flags=re.MULTILINE)
+    new, count = re.subn(r"^---\n", entry + "---\n", src, count=1, flags=re.MULTILINE)
+    if count == 0:
+        # No --- separator (template state or reformatted): prepend so the
+        # wipe event is still recorded.
+        new = entry + src
     p.write_text(new, encoding="utf-8")
 
 
@@ -283,11 +286,19 @@ def execute_wipe(project_root, operator, dry_run, tag=None):
                 if sd.is_dir() and not any(sd.iterdir()):
                     sd.rmdir()
 
-    # 6. Delete root client-specific dirs
+    # 6. Delete root client-specific dirs (honor PRESERVE_FILENAMES — must
+    #    match gather_files_to_clear so dry-run preview cannot lie)
     for rel in ROOT_DIRS_DELETE:
         dpath = project_root / rel
         if dpath.is_dir():
-            shutil.rmtree(dpath)
+            for f in dpath.rglob("*"):
+                if f.is_file() and f.name not in PRESERVE_FILENAMES:
+                    f.unlink()
+            for sd in sorted(dpath.rglob("*"), reverse=True):
+                if sd.is_dir() and not any(sd.iterdir()):
+                    sd.rmdir()
+            if not any(dpath.iterdir()):
+                dpath.rmdir()
 
     # 7. Reset per-op data files
     op_dir = project_root / "data" / operator

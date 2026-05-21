@@ -583,7 +583,7 @@ def evaluate_pipeline_regression_guard(base_data, head_data):
 
 
 def check_pipeline_regression_guard(errors):
-    """Guard against stale branch overwrite regressions on kai sharded pipeline."""
+    """Guard against stale branch overwrite regressions on each operator's sharded pipeline."""
     event_name = os.getenv("GITHUB_EVENT_NAME", "")
     ref_name = os.getenv("GITHUB_REF_NAME", "")
     pr_body = os.getenv("PR_BODY", "")
@@ -595,29 +595,37 @@ def check_pipeline_regression_guard(errors):
     if event_name == "push" and ref_name == "main":
         return
 
-    try:
-        base_data = _read_pipeline_sharded_from_git("origin/main", operator="kai")
-    except Exception:
-        return
-    if base_data is None:
-        return
+    import sys
 
-    head_data, head_path = _read_pipeline_sharded_from_data_dir(
-        REPO_ROOT / "data" / "kai"
-    )
-    if head_data is None:
-        return
+    ops_lib_path = REPO_ROOT / "scripts" / "ops"
+    if str(ops_lib_path) not in sys.path:
+        sys.path.insert(0, str(ops_lib_path))
+    from lib.config import OPERATORS as _OPERATORS  # noqa: E402
 
-    for msg in evaluate_pipeline_regression_guard(base_data, head_data):
-        errors.append(
-            {
-                "file": str(head_path),
-                "line": 0,
-                "severity": "ERROR",
-                "check": "pipeline-regression-guard",
-                "message": msg.replace("❌ pipeline-regression-guard: ", ""),
-            }
+    for op_name in _OPERATORS:
+        try:
+            base_data = _read_pipeline_sharded_from_git("origin/main", operator=op_name)
+        except Exception:
+            continue
+        if base_data is None:
+            continue
+
+        head_data, head_path = _read_pipeline_sharded_from_data_dir(
+            REPO_ROOT / "data" / op_name
         )
+        if head_data is None:
+            continue
+
+        for msg in evaluate_pipeline_regression_guard(base_data, head_data):
+            errors.append(
+                {
+                    "file": str(head_path),
+                    "line": 0,
+                    "severity": "ERROR",
+                    "check": "pipeline-regression-guard",
+                    "message": msg.replace("❌ pipeline-regression-guard: ", ""),
+                }
+            )
 
 
 def check_registry_completeness(registry, errors):
@@ -845,17 +853,6 @@ def check_skill_stub_readme_version_sync(errors):
                     )
 
 
-def check_ai_patterns_warnings(errors):
-    """Skip AI-pattern warnings for ready-to-shoot drafts.
-
-    The ready-to-shoot tree is Kai's script preparation area. Its filming notes,
-    rhythm markers, and script guides intentionally use formatting that can look
-    like deterministic AI-writing residue, so aggregate rules-lint should not
-    apply online-quality AI artifact checks there.
-    """
-    return
-
-
 def check_skill_io_contract(errors):
     """Run skill-io lint and merge findings."""
     script = REPO_ROOT / "scripts" / "lint" / "skill-io-lint.py"
@@ -982,7 +979,6 @@ def main():
     check_skill_stub_readme_version_sync(all_errors)
     check_skill_io_contract(all_errors)
     check_brand_ref_contract(all_errors)
-    check_ai_patterns_warnings(all_errors)
     check_legacy_lesson_stage_usage(all_errors)
 
     # Output

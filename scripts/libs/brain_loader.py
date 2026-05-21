@@ -47,8 +47,8 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def _operator_data_dir(operator: str) -> Path:
-    root = _repo_root()
+def _operator_data_dir(operator: str, root: Path | None = None) -> Path:
+    root = root or _repo_root()
     operators_json = root / "data" / ".operators.json"
     if operators_json.exists():
         try:
@@ -65,7 +65,9 @@ def _operator_data_dir(operator: str) -> Path:
     return root / "data" / operator
 
 
-def _persona_files_for_operator(operator: str) -> tuple[str, str]:
+def _persona_files_for_operator(
+    operator: str, root: Path | None = None
+) -> tuple[str, str]:
     """Resolve (primary, partner) persona filenames for given operator.
 
     Reads `data/.operators.json` operator config keys:
@@ -77,7 +79,7 @@ def _persona_files_for_operator(operator: str) -> tuple[str, str]:
     their operator config to use their own creator name.
     """
     primary, partner = "kai.md", "an.md"
-    root = _repo_root()
+    root = root or _repo_root()
     operators_json = root / "data" / ".operators.json"
     if not operators_json.exists():
         return primary, partner
