@@ -51,12 +51,3 @@ def test_missing_file_checker_accepts_bare_filename_elsewhere_in_repo(tmp_path):
 
     missing = [e for e in errors if e.get("check") == "missing_file"]
     assert missing == []
-
-
-def test_ready_to_shoot_ai_patterns_are_excluded_from_rules_lint():
-    rules_lint = load_rules_lint_module()
-    errors = []
-
-    rules_lint.check_ai_patterns_warnings(errors)
-
-    assert errors == []

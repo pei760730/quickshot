@@ -158,22 +158,12 @@ def compute_cases_health(cases_path: Path) -> Optional[CasesHealth]:
 
 
 def _persona_files_for_operator(root: Path, operator: str) -> tuple[str, str]:
-    """Resolve (primary, partner) persona filenames for operator.
-
-    Delegates to brain_loader._persona_files_for_operator with a temporarily
-    swapped _repo_root so the call reads `<root>/data/.operators.json`.
-    """
     libs_path = PROJECT_ROOT / "scripts" / "libs"
     if str(libs_path) not in sys.path:
         sys.path.insert(0, str(libs_path))
     import brain_loader  # type: ignore
 
-    original = brain_loader._repo_root
-    brain_loader._repo_root = lambda: root
-    try:
-        return brain_loader._persona_files_for_operator(operator)
-    finally:
-        brain_loader._repo_root = original
+    return brain_loader._persona_files_for_operator(operator, root=root)
 
 
 def compute_personas_health(root: Path, operator: str) -> PersonasHealth:
@@ -210,21 +200,21 @@ def compute_operators_health(operators_json: Path) -> OperatorsHealth:
 
 
 def compute_pipeline_health(data_dir: Path) -> PipelineHealth:
-    pipeline_json = data_dir / "pipeline.json"
-    if not pipeline_json.exists():
-        return PipelineHealth(items_total=0, by_status={})
-    try:
-        data = json.loads(pipeline_json.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return PipelineHealth(items_total=0, by_status={})
-    items = data.get("items", []) if isinstance(data, dict) else []
+    items_dir = data_dir / "pipeline" / "items"
     by_status: dict[str, int] = {}
-    for item in items:
-        if not isinstance(item, dict):
-            continue
-        s = item.get("status", "unknown")
-        by_status[s] = by_status.get(s, 0) + 1
-    return PipelineHealth(items_total=len(items), by_status=by_status)
+    items_total = 0
+    if items_dir.is_dir():
+        for p in sorted(items_dir.glob("*.json")):
+            try:
+                item = json.loads(p.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(item, dict):
+                continue
+            items_total += 1
+            s = item.get("status", "unknown")
+            by_status[s] = by_status.get(s, 0) + 1
+    return PipelineHealth(items_total=items_total, by_status=by_status)
 
 
 def compute_lessons_health(data_dir: Path) -> LessonsHealth:

@@ -206,16 +206,12 @@ class TestPipelineHealth:
 
     def test_status_counts(self, tmp_path):
         d = tmp_path / "op"
-        d.mkdir()
-        data = {
-            "items": [
-                {"status": "inbox"},
-                {"status": "已上線"},
-                {"status": "已上線"},
-                {"status": "剪輯中"},
-            ]
-        }
-        (d / "pipeline.json").write_text(json.dumps(data), encoding="utf-8")
+        items_dir = d / "pipeline" / "items"
+        items_dir.mkdir(parents=True)
+        for i, status in enumerate(["inbox", "已上線", "已上線", "剪輯中"]):
+            (items_dir / f"item-{i}.json").write_text(
+                json.dumps({"status": status}), encoding="utf-8"
+            )
         h = compute_pipeline_health(d)
         assert h.items_total == 4
         assert h.by_status == {"inbox": 1, "已上線": 2, "剪輯中": 1}
