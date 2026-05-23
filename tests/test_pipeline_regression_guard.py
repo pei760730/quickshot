@@ -1,5 +1,3 @@
-import pytest
-
 from tests.path_bootstrap import load_rules_lint_module
 
 rules_lint = load_rules_lint_module("rules_lint_pipeline_guard")

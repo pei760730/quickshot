@@ -109,20 +109,19 @@ git push -u origin restore-longbro
 | `03-production-line/02-ready-to-shoot/*` | 清空 |
 | `03-production-line/03-done/*` | 清空 |
 | `00-control-center/` | 整 dir 刪（KaiOS 殘留待辦 / 報告）|
-| `data/{op}/pipeline.json` | 回 `data/template/pipeline.json` |
+| `data/{op}/pipeline/` | 回 `data/template/pipeline/`（sharded SSoT；legacy 單檔 `pipeline.json` 已被 `.gitignore` 防誤建）|
 | `data/{op}/todos.json` | 回 `data/template/todos.json` |
 | `data/{op}/performance-patterns.json` | 回 template（client-specific 統計、跨客戶污染）|
 | `data/{op}/brand-monitor.json` | 回 template |
 | `data/{op}/social-followers.json` | 回 template |
 | `data/{op}/topic-history.json` | 回 template |
-| `data/{op}/pipeline/` | 回 `data/template/pipeline/` |
 | `data/.operators.json` | 移除該 operator entry |
 
 ### 過濾的（保留檔、過濾條目）
 
 | 路徑 | 過濾條件 |
 |------|---------|
-| `data/{op}/lessons.json` | 保 `stage=hardened` 且 pattern/counter_pattern/title 不含 operator/brand 名的條目；其餘砍 |
+| `data/{op}/lessons.json` | 保 `stage=hardened` 且 pattern/counter_pattern 不含 operator/brand 名的條目；其餘砍 |
 
 ### 完全保留的
 

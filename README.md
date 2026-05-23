@@ -37,7 +37,7 @@ quickshot/
 │   ├── rules/workflow.md       # 對話開頭檢查 + 設計原則 + 冷啟動萃取
 │   ├── rules/permissions.md    # 受保護路徑
 │   ├── hooks/session-start.sh  # 品牌速查注入
-│   ├── commands/{harden,scan}.md
+│   ├── commands/{init,check,harden,scan}.md
 │   └── settings.json           # deny list 保護 CLAUDE.md / .claude/**
 │
 ├── 01-data-brain/              # 品牌知識
@@ -49,7 +49,7 @@ quickshot/
 ├── data/
 │   ├── .operators.json         # operator 註冊
 │   ├── {operator}/             # 每 operator 一個 dir（在 data/.operators.json 註冊後建立）
-│   │   ├── pipeline.json       # 狀態 SSoT
+│   │   ├── pipeline/           # 狀態 SSoT（sharded：_meta.json + items/VID-NNN.json）
 │   │   ├── lessons.json        # 學習 lessons
 │   │   ├── todos.json          # 待辦
 │   │   └── hardening-archive.json

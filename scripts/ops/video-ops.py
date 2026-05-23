@@ -1098,7 +1098,6 @@ def _load_vid_inference_entries(log_path: Path):
 
 
 def _cmd_vid_inference_stats():
-    kv = _parse_kv_args(sys.argv, start=2)
     log_path = PROJECT_ROOT / "data/.adoption-stats/vid_inference.jsonl"
     rows = _load_vid_inference_entries(log_path)
     today = datetime.utcnow().date()

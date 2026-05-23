@@ -1,7 +1,5 @@
 """Tests for save_script command and backfill verifier accuracy comparison."""
 
-from pathlib import Path
-
 import pytest
 from conftest import make_video, write_sharded_pipeline
 from path_bootstrap import load_video_ops_module
@@ -23,8 +21,20 @@ def _pipeline_with_meta(videos, next_vid=2):
             "valid_title_types": ["T1", "T2", "T3", "T4", "T5"],
             "valid_hook_types": ["D1", "D2", "D3", "B1", "B2", "B3"],
             "valid_versions": [
-                "A1", "A2", "A3", "B1", "B2", "B3",
-                "C1", "C2", "C3", "D1", "D2", "D3", "D4", "D5",
+                "A1",
+                "A2",
+                "A3",
+                "B1",
+                "B2",
+                "B3",
+                "C1",
+                "C2",
+                "C3",
+                "D1",
+                "D2",
+                "D3",
+                "D4",
+                "D5",
             ],
             "valid_verifier_predictions": ["high", "normal", "low"],
         },
@@ -42,7 +52,6 @@ def _pipeline_with_trace_required(videos, trace_required_statuses, next_vid=2):
 
 
 class TestSaveScript:
-
     def test_save_success(self, patch_paths):
         from lib.pipeline import load_tracking, save_script
 
@@ -54,7 +63,8 @@ class TestSaveScript:
 
         data = load_tracking()
         ok, msg = save_script(
-            data, "VID-001",
+            data,
+            "VID-001",
             script_path="03-production-line/02-ready-to-shoot/test.md",
             title_type="T3",
             hook_type="B2",
@@ -84,7 +94,8 @@ class TestSaveScript:
 
         data = load_tracking()
         ok, msg = save_script(
-            data, "VID-001",
+            data,
+            "VID-001",
             script_path="test.md",
             title_type="T3",
             hook_type="B2",
@@ -104,7 +115,8 @@ class TestSaveScript:
 
         data = load_tracking()
         ok, msg = save_script(
-            data, "VID-001",
+            data,
+            "VID-001",
             script_path="test.md",
             title_type="X9",
             hook_type="B2",
@@ -124,7 +136,8 @@ class TestSaveScript:
 
         data = load_tracking()
         ok, msg = save_script(
-            data, "VID-001",
+            data,
+            "VID-001",
             script_path="test.md",
             title_type="T3",
             hook_type="B2",
@@ -144,7 +157,8 @@ class TestSaveScript:
 
         data = load_tracking()
         ok, msg = save_script(
-            data, "VID-001",
+            data,
+            "VID-001",
             script_path="test.md",
             title_type="T3",
             hook_type="X1",
@@ -164,7 +178,8 @@ class TestSaveScript:
 
         data = load_tracking()
         ok, msg = save_script(
-            data, "VID-001",
+            data,
+            "VID-001",
             script_path="test.md",
             title_type="T3",
             hook_type="B2",
@@ -183,7 +198,8 @@ class TestSaveScript:
 
         data = load_tracking()
         ok, msg = save_script(
-            data, "VID-999",
+            data,
+            "VID-999",
             script_path="test.md",
             title_type="T3",
             hook_type="B2",
@@ -214,7 +230,8 @@ class TestSaveScript:
             "persona_deviation_score": 3,
         }
         ok, msg = save_script(
-            data, "VID-001",
+            data,
+            "VID-001",
             script_path="test.md",
             title_type="T3",
             hook_type="B2",
@@ -240,7 +257,8 @@ class TestSaveScript:
 
         data = load_tracking()
         ok, msg = save_script(
-            data, "VID-001",
+            data,
+            "VID-001",
             script_path="test.md",
             title_type="T3",
             hook_type="B2",
@@ -258,21 +276,31 @@ class TestSaveCliTraceFlag:
         data = _pipeline_with_meta([v])
         write_sharded_pipeline(patch_paths / "data" / "kai", data)
 
-    def test_save_with_trace_flag_writes_generation_trace(self, monkeypatch, patch_paths):
+    def test_save_with_trace_flag_writes_generation_trace(
+        self, monkeypatch, patch_paths
+    ):
         self._write_pipeline(patch_paths)
         video_ops = load_video_ops_module()
         from lib.pipeline import load_tracking
+
         ctx = {"data": load_tracking(), "op_paths": {"operator": "kai"}}
         monkeypatch.setattr(
             video_ops.sys,
             "argv",
             [
-                "video-ops.py", "save", "VID-001",
-                "--script-path", "03-production-line/02-ready-to-shoot/test.md",
-                "--title-type", "T3",
-                "--hook-type", "B2",
-                "--version", "B2",
-                "--verifier-prediction", "high",
+                "video-ops.py",
+                "save",
+                "VID-001",
+                "--script-path",
+                "03-production-line/02-ready-to-shoot/test.md",
+                "--title-type",
+                "T3",
+                "--hook-type",
+                "B2",
+                "--version",
+                "B2",
+                "--verifier-prediction",
+                "high",
                 "--trace",
                 '{"skill_used":"flow-operator","skill_version":"1.50","generated_at":"2026-04-25","title_type":"T3","hook_type":"B2","version_chosen":"D","patterns_injected":["B2"]}',
             ],
@@ -284,17 +312,25 @@ class TestSaveCliTraceFlag:
         self._write_pipeline(patch_paths)
         video_ops = load_video_ops_module()
         from lib.pipeline import load_tracking
+
         ctx = {"data": load_tracking(), "op_paths": {"operator": "kai"}}
         monkeypatch.setattr(
             video_ops.sys,
             "argv",
             [
-                "video-ops.py", "save", "VID-001",
-                "--script-path", "03-production-line/02-ready-to-shoot/test.md",
-                "--title-type", "T3",
-                "--hook-type", "B2",
-                "--version", "B2",
-                "--verifier-prediction", "high",
+                "video-ops.py",
+                "save",
+                "VID-001",
+                "--script-path",
+                "03-production-line/02-ready-to-shoot/test.md",
+                "--title-type",
+                "T3",
+                "--hook-type",
+                "B2",
+                "--version",
+                "B2",
+                "--verifier-prediction",
+                "high",
             ],
         )
         with pytest.raises(SystemExit) as exc:
@@ -305,42 +341,61 @@ class TestSaveCliTraceFlag:
         self._write_pipeline(patch_paths)
         video_ops = load_video_ops_module()
         from lib.pipeline import load_tracking
+
         ctx = {"data": load_tracking(), "op_paths": {"operator": "kai"}}
         monkeypatch.setattr(
             video_ops.sys,
             "argv",
             [
-                "video-ops.py", "save", "VID-001",
-                "--script-path", "03-production-line/02-ready-to-shoot/test.md",
-                "--title-type", "T3",
-                "--hook-type", "B2",
-                "--version", "B2",
-                "--verifier-prediction", "high",
-                "--trace", "{bad-json",
+                "video-ops.py",
+                "save",
+                "VID-001",
+                "--script-path",
+                "03-production-line/02-ready-to-shoot/test.md",
+                "--title-type",
+                "T3",
+                "--hook-type",
+                "B2",
+                "--version",
+                "B2",
+                "--verifier-prediction",
+                "high",
+                "--trace",
+                "{bad-json",
             ],
         )
         with pytest.raises(SystemExit) as exc:
             video_ops._cmd_save(ctx)
         assert exc.value.code == 1
 
-    def test_save_requires_trace_on_first_save_when_status_is_enforced(self, monkeypatch, patch_paths, capsys):
+    def test_save_requires_trace_on_first_save_when_status_is_enforced(
+        self, monkeypatch, patch_paths, capsys
+    ):
         v = make_video(vid="VID-001", status="待拍")
         data = _pipeline_with_trace_required([v], ["待拍"])
         write_sharded_pipeline(patch_paths / "data" / "kai", data)
 
         video_ops = load_video_ops_module()
         from lib.pipeline import load_tracking
+
         ctx = {"data": load_tracking(), "op_paths": {"operator": "kai"}}
         monkeypatch.setattr(
             video_ops.sys,
             "argv",
             [
-                "video-ops.py", "save", "VID-001",
-                "--script-path", "03-production-line/02-ready-to-shoot/test.md",
-                "--title-type", "T3",
-                "--hook-type", "B2",
-                "--version", "B2",
-                "--verifier-prediction", "high",
+                "video-ops.py",
+                "save",
+                "VID-001",
+                "--script-path",
+                "03-production-line/02-ready-to-shoot/test.md",
+                "--title-type",
+                "T3",
+                "--hook-type",
+                "B2",
+                "--version",
+                "B2",
+                "--verifier-prediction",
+                "high",
             ],
         )
         with pytest.raises(SystemExit) as exc:
@@ -349,7 +404,9 @@ class TestSaveCliTraceFlag:
         out = capsys.readouterr().out
         assert "trace 必填、見 generation SKILL.md §Output Contract" in out
 
-    def test_save_rejects_followup_without_trace_even_when_trace_already_exists(self, monkeypatch, patch_paths):
+    def test_save_rejects_followup_without_trace_even_when_trace_already_exists(
+        self, monkeypatch, patch_paths
+    ):
         v = make_video(vid="VID-001", status="待拍")
         v["generation_trace"] = {
             "skill_used": "flow-operator",
@@ -365,17 +422,25 @@ class TestSaveCliTraceFlag:
 
         video_ops = load_video_ops_module()
         from lib.pipeline import load_tracking
+
         ctx = {"data": load_tracking(), "op_paths": {"operator": "kai"}}
         monkeypatch.setattr(
             video_ops.sys,
             "argv",
             [
-                "video-ops.py", "save", "VID-001",
-                "--script-path", "03-production-line/02-ready-to-shoot/test.md",
-                "--title-type", "T3",
-                "--hook-type", "B2",
-                "--version", "B2",
-                "--verifier-prediction", "high",
+                "video-ops.py",
+                "save",
+                "VID-001",
+                "--script-path",
+                "03-production-line/02-ready-to-shoot/test.md",
+                "--title-type",
+                "T3",
+                "--hook-type",
+                "B2",
+                "--version",
+                "B2",
+                "--verifier-prediction",
+                "high",
             ],
         )
         with pytest.raises(SystemExit) as exc:
@@ -387,7 +452,6 @@ class TestSaveCliTraceFlag:
 
 
 class TestVerifierAccuracy:
-
     def test_backfill_compares_verifier_prediction_match(self, patch_paths):
         from lib.pipeline import load_tracking
         from lib.backfill import backfill_video
@@ -400,8 +464,11 @@ class TestVerifierAccuracy:
 
         data = load_tracking()
         ok, msg, result = backfill_video(
-            data, "VID-001",
-            views=500000, retention_3s=80, completion_rate=50,
+            data,
+            "VID-001",
+            views=500000,
+            retention_3s=80,
+            completion_rate=50,
         )
         assert ok
         assert "verifier_accuracy" in result
@@ -421,8 +488,11 @@ class TestVerifierAccuracy:
 
         data = load_tracking()
         ok, msg, result = backfill_video(
-            data, "VID-001",
-            views=1000, retention_3s=30, completion_rate=10,
+            data,
+            "VID-001",
+            views=1000,
+            retention_3s=30,
+            completion_rate=10,
         )
         assert ok
         assert "verifier_accuracy" in result
@@ -442,8 +512,11 @@ class TestVerifierAccuracy:
 
         data = load_tracking()
         ok, msg, result = backfill_video(
-            data, "VID-001",
-            views=1000, retention_3s=50, completion_rate=25,
+            data,
+            "VID-001",
+            views=1000,
+            retention_3s=50,
+            completion_rate=25,
         )
         assert ok
         assert "verifier_accuracy" not in result

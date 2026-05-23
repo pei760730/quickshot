@@ -92,7 +92,7 @@
 | 命令 | 用法 | 說明 |
 |------|------|------|
 | `list-topics` | `list-topics` | 列出已佔用主題（去重用） |
-| `validate` | `validate` | 驗證 pipeline.json schema |
+| `validate` | `validate` | 驗證 pipeline schema（sharded：`_meta.json` + items）|
 | `validate-all` | `validate-all` | 跨檔驗證（含 performance-patterns） |
 | `migrate` | `migrate` | 自動補齊缺失欄位 |
 | `renumber` | `renumber` | 重新編號 VID |

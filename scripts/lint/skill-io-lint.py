@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import re
-import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -53,17 +52,23 @@ def _parse_contract() -> dict:
 
         if header and "field" in " ".join(header) and "required" in " ".join(header):
             req_idx = next((i for i, h in enumerate(header) if "required" in h), 2)
-            field_idx = next((i for i, h in enumerate(header) if "field" in h or "欄位" in h), 0)
+            field_idx = next(
+                (i for i, h in enumerate(header) if "field" in h or "欄位" in h), 0
+            )
             required = (row[req_idx] if len(row) > req_idx else "").strip().lower()
             field = row[field_idx].strip()
-            if required in {"yes", "y", "required", "必填", "✅"} and re.fullmatch(r"[a-z_][a-z0-9_]*", field):
+            if required in {"yes", "y", "required", "必填", "✅"} and re.fullmatch(
+                r"[a-z_][a-z0-9_]*", field
+            ):
                 spec["frontmatter_required"].append(field)
             continue
 
         if re.fullmatch(r"[a-z][a-z0-9\-]+", row[0].strip()):
             skill = row[0].strip()
             sections_blob = row[1] if len(row) >= 2 else ""
-            sections = [x.strip(" `") for x in re.split(r"[+,，、]", sections_blob) if x.strip()]
+            sections = [
+                x.strip(" `") for x in re.split(r"[+,，、]", sections_blob) if x.strip()
+            ]
             if sections:
                 spec["sections_by_skill"][skill] = sections
 
@@ -126,63 +131,75 @@ def _lint_output_contract_sections(rule_ids: set[str]) -> list[dict]:
     if check_generation:
         skill_file = REPO_ROOT / SKILL_FILE_MAP["generation"]
         if not skill_file.exists():
-            errors.append({
-                "file": str(skill_file),
-                "line": 1,
-                "severity": "ERROR",
-                "check": "output_contract_section_present",
-                "message": f"generation missing SKILL.md: {SKILL_FILE_MAP['generation']}",
-            })
+            errors.append(
+                {
+                    "file": str(skill_file),
+                    "line": 1,
+                    "severity": "ERROR",
+                    "check": "output_contract_section_present",
+                    "message": f"generation missing SKILL.md: {SKILL_FILE_MAP['generation']}",
+                }
+            )
         else:
             content = skill_file.read_text(encoding="utf-8", errors="ignore")
             heading_ok, section = _extract_output_contract_section(content)
             if not heading_ok:
-                errors.append({
-                    "file": str(skill_file),
-                    "line": 1,
-                    "severity": "ERROR",
-                    "check": "output_contract_section_present",
-                    "message": "generation missing heading: ## Output Contract",
-                })
+                errors.append(
+                    {
+                        "file": str(skill_file),
+                        "line": 1,
+                        "severity": "ERROR",
+                        "check": "output_contract_section_present",
+                        "message": "generation missing heading: ## Output Contract",
+                    }
+                )
             elif "--skill generation" not in section or "--mode" not in section:
-                errors.append({
-                    "file": str(skill_file),
-                    "line": 1,
-                    "severity": "ERROR",
-                    "check": "output_contract_section_present",
-                    "message": "generation Output Contract must mention --skill generation and --mode",
-                })
+                errors.append(
+                    {
+                        "file": str(skill_file),
+                        "line": 1,
+                        "severity": "ERROR",
+                        "check": "output_contract_section_present",
+                        "message": "generation Output Contract must mention --skill generation and --mode",
+                    }
+                )
 
     if check_quality:
         skill_file = REPO_ROOT / SKILL_FILE_MAP["quality"]
         if not skill_file.exists():
-            errors.append({
-                "file": str(skill_file),
-                "line": 1,
-                "severity": "ERROR",
-                "check": "quality_output_contract_present",
-                "message": f"quality missing SKILL.md: {SKILL_FILE_MAP['quality']}",
-            })
+            errors.append(
+                {
+                    "file": str(skill_file),
+                    "line": 1,
+                    "severity": "ERROR",
+                    "check": "quality_output_contract_present",
+                    "message": f"quality missing SKILL.md: {SKILL_FILE_MAP['quality']}",
+                }
+            )
             return errors
 
         content = skill_file.read_text(encoding="utf-8", errors="ignore")
         heading_ok, section = _extract_output_contract_section(content)
         if not heading_ok:
-            errors.append({
-                "file": str(skill_file),
-                "line": 1,
-                "severity": "ERROR",
-                "check": "quality_output_contract_present",
-                "message": "quality missing heading: ## Output Contract",
-            })
+            errors.append(
+                {
+                    "file": str(skill_file),
+                    "line": 1,
+                    "severity": "ERROR",
+                    "check": "quality_output_contract_present",
+                    "message": "quality missing heading: ## Output Contract",
+                }
+            )
         elif "record-verifier-scores" not in section or "phase=check" not in content:
-            errors.append({
-                "file": str(skill_file),
-                "line": 1,
-                "severity": "ERROR",
-                "check": "quality_output_contract_present",
-                "message": "quality Output Contract must mention record-verifier-scores and phase=check",
-            })
+            errors.append(
+                {
+                    "file": str(skill_file),
+                    "line": 1,
+                    "severity": "ERROR",
+                    "check": "quality_output_contract_present",
+                    "message": "quality Output Contract must mention record-verifier-scores and phase=check",
+                }
+            )
     return errors
 
 
@@ -197,26 +214,30 @@ def run_lint() -> list[dict]:
             continue
         for field in spec["frontmatter_required"]:
             if not front.get(field):
-                errors.append({
-                    "file": str(path),
-                    "line": 1,
-                    "severity": "ERROR",
-                    "check": "skill_io_frontmatter",
-                    "message": f"missing required frontmatter field: {field}",
-                })
+                errors.append(
+                    {
+                        "file": str(path),
+                        "line": 1,
+                        "severity": "ERROR",
+                        "check": "skill_io_frontmatter",
+                        "message": f"missing required frontmatter field: {field}",
+                    }
+                )
         skill = front.get("skill")
         if not skill:
             continue
         sections = _extract_sections(text)
         for sec in spec["sections_by_skill"].get(skill, []):
             if sec not in sections:
-                errors.append({
-                    "file": str(path),
-                    "line": start_line,
-                    "severity": "ERROR",
-                    "check": "skill_io_sections",
-                    "message": f"missing required section for {skill}: {sec}",
-                })
+                errors.append(
+                    {
+                        "file": str(path),
+                        "line": start_line,
+                        "severity": "ERROR",
+                        "check": "skill_io_sections",
+                        "message": f"missing required section for {skill}: {sec}",
+                    }
+                )
     errors.extend(_lint_output_contract_sections(rule_ids))
     return errors
 
@@ -225,7 +246,9 @@ def main() -> int:
     issues = run_lint()
     if issues:
         for i in issues:
-            print(f"[{i['severity']}] {i['file']}:{i['line']} {i['check']} - {i['message']}")
+            print(
+                f"[{i['severity']}] {i['file']}:{i['line']} {i['check']} - {i['message']}"
+            )
         return 1
     print("✅ skill-io lint passed")
     return 0
