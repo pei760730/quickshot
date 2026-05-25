@@ -481,7 +481,6 @@ Claude 萃取的候選 vs Kai 標 ✅ 採用的比例
 | `驗證：[腳本]` | quality skill phase=check（5 項驗證）|
 | `語音筆記` | 附音檔 → 自動分流（→ `production-details.md`） |
 | `複製贏家：VID-NNN` | 高表現公式複製（→ `production-details.md`） |
-| `週報` | weekly-report |
 | `看漏斗` | pipeline-stats |
 | `記錯：XXX` | 錯誤記憶（→ `system-maintenance.md`）→ 寫入 `data/{operator}/lessons.json`（origin=`mistake`） |
 | `看偏差` | analyze-deviations |
