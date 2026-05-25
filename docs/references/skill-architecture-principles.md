@@ -160,7 +160,7 @@ lesson 還是 soft、CI gate 已硬化、規則層**繞過** lesson 層直接落
 | 能力 | 目前狀態 | 4.6 為何沒做 | 4.7 是否該做 |
 |------|---------|-------------|-------------|
 | **策略層**：Kai 這週該拍什麼？月主題？季方向？ | 0 skill、Kai 自己想 | 4.6 對長期策略推理不穩、不敢做 | 該、`series-engine` 是單一系列、缺月度規劃 |
-| **Series-level retrospective**：這 5 支同類影片表現規律是什麼？ | 0 skill、靠 weekly-report 看單支 | 4.6 跨多支推理容易 hallucinate | 該、4.7 能 hold 5+ VID 同時推理 |
+| **Series-level retrospective**：這 5 支同類影片表現規律是什麼？ | 0 skill、靠回填按單支看成效 | 4.6 跨多支推理容易 hallucinate | 該、4.7 能 hold 5+ VID 同時推理 |
 | **Hook 失敗反事實**：為什麼 D3 hook 在某類題反覆失敗？ | 0 skill、靠 hook-killer 自我介紹 | 4.6 因果推理弱、只能列模式 | 該、4.7 能做反事實（"如果換 D5、會不會好"） |
 | **品牌動向偵測**：競品最近策略變化、品牌該如何回應？ | 0 skill、`trend-adapter` 拆爆紅 Reels（不是策略層）| 4.6 對外部資訊整合弱 | 該、但需 web 工具支援、目前架構未必 ready |
 
