@@ -132,7 +132,7 @@ candidate skill 名字含以下字眼 → 高機率是補洞型：
 
 1. **Kai 重複手動做的事**：哪些工作 Kai 每週 / 每月反覆做、目前 0 系統支援？
 2. **隱性能力缺口**：哪些能力 4.6 推理力下不敢做（容易 hallucinate / 因果推理弱 / 跨多支推理不穩）、但 4.7 能 hold 住？
-3. **跨多 VID 的 pattern 識別**：目前 weekly-report 看單支、有沒有「跨 N 支同類影片表現規律」這種 series-level 分析需求？
+3. **跨多 VID 的 pattern 識別**：目前回填只按單支累積成效（performance-patterns）、有沒有「跨 N 支同類影片表現規律」這種 series-level 分析需求？
 4. **策略層工作**：Kai 想「這週該拍什麼 / 月主題 / 季方向」時、有沒有 skill 支援？
 
 ### 識別失敗的反例

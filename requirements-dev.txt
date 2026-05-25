@@ -6,7 +6,7 @@
 #   - Local dev / Codex worktree        → same command as above
 #
 # Adding / removing a tool? Update this file only.
-# Track new file in `engine-manifest.json` internal_files when adding new SSoT files.
+# (short-term template has no engine-manifest.json — that KaiOS tracking file was not ported here.)
 
 pytest>=8.0
 ruff>=0.5

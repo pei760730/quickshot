@@ -1,7 +1,7 @@
 # quickshot — 短期客戶短影音生產 template
 
 > AI 驅動的短影音內容生產系統、**短期客戶（≤30 天驗證型）精簡版**。
-> version: 1.0 (short-term template) | last_updated: 2026-05-17
+> version: 1.0 (short-term template) | last_updated: 2026-05-24
 
 ## 用途
 
@@ -49,7 +49,7 @@ quickshot/
 ├── data/
 │   ├── .operators.json         # operator 註冊
 │   ├── {operator}/             # 每 operator 一個 dir（在 data/.operators.json 註冊後建立）
-│   │   ├── pipeline.json       # 狀態 SSoT
+│   │   ├── pipeline/           # 狀態 SSoT（sharded：_meta.json + items/*.json、見 docs/contracts/pipeline-schema.md；legacy 單檔 pipeline.json 已退役、.gitignore 防誤建）
 │   │   ├── lessons.json        # 學習 lessons
 │   │   ├── todos.json          # 待辦
 │   │   └── hardening-archive.json
