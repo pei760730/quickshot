@@ -1,0 +1,9 @@
+{
+  "territories": {
+    "codex": {
+      "branch_prefixes": ["codex/"],
+      "allow": ["scripts/**", "tests/**", ".github/workflows/**", ".github/agent-territory.json"],
+      "deny": ["CLAUDE.md", "CLAUDE.local.md", ".claude/**", "docs/contracts/**", "01-data-brain/**", "data/**", "scripts/lint/rules-lint.py"]
+    }
+  }
+}

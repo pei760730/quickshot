@@ -8,6 +8,14 @@
 
 ---
 
+## feat(ci): 領土白名單 CI（2026-06-04）
+
+**主題：🔧 Codex territory whitelist hard gate**
+
+- 新增 agent branch 路徑白名單 lint、CI workflow 與單元測試，讓 Codex PR 改到 territory 外路徑時直接 fail 並列出越界檔案。
+
+---
+
 ## wipe: longbro client ended (2026-05-17)
 
 **主題：🧹 短期客戶 longbro 結束、repo 清回 template 狀態**

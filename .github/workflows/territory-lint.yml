@@ -1,0 +1,22 @@
+name: Territory Lint
+
+on: pull_request
+
+jobs:
+  territory-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fetch base branch
+        run: git fetch origin ${{ github.base_ref }}
+
+      - name: Run territory whitelist lint
+        run: python scripts/lint/territory-lint.py --base origin/${{ github.base_ref }} --branch ${{ github.head_ref }}
