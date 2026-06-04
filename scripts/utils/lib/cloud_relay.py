@@ -68,7 +68,7 @@ def _get_github_token():
         import subprocess
         result = subprocess.run(
             ["git", "remote", "get-url", "github"],
-            capture_output=True, text=True, cwd=PROJECT_ROOT
+            capture_output=True, text=True, encoding="utf-8", cwd=PROJECT_ROOT
         )
         url = result.stdout.strip()
         if "@github.com" in url and "//" in url:
@@ -100,7 +100,7 @@ def _get_current_branch():
         import subprocess
         result = subprocess.run(
             ["git", "branch", "--show-current"],
-            capture_output=True, text=True, cwd=PROJECT_ROOT
+            capture_output=True, text=True, encoding="utf-8", cwd=PROJECT_ROOT
         )
         return result.stdout.strip() or "main"
     except Exception:
@@ -143,7 +143,7 @@ def trigger_github_sync_via_push(operator=None):
         )
         result = subprocess.run(
             ["git", "push", "-u", "origin", ref],
-            cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=30
+            cwd=PROJECT_ROOT, capture_output=True, text=True, encoding="utf-8", timeout=30
         )
         if result.returncode != 0:
             print(f"  ❌ push 失敗：{result.stderr}")

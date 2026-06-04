@@ -25,7 +25,7 @@ class TestQuickAddCLI:
         env = {**os.environ, **env_patch}
         result = subprocess.run(
             [sys.executable, str(script)] + args,
-            capture_output=True, text=True, env=env,
+            capture_output=True, text=True, encoding="utf-8", env=env,
             check=False, timeout=PROCESS_TIMEOUT_SEC,
         )
         return result.returncode, result.stdout, result.stderr

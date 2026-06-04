@@ -94,6 +94,14 @@ def transcribe(audio_path, model_size="medium"):
 
 
 def main():
+    # 強制 UTF-8 輸出：Windows / 非 UTF-8 locale 下，emoji 輸出被 pipe / 重導 / 捕捉時
+    # 預設 locale codec（如 cp950）無法編碼 emoji → print 崩潰。
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
+
     if len(sys.argv) < 2:
         print("用法：python scripts/utils/transcribe.py <影片或音檔路徑/Google Drive連結> [--model medium]")
         sys.exit(1)

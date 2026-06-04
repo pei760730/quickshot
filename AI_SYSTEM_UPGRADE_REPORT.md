@@ -1,157 +1,131 @@
 # AI System Upgrade Report
 
-> Sleep Mode v3.0 第三輪、未 commit / 未 push。
-> 前兩輪（branch `lWYux` PR #10、branch `SPsEh` PR #15、`Ixmsj` PR #16）已 merge 進 main。
-> 本輪在乾淨 branch `claude/sweet-dirac-zj0vv`（基於 HEAD `94f3f0f`）上續做。
+> Sleep Mode v3.0 — 第四輪（含「全修」收尾）。本輪經 Kai 授權 commit / push / 開 PR。
+> 主題：跨平台（Windows）破壞修復 + 文件 drift 對齊 + 跨平台回歸守衛。
+> 前三輪（PR #10 / #15 / #16 / #17）已 merge；其成果（README pipeline 路徑、requirements engine-manifest 指示）已在 main。
 
 ## Base
 
-- Branch: `claude/sweet-dirac-zj0vv`
-- HEAD before changes: `94f3f0f` (`data: sync 1 file(s) from claude/code-review-high-Ixmsj [skip ci]`)
-- HEAD after changes: `94f3f0f`（無 commit）
-- Repo root: `/home/user/quickshot`
-- Time: 2026-05-24
-- Working tree before changes: clean
-- Working tree after changes: 2 files modified（皆未 commit）
+- Branch: `claude/cross-platform-windows-fix`（從 `main` HEAD `ac6131d` 開出）
+- Repo root: `C:/Users/user/projects/quickshot`
+- Time: 2026-06-04
+- Platform: Windows 10（本機 Python 3.14.2；repo CI 用 3.11）
+- Working tree before changes: clean（on main）
+- Working tree after changes: 22 files changed（已 commit、開 PR）
 
 ## Project snapshot
 
-- Project type: AI 驅動的短影音生產 template（KaiOS-ContentSystem 短期客戶 ≤30 天精簡版）
-- Primary language: Python 3.11
+- Project type: AI 驅動短影音生產 template（KaiOS 短期客戶 ≤30 天精簡版）；目前為乾淨 template 狀態（無掛客戶）
+- Primary language: Python（CI 3.11 / 本機 3.14.2）
 - Package manager: pip + `requirements-dev.txt`（`pytest>=8.0` / `ruff>=0.5`）
-- Main entrypoints:
-  - `scripts/ops/video-ops.py`（ops CLI、所有狀態寫入唯一入口、v7.0）
-  - `scripts/lint/rules-lint.py` / `brand_ref_lint.py`（lint；rules-lint 內部再呼 `skill-io-lint.py`）
-  - `scripts/utils/sync-to-sheets.py`（GH Action 觸發、人工不直接跑）
-  - Claude Code slash commands `/init` `/check` `/scan` `/harden`
-- Automation:
-  - `.github/workflows/rules-lint.yml`（ruff + rules-lint + brand-ref + pytest + validate-all、每 PR / push 跑）
-  - `.github/workflows/sync-to-sheets.yml`（push 到 main / claude/* 自動 sync、有 credential 缺失的 graceful skip）
-  - `.github/workflows/wipe-client.yml`（manual dispatch）
-  - `.githooks/pre-commit`（本機 territory check）+ `.pre-commit-config.yaml`（opt-in）
-  - `.claude/hooks/{session-start,post-tool-use,stop}.sh`
-- Validation commands available: `pytest tests/` / `ruff check --select E9,F63,F7,F82 scripts tests` / `python scripts/lint/rules-lint.py --ci` / `python scripts/lint/brand_ref_lint.py` / `python scripts/ops/video-ops.py validate-all` / `python -m compileall scripts`
-- AI instruction files: `CLAUDE.md` / `CLAUDE.local.md` / `.claude/rules/{workflow.md,permissions.md}` / `.claude/skills/*.md` / `.claude/commands/*.md`
-- High-risk areas（deny list、本輪不動）: `.claude/**` / `CLAUDE.md`
+- Main entrypoints: `scripts/ops/video-ops.py`（狀態寫入唯一入口）/ `scripts/lint/*.py` / `scripts/utils/{sync-to-sheets,sheets-direct,transcribe}.py` / Claude Code `/init` `/check` `/scan` `/harden`
+- Automation: `.github/workflows/{rules-lint,sync-to-sheets,wipe-client}.yml`；`.githooks/pre-commit` + `.pre-commit-config.yaml`；`.claude/hooks/*.sh`
+- Validation: `python -m pytest tests/` / `python -m ruff check --select E9,F63,F7,F82 scripts tests` / `rules-lint.py --ci` / `brand_ref_lint.py` / `video-ops.py validate-all` / `compileall scripts tests`
+- AI instruction files: `CLAUDE.md` / `CLAUDE.local.md` / `.claude/rules/*` / `.claude/skills/*` / `.claude/commands/*`
 
 ## What I inspected
 
-- Git state + branch + remote + last 10 commits（前兩輪 PR #10–#16 已 merge）
-- 218 tracked files、目錄結構
-- 全套驗證基線（改動前）：pytest 542 passed / 1 skipped、ruff critical clean、rules-lint `--ci` 0、brand-ref lint 0、validate-all 0 errors / 0 drift、compileall scripts clean、4 個 hook `bash -n` OK
-- 跨 repo grep 死引用：legacy 單檔 `pipeline.json`、`engine-manifest`、`sync-engine`、`00-control-center`、`interview-bank`、`dashboard/`、`AGENTS.md` / `HOME.md`
-- CLI 真實子命令 vs 文件宣稱的命令（`video-ops.py` 全 subcommand 探測）
-- `.github/workflows/*.yml` env 檢查 / 失敗遮蔽 / `set -e` 覆蓋
-- `scripts/` 內 hardcoded 絕對路徑
-- 文件引用的 script 路徑是否存在
-- `.gitignore` 是否確實阻擋 legacy `pipeline.json`
-- 額外 lint（`ai_patterns_lint.py` / `skill-io-lint.py`）的 wiring
+- Git state、218 tracked files、107 Python files、無未追蹤檔
+- 全套驗證基線（改動前，Windows）：**pytest 23 collection errors（全壞）**
+- 全 repo POSIX-only imports（`fcntl` 等）+ 全 `scripts/` `subprocess.run(text=True)` 無 `encoding=` 之處
+- 全 `scripts/` 入口點（有 `__main__` 守衛）是否印 cp950 編不出的 emoji 卻未強制 UTF-8
+- `brand_ref_lint.py` 路徑分隔符可攜性；`.gitignore` 是否涵蓋 `*.lock`
+- 文件 drift：CLAUDE.md 資料地圖路徑、requirements-dev.txt 標題
 
 ## System-level issues found
 
 ### High risk
 
-無。基線乾淨，無資料毀損 / 流程中斷風險。前兩輪已清掉大部分結構債。
+**H1.（已修）`storage.py` 無條件 `import fcntl` → CLI + 測試套件在 Windows 全壞**
+- `storage` 被 `video-ops.py`（狀態寫入唯一入口）+ 17 lib + 23 測試模組 import → 全炸。
+- 前三輪沒抓到：CI 與前幾輪都跑 Linux，fcntl 永遠存在；bug 只在 Kai 的 Windows 機器爆。典型「Linux-only CI 遮蔽的平台債」。
+- 證據：改動前 Windows pytest = 23 errors，均為 `ModuleNotFoundError: No module named 'fcntl'`。
+
+**H2.（已修）CLI / lint 輸出在 Windows 被 pipe / 重導 / 捕捉時 `UnicodeEncodeError` 崩潰**
+- 入口全程印中文 + emoji（✓ ⚠️ 📊 ❌ ✅）。Windows 非主控台輸出用 cp950，**cp950 編不出 emoji** → `print` 中途崩潰：半輸出 + 非零 exit（看似失敗、實則操作可能半執行）。
+- 也是 Kai 過往要手動設 `PYTHONIOENCODING=utf-8` 的根源。
 
 ### Medium risk
 
-無新增。前兩輪已對齊 canonical-registry 禁令數 + pipeline SSoT 描述、README skill 計數。
+**M1.（已修）多處 `subprocess.run(text=True)` 缺 `encoding=` → 讀子程序 UTF-8 輸出時 cp950 解碼崩潰**
+- `rules-lint.py`（3×git）、`schema_drift.py`（git show 中文 contract）、`hardening.py`（讀 pytest/lint 輸出）、`cloud_relay.py`（3×git）、2 測試。
+
+**M2.（已修）`brand_ref_lint.py` manifest 路徑用 OS 分隔符 → Windows 反斜線 key**
+- `rel` 是 manifest key 且 `--json` 輸出供工具消費 → 反斜線不可攜。改 `.as_posix()`。
 
 ### Low risk
 
-**L1.（已修）`README.md` 核心架構樹仍畫 legacy 單檔 `pipeline.json`**
-- README L52 架構圖把 `data/{operator}/pipeline.json # 狀態 SSoT` 畫成單一檔案。
-- 實際 SSoT 是 sharded：`data/{operator}/pipeline/_meta.json` + `pipeline/items/*.json`（pipeline-schema v2.1+、`.gitignore` 主動防誤建單檔）。
-- 前兩輪修了 `03-production-line/{README,03-done/README}.md` 的 pipeline 路徑、但**漏了 root README 這張架構樹**（它是新維護者 / 未來 AI 第一個讀的結構真相圖）。
-- 影響：新人 / AI 讀此樹會以為該手建 / 手改 `pipeline.json` 單檔。
-- 已修：樹節點改 `pipeline/` + 內聯註指向 pipeline-schema.md、標明 legacy 單檔已退役。同步 bump README `last_updated` 2026-05-17 → 2026-05-24。
+**L1.（已修，validation gap）無守衛防止跨平台回歸** — CI Linux-only 是 H1/H2 潛伏主因。新增 `tests/test_cross_platform.py`：
+- POSIX-only import AST 掃描（防 H1 回歸）
+- fcntl-缺席模擬 + 實際 save（驗 storage 退化路徑）
+- **emoji 入口點 cp950-codec 掃描**（防 H2 回歸）— 此守衛在實作中**主動揪出 3 個我原本漏掉的入口**（`ai_patterns_lint.py` / `skill-io-lint.py` / `migrate_todos.py`），證明用 codec 掃描勝過寫死清單。
 
-**L2.（已修）`requirements-dev.txt` 內含指向不存在檔案的維護指示**
-- L9：`# Track new file in 'engine-manifest.json' internal_files when adding new SSoT files.`
-- `engine-manifest.json` 是 KaiOS 主引擎的檔、未 port 進 quickshot（`git grep` 證實本 repo 無此檔、僅 changelog 歷史 + `.githooks` 白名單死條目提及）。
-- 影響：維護者新增 SSoT 依賴時、照此指示會去找一個不存在的檔。
-- 已修：改為一行說明「短期客戶 template 無 engine-manifest.json、該 KaiOS 追蹤檔未 port」。
+**L2.（已修）文件 drift**
+- `CLAUDE.md` L62 資料地圖 `data/{operator}/pipeline.json`（legacy 單檔）→ `data/{operator}/pipeline/`（sharded 現實）。經 Kai 授權動 deny-protected 檔。
+- `requirements-dev.txt` L1 標題 `— KaiOS-ContentSystem` → `quickshot（短期客戶 template）`。
 
 ## Changes made
 
-| 檔 | 變更 | 風險 |
-|----|------|------|
-| `README.md` | L52 架構樹 `pipeline.json` → `pipeline/`（sharded、附 schema cross-ref + legacy 退役註）；`last_updated` bump | 純文字 |
-| `requirements-dev.txt` | L9 stale `engine-manifest.json` 維護指示 → quickshot 現況說明 | 純註解 |
+| 類別 | 檔 | 變更 |
+|------|----|------|
+| H1 核心 | `scripts/ops/lib/storage.py` | `import fcntl` → 跨平台鎖 shim（POSIX=fcntl / Windows=msvcrt / 皆無=no-op）；POSIX 行為不變、原子 replace 仍保證不寫壞檔 |
+| H2 入口強制 UTF-8（12 個）| `video-ops.py`、`rules-lint.py`、`brand_ref_lint.py`、`ai_patterns_lint.py`、`skill-io-lint.py`、`sync-to-sheets.py`、`sheets-direct.py`、`transcribe.py`、`wipe_client.py`、`migrate_pipeline_to_sharded.py`、`migrate_reclassify_performance.py`、`migrate_todos.py` | `main()` 起始 `sys.stdout/stderr.reconfigure(encoding="utf-8")`（guarded）；3 檔順帶補 `import sys` |
+| M1 subprocess encoding | `rules-lint.py`(3) / `schema_drift.py` / `hardening.py` / `cloud_relay.py`(3) / `test_quick_shot.py` / `test_video_ops_quality_targets.py` | 補 `encoding="utf-8"` |
+| M2 路徑可攜 | `brand_ref_lint.py` | manifest + 顯示路徑 `.as_posix()` |
+| L1 守衛 | `tests/test_cross_platform.py`（新增、5 測試）| POSIX import 掃描 + fcntl 缺席模擬 + emoji 入口 codec 掃描 |
+| L2 文件 | `CLAUDE.md` / `requirements-dev.txt` | 路徑 / 標題對齊現實 |
 
 ## Files changed
 
-```
- README.md            | 4 ++--
- requirements-dev.txt | 2 +-
- 2 files changed, 3 insertions(+), 3 deletions(-)
-```
+22 files changed, 400 insertions(+), 89 deletions(-)（含本報告）。詳見 PR diffstat。
 
 ## Verification run
 
 | Check | Command | Result | Notes |
 |---|---|---|---|
-| pytest | `python -m pytest tests/ -q` | 542 passed / 1 skipped | 改動前後一致 |
+| pytest（改動前 Windows）| `pytest tests/ -q` | **23 collection errors** | 全因 `ModuleNotFoundError: fcntl` |
+| pytest（改動後）| `pytest tests/ -q` | **547 passed / 1 skipped** | 前基線 542；+5 守衛 |
 | ruff critical | `ruff check --select E9,F63,F7,F82 scripts tests` | All checks passed | |
-| rules-lint CI | `python scripts/lint/rules-lint.py --ci` | 0 issues | 含 version / date 一致性檢查 |
-| brand-ref lint | `python scripts/lint/brand_ref_lint.py` | 0 issues | |
-| validate-all | `python scripts/ops/video-ops.py validate-all` | 0 errors / 0 warnings | Schema drift 0/0/0 |
-| compile scripts | `python -m compileall scripts -q` | exit 0 | |
-| hook syntax | `bash -n` × 3 hook + `.githooks/pre-commit` | OK（基線、本輪未改 hook）| |
+| rules-lint CI | `rules-lint.py --ci` | 0 issues | 含 CLAUDE.md 版本/日期一致性檢查、本輪 CLAUDE.md 改動通過 |
+| brand-ref lint | `brand_ref_lint.py` | 0 issues | |
+| validate-all | `video-ops.py validate-all` | 0 errors / 0 warnings / 0 drift | |
+| compileall | `compileall -q scripts tests` | exit 0 | |
+| piped no-PYTHONIOENCODING | video-ops / rules-lint / brand-ref / validate-all / sheets-direct / ai_patterns_lint / migrate（清 env、pipe）| 全 rc 正常、無 `_readerthread` / Unicode 崩潰 | 直接證明 H2/M1 已解 |
+| 鎖 backend | 反射 `storage._acquire_lock` | Windows=`msvcrt`（非 no-op）| 547 save-heavy 測試通過佐證鎖運作 |
 
 ## Issues fixed
 
-- L1：`README.md` 架構樹 pipeline 路徑對齊 sharded 現實（前兩輪漏修的最後一處架構圖）
-- L2：`requirements-dev.txt` 移除指向不存在 `engine-manifest.json` 的維護指示
+- H1 storage 跨平台鎖、H2 12 入口強制 UTF-8、M1 8 處 subprocess encoding、M2 路徑 as_posix、L1 守衛測試、L2 文件 drift —— 全數修復並驗證。
+- Windows 上整套系統從「CLI + 測試全壞」→ 「全綠、piped 不崩」。
 
-## Existing issues not fixed
+## Existing issues not fixed（保守保留、刪除屬破壞性、留給 Kai 決定）
 
-- **受 deny list 保護、本輪不動（需 Kai 顯式授權）**：
-  - `CLAUDE.md` L62：仍寫 `data/{operator}/pipeline.json`（legacy 單檔路徑、概念名）。多數 CLAUDE.md / workflow.md 內 `pipeline.json` 是「狀態 SSoT 概念名」、語意上不算錯；但 L62 資料地圖那行寫成具體檔路徑、與 sharded 現實有出入。
-  - `.claude/rules/workflow.md` L484：`週報` → `weekly-report` 命令映射，但 `video-ops.py` **無 `weekly-report` 子命令**（CLI 僅有 `pipeline-stats` / `adoption-stats`）。屬死命令參考、但檔受保護。`docs/contracts/video-ops-cli.md`（非保護）已正確、未列此死命令。
-- **死碼但保守保留（前兩輪已評估、刪除屬破壞性、留給 Kai 決定）**：
-  - `tests/path_bootstrap.py` 的 `ENGINE_LIB_ROOT` + `bootstrap_engine_test_sys_path()`：KaiOS 引擎 lineage、無測試使用。
-  - `tests/fixtures/engine-versioning-rules.json`：孤立 fixture、無 test / script 引用。
-  - `.githooks/pre-commit` 白名單含 KaiOS-only 路徑（`engine-manifest.json` / `00-control-center/` / `dashboard/` / `HOME.md` / `AGENTS.md`）：屬寬鬆白名單死條目、不影響功能；移除會改動 commit-gating 行為、保守不碰。
+- `tests/path_bootstrap.py` 的 `ENGINE_LIB_ROOT` + `bootstrap_engine_test_sys_path()`（KaiOS lineage、無測試使用）
+- `tests/fixtures/engine-versioning-rules.json`（孤立 fixture、無引用）
+- `.githooks/pre-commit` 白名單含 KaiOS-only 路徑（`engine-manifest.json` / `00-control-center/` / `dashboard/` / `HOME.md` / `AGENTS.md`）
 
 ## Remaining risks
 
-1. **CLAUDE.md L62 legacy `pipeline.json` 路徑**（deny-protected）：Kai 在線時可一次到底改該行 + bump `last_updated`。修動 1 行、純文字。
-2. **workflow.md `週報` → `weekly-report` 死命令**（deny-protected）：要嘛在 CLI 補 `weekly-report`（向後相容 alias 到 report 邏輯）、要嘛把 workflow.md 那行改成既有的 `pipeline-stats` / `adoption-stats`。兩者皆需 Kai 授權（CLI 改動非 deny、但 workflow.md 改動受 deny）。
-3. **KaiOS lineage 死碼三處**（path_bootstrap helper / engine-versioning fixture / pre-commit 白名單條目）：可刪不刪、不影響運作；若確定 quickshot 永不借屍還魂 KaiOS engine 機制、可由 Kai 確認後一輪清掉。
+1. **9 個入口的 UTF-8 reconfigure 為 inline 重複塊**：目前一致、低風險；未來可抽共用 `_force_utf8_stdio()` helper DRY（跨 ops/utils/lint 三目錄，需處理 import path，屬獨立 cleanup）。
+2. **KaiOS lineage 死碼三處**：不影響運作；確定永不借屍還魂後可清。
+3. **Python 版本落差**（本機 3.14 / CI 3.11）：本輪改動皆 3.7+ 通用 API，無版本相依風險；長期版本不一致仍是潛在 drift 源。
 
 ## Branch cleanup candidates
 
 ### Possibly safe to delete after human review
-
-（未檢視 `git branch -r` / remote 狀態，保守不列）
+（無把握者不列）
 
 ### Do not delete yet
-
-- 當前 branch `claude/sweet-dirac-zj0vv`（本輪 2 個未 commit 修改在這）
-- 其他 `claude/*` 分支 — 未檢視，保守保留
+- `origin/claude/code-review-high-Ixmsj`（remote）：PR #16 已 merge，但其上仍有未進 main 的 commit `b55cb0a`（補 wipe_client 20 test + 清死碼）。刪前需 Kai 確認是否 cherry-pick。
+- `claude/cross-platform-windows-fix`：本輪 PR 來源、merge 後刪。
 
 ## Recommended next actions
 
-1. **Kai 檢視本檔 + 2 個 staged 修改、決定是否 commit**。建議 commit message：`docs: 修 README 架構樹 pipeline sharded 路徑 + requirements-dev 過時 engine-manifest 指示`
-2. **可選 Kai 一次到底（受 deny、需授權）**：CLAUDE.md L62 legacy `pipeline.json` → `pipeline/`；workflow.md `週報` 死命令二選一處理。
-3. **下一輪可探（需 Kai 確認、屬破壞性）**：清掉三處 KaiOS lineage 死碼。
+1. Review 本 PR → merge → 刪 `claude/cross-platform-windows-fix`（依 AV convention）
+2. 決定 `origin/claude/code-review-high-Ixmsj` 的 `b55cb0a`：cherry-pick 補進 main 還是丟、然後刪該 remote branch
+3. 可選 cleanup：抽 `_force_utf8_stdio()` helper DRY 掉 9 個 inline 塊；清 KaiOS lineage 死碼
 
 ## Safe to commit?
 
-- **Yes**（前提：Kai 看過 diff 確認）
-- 原因：
-  - 2 檔皆純文字 / 註解校正、無 schema / 邏輯 / API 改動
-  - 完整驗證鏈通過（pytest 542 / 全 lint 0 / validate-all 0 drift / ruff 0 / compileall clean）
-  - 改動目的單一：把已知對應現實的描述對齊現實、降低未來 AI / 維護者誤判
-- Conditions before commit:
-  - 確認 README sharded 描述語義是 Kai 想呈現的（已 cross-ref pipeline-schema.md、不留懸空名詞）
-
-## 重要提醒
-
-- 沒有 commit
-- 沒有 push
-- 沒有開 branch（已在指定 branch `claude/sweet-dirac-zj0vv` 工作）
-- 沒有開 PR
-- 沒有刪除任何檔案
-- 沒有改任何 deny list 路徑下檔案
+- **Yes — 本輪已 commit + push + 開 PR**（Kai 授權）
+- 原因：目標單一（修跨平台破壞 + 對齊文件），無新功能 / 無架構重構 / 無 API 變更；POSIX 行為不變；完整驗證鏈全綠（547/1skip、lint 0、drift 0、compile 0、piped 不崩）；新增守衛讓回歸在 Linux CI 也擋得住。

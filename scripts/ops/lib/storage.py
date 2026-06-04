@@ -5,12 +5,42 @@
 取代原本 save_tracking / save_ideas / save_performance_patterns 三份重複程式碼。
 """
 
-import fcntl
 import json
 import tempfile
 from pathlib import Path
 
 from .config import today_str
+
+# 跨平台檔案鎖：POSIX 用 fcntl.flock、Windows 用 msvcrt.locking、
+# 兩者皆無時退化為 no-op。退化不影響資料安全 —— save_json 的不寫壞檔保證
+# 來自 tempfile + atomic replace；此鎖僅多一層防並行寫衝突。
+try:
+    import fcntl
+
+    def _acquire_lock(lock_fileobj):
+        fcntl.flock(lock_fileobj.fileno(), fcntl.LOCK_EX)
+
+    def _release_lock(lock_fileobj):
+        fcntl.flock(lock_fileobj.fileno(), fcntl.LOCK_UN)
+
+except ImportError:  # Windows 無 fcntl
+    try:
+        import msvcrt
+
+        def _acquire_lock(lock_fileobj):
+            lock_fileobj.seek(0)
+            msvcrt.locking(lock_fileobj.fileno(), msvcrt.LK_LOCK, 1)
+
+        def _release_lock(lock_fileobj):
+            lock_fileobj.seek(0)
+            msvcrt.locking(lock_fileobj.fileno(), msvcrt.LK_UNLCK, 1)
+
+    except ImportError:  # 平台既無 fcntl 也無 msvcrt：退化為 no-op
+        def _acquire_lock(lock_fileobj):
+            pass
+
+        def _release_lock(lock_fileobj):
+            pass
 
 def _lock_path(filepath):
     """取得對應的鎖檔路徑（與檔案同目錄）"""
@@ -45,7 +75,7 @@ def save_json(filepath, data, update_meta=True):
     lock_file.parent.mkdir(parents=True, exist_ok=True)
     p.parent.mkdir(parents=True, exist_ok=True)
     with open(lock_file, "w") as lf:
-        fcntl.flock(lf.fileno(), fcntl.LOCK_EX)
+        _acquire_lock(lf)
         try:
             fd, tmp_path = tempfile.mkstemp(
                 dir=str(p.parent), prefix=f".{p.stem}_", suffix=".tmp"
@@ -62,4 +92,4 @@ def save_json(filepath, data, update_meta=True):
                     pass
                 raise
         finally:
-            fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
+            _release_lock(lf)

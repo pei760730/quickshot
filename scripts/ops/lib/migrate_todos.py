@@ -156,6 +156,14 @@ def run_migration(operator=None):
 
 
 def main():
+    # 強制 UTF-8 輸出：Windows / 非 UTF-8 locale 下，emoji 輸出被 pipe / 重導 / 捕捉時
+    # 預設 locale codec（如 cp950）無法編碼 emoji → print 崩潰。
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
+
     parser = argparse.ArgumentParser(description="Migrate markdown todo files to structured todos.json")
     parser.add_argument("--operator", default=_cfg.DEFAULT_OPERATOR)
     args = parser.parse_args()

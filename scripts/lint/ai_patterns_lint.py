@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import sys
 from pathlib import Path
 
 PATTERNS = {
@@ -78,6 +79,14 @@ def lint_path(path: Path) -> list[str]:
 
 
 def main() -> int:
+    # 強制 UTF-8 輸出：Windows / 非 UTF-8 locale 下，emoji 輸出被 pipe / 重導 / 捕捉時
+    # 預設 locale codec（如 cp950）無法編碼 emoji → print 崩潰。
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--path", default="03-production-line/02-ready-to-shoot/")

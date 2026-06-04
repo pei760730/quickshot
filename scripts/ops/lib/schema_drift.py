@@ -16,6 +16,7 @@ def _git_show(ref, rel_path):
         result = subprocess.run(
             ["git", "show", f"{ref}:{rel_path}"],
             text=True,
+            encoding="utf-8",
             cwd=ROOT,
             capture_output=True,
             check=False,

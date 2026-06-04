@@ -200,7 +200,7 @@ def _validate_after_execute(action_type, target_path=None):
     else:
         return
 
-    res = subprocess.run(cmd, capture_output=True, text=True, check=False, cwd=str(_cfg.PROJECT_ROOT))
+    res = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", check=False, cwd=str(_cfg.PROJECT_ROOT))
     if res.returncode != 0:
         stderr = (res.stderr or "").strip()
         stdout = (res.stdout or "").strip()
