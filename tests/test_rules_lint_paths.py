@@ -1,6 +1,5 @@
 """Regression tests for rules-lint missing-file path resolution."""
 
-from pathlib import Path
 
 from path_bootstrap import load_rules_lint_module
 

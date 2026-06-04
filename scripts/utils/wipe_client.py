@@ -71,7 +71,7 @@ def gather_files_to_clear(project_root, operator):
         if p.is_file():
             items.append(
                 {
-                    "path": str(p.relative_to(project_root)),
+                    "path": p.relative_to(project_root).as_posix(),
                     "size_bytes": p.stat().st_size,
                     "action": action,
                 }
@@ -84,7 +84,7 @@ def gather_files_to_clear(project_root, operator):
                 if f.is_file() and f.name not in PRESERVE_FILENAMES:
                     items.append(
                         {
-                            "path": str(f.relative_to(project_root)),
+                            "path": f.relative_to(project_root).as_posix(),
                             "size_bytes": f.stat().st_size,
                             "action": action,
                         }

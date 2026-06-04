@@ -1,4 +1,3 @@
-import pytest
 
 from tests.path_bootstrap import load_rules_lint_module
 
