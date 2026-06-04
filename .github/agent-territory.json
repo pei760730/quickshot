@@ -1,4 +1,5 @@
 {
+  "_note": "territory 只靠 branch 前綴判定；非已知前綴的分支會被 skip（honor-system 限制，刻意不硬化）。詳見 .claude/rules/workflow.md §多代理協作 §已知限制。",
   "territories": {
     "codex": {
       "branch_prefixes": ["codex/"],
