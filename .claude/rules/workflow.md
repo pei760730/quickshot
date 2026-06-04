@@ -1,6 +1,6 @@
 # 工作流程
 
-> version: 2.32 | last_updated: 2026-06-04
+> version: 2.33 | last_updated: 2026-06-04
 > 精煉版。詳細步驟按需載入 `docs/references/`。
 
 ---
@@ -156,7 +156,7 @@ mistake 發生
 
 ### 領土邊界
 
-- 明確劃分各 agent 能改的**路徑白名單**；越界應由 CI lint 擋（path-whitelist 檢查待 Codex 首次上工時再建、別預先硬化）。
+- 明確劃分各 agent 能改的**路徑白名單**；越界由 `territory-lint` CI 硬擋（白名單定義見 `.github/agent-territory.json`，分支前綴對應 territory）。
 - 共享路徑（如 `docs/contracts/` 契約檔）**單向輪替**、PR body 標明 owner、不同時雙寫。
 
 ### 派任務 prompt 必含
