@@ -81,8 +81,15 @@ def changed_files(base: str) -> list[str]:
 
 
 def load_config() -> dict:
-    with CONFIG_PATH.open(encoding="utf-8") as file:
-        return json.load(file)
+    try:
+        with CONFIG_PATH.open(encoding="utf-8") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        print(f"❌ agent-territory.json 找不到：{CONFIG_PATH}")
+        sys.exit(1)
+    except json.JSONDecodeError as e:
+        print(f"❌ agent-territory.json JSON 格式錯誤：{e}")
+        sys.exit(1)
 
 
 def select_territory(config: dict, branch: str) -> tuple[str, dict] | tuple[None, None]:
