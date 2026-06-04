@@ -27,7 +27,7 @@
 
 ### 領土邊界
 
-- 只改**派工 prompt 白名單內的路徑**。越界由 CI lint 硬擋。
+- 只改**派工 prompt 白名單內的路徑**。越界應由 CI lint 擋（檢查待建；在那之前由你自律 + 驗收方 review）。
 - 共享路徑（如 `docs/contracts/` 契約檔）單向輪替，不與其他 agent 同時雙寫；PR body 標明 owner。
 
 ### 開工前
