@@ -65,6 +65,7 @@ def run_git(args: list[str]) -> str:
         cwd=REPO_ROOT,
         check=True,
         text=True,
+        encoding="utf-8",
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
