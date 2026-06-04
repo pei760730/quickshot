@@ -1,6 +1,6 @@
 # AGENTS.md — Codex / sub-agent 協作入口
 
-> version: 1.0 | last_updated: 2026-06-04
+> version: 1.1 | last_updated: 2026-06-04
 > 給 Codex / sub-agent 讀的入口。Claude Code 讀 `CLAUDE.md`；本檔讓非 Claude 的 agent 拿到同一套規則。
 
 ## 完整規則在哪
@@ -27,7 +27,7 @@
 
 ### 領土邊界
 
-- 只改**派工 prompt 白名單內的路徑**。越界應由 CI lint 擋（檢查待建；在那之前由你自律 + 驗收方 review）。
+- 只改**派工 prompt 白名單內的路徑**。`codex/` 分支的越界會被 `territory-lint` CI 硬擋（白名單見 `.github/agent-territory.json`）。
 - 共享路徑（如 `docs/contracts/` 契約檔）單向輪替，不與其他 agent 同時雙寫；PR body 標明 owner。
 
 ### 開工前
