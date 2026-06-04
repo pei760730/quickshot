@@ -1,6 +1,6 @@
 # 工作流程
 
-> version: 2.33 | last_updated: 2026-06-04
+> version: 2.34 | last_updated: 2026-06-04
 > 精煉版。詳細步驟按需載入 `docs/references/`。
 
 ---
@@ -158,6 +158,11 @@ mistake 發生
 
 - 明確劃分各 agent 能改的**路徑白名單**；越界由 `territory-lint` CI 硬擋（白名單定義見 `.github/agent-territory.json`，分支前綴對應 territory）。
 - 共享路徑（如 `docs/contracts/` 契約檔）**單向輪替**、PR body 標明 owner、不同時雙寫。
+
+> **已知限制（honor-system、刻意不硬化、v2.34 記）**：`territory-lint` 只能靠**分支前綴**判定 territory（本 repo 所有 PR——人類 / Claude / Codex——都同一個 GitHub 帳號開，沒有 bot 帳號可用作者區分）。後果：agent 只要不用 `codex/` 前綴開 PR（如 `fix/x`）就會被 skip、完全繞過 gate。
+> 目前**刻意不堵**：單帳號 + agent 由派工 prompt 驅動、實際風險低；依「別預先硬化沒人用的 gate」（本檔 §設計原則 Mode W），先記限制、觀察。
+> **補償控制**：① 派工 prompt 一律指定 `codex/<name>` 前綴 ② 驗收方收 PR 必查 merge-base + 變更檔清單（下面 §收 agent 的 PR）。
+> **升級觸發**：若真出現一次「agent 用非 `codex/` 前綴繞過領土」事件 → 才升 default-deny（config 加受信任前綴白名單、未知前綴一律 fail）。
 
 ### 派任務 prompt 必含
 
