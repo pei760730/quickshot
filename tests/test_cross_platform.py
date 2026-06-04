@@ -24,6 +24,13 @@ PROJECT_ROOT = Path(_PROJECT_ROOT_RAW)
 POSIX_ONLY = {"fcntl", "termios", "grp", "pwd", "posix", "resource", "syslog"}
 
 
+def _guard_scan_files() -> list[Path]:
+    files = []
+    for sub in ("scripts", "tests"):
+        files.extend((PROJECT_ROOT / sub).rglob("*.py"))
+    return sorted(files)
+
+
 def _toplevel_imports(tree: ast.Module) -> set[str]:
     """Module-level import names (NOT those guarded inside try/except, which
     live under an ``ast.Try`` node rather than directly in the module body)."""
@@ -146,8 +153,11 @@ def test_text_subprocess_calls_force_utf8():
         "subprocess.check_call",
     }
     offenders: list[str] = []
-    for py in sorted((PROJECT_ROOT / "scripts").rglob("*.py")):
-        tree = ast.parse(py.read_text(encoding="utf-8"))
+    for py in _guard_scan_files():
+        try:
+            tree = ast.parse(py.read_text(encoding="utf-8"))
+        except SyntaxError:  # pragma: no cover - surfaced by compileall instead
+            continue
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
                 continue
@@ -174,7 +184,7 @@ def test_emoji_entry_points_force_utf8():
     mode. CI is Linux-only so this guard is what keeps Windows from regressing.
     """
     offenders: list[str] = []
-    for py in sorted((PROJECT_ROOT / "scripts").rglob("*.py")):
+    for py in _guard_scan_files():
         text = py.read_text(encoding="utf-8")
         if not _is_entry_point(text):
             continue
