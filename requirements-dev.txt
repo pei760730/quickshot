@@ -1,4 +1,4 @@
-# Dev / CI / Claude session dependencies SSoT — KaiOS-ContentSystem
+# Dev / CI / Claude session dependencies SSoT — quickshot（短期客戶 template）
 #
 # Single source of truth for Python dev tooling. All envs install from here:
 #   - .github/workflows/rules-lint.yml  → `pip install -r requirements-dev.txt`

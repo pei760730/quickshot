@@ -338,6 +338,7 @@ def _read_pipeline_sharded_from_git(ref, operator="kai"):
         ["git", "show", f"{ref}:{base}/_meta.json"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         check=False,
         cwd=REPO_ROOT,
     )
@@ -347,6 +348,7 @@ def _read_pipeline_sharded_from_git(ref, operator="kai"):
         ["git", "ls-tree", "-r", "--name-only", ref, f"{base}/items"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         check=False,
         cwd=REPO_ROOT,
     )
@@ -363,6 +365,7 @@ def _read_pipeline_sharded_from_git(ref, operator="kai"):
                 ["git", "show", f"{ref}:{rel_path}"],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
                 check=False,
                 cwd=REPO_ROOT,
             )
@@ -960,6 +963,14 @@ def lint_file(filepath, registry):
 
 
 def main():
+    # 強制 UTF-8 輸出：Windows / 非 UTF-8 locale 下，emoji 輸出被 pipe / pre-commit
+    # 捕捉時，預設 locale codec（如 cp950）無法編碼 emoji → print 崩潰。
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
+
     ci_mode = "--ci" in sys.argv
 
     registry = load_registry()

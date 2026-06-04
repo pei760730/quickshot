@@ -60,6 +60,7 @@ def test_fault_injection_invalid_operator_cli():
         [sys.executable, str(script), "--operator", "not-an-operator", "list"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         check=False,
         timeout=PROCESS_TIMEOUT_SEC,
     )

@@ -1980,6 +1980,16 @@ def _extract_operator(argv):
 
 
 def main():
+    # 強制 UTF-8 輸出：Windows / 非 UTF-8 locale 下，含中文 + emoji 的輸出被 pipe /
+    # 重導 / 程式捕捉時，預設 locale codec（如 cp950）無法編碼 emoji → print 中途崩潰
+    # （半輸出 + 非零 exit、看似失敗實則操作可能已半執行）。在此移除對 PYTHONIOENCODING
+    # 的依賴、讓 CLI 在所有平台輸出一致。
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
+
     if len(sys.argv) < 2:
         print(__doc__)
         sys.exit(0)

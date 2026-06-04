@@ -91,7 +91,7 @@ def run_lint(repo_root: Path | None = None) -> tuple[list[dict], dict[str, list[
 
     for path in _scan_targets(root):
         text = path.read_text(encoding="utf-8", errors="ignore")
-        rel = str(path.relative_to(root))
+        rel = path.relative_to(root).as_posix()
         declared_refs, declared_line = parse_declared_refs(text)
         inline_refs = parse_inline_refs(text)
         inline_numbers = [n for n, _ in inline_refs]
@@ -156,7 +156,7 @@ def _print_issues(issues: Iterable[dict], repo_root: Path) -> None:
     for issue in issues:
         by_file.setdefault(issue["file"], []).append(issue)
     for file_path, file_issues in sorted(by_file.items()):
-        rel = Path(file_path).relative_to(repo_root)
+        rel = Path(file_path).relative_to(repo_root).as_posix()
         print(f"\n📄 {rel}")
         for i in sorted(file_issues, key=lambda x: x["line"]):
             icon = "❌" if i["severity"] == "ERROR" else "⚠️"
@@ -164,6 +164,14 @@ def _print_issues(issues: Iterable[dict], repo_root: Path) -> None:
 
 
 def main() -> int:
+    # 強制 UTF-8 輸出：Windows / 非 UTF-8 locale 下，emoji 輸出被 pipe / pre-commit
+    # 捕捉時，預設 locale codec（如 cp950）無法編碼 emoji → print 崩潰。
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", action="store_true")
     parser.add_argument("--json", action="store_true", dest="json_mode")
