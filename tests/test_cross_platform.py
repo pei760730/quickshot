@@ -111,6 +111,61 @@ def _has_cp950_unsafe_chars(text: str) -> bool:
         return True
 
 
+def _attribute_chain(node: ast.AST) -> str | None:
+    parts: list[str] = []
+    current = node
+    while isinstance(current, ast.Attribute):
+        parts.append(current.attr)
+        current = current.value
+    if isinstance(current, ast.Name):
+        parts.append(current.id)
+        return ".".join(reversed(parts))
+    return None
+
+
+def _keyword_is_true(call: ast.Call, name: str) -> bool:
+    return any(
+        keyword.arg == name
+        and isinstance(keyword.value, ast.Constant)
+        and keyword.value.value is True
+        for keyword in call.keywords
+    )
+
+
+def test_text_subprocess_calls_force_utf8():
+    """Text-mode subprocess calls must pin UTF-8 decoding.
+
+    Without an explicit encoding, ``subprocess`` uses the process locale for
+    stdout/stderr decoding. On Windows cp950 that can crash with
+    UnicodeDecodeError when git emits UTF-8 paths or messages.
+    """
+    text_subprocess_calls = {
+        "subprocess.run",
+        "subprocess.check_output",
+        "subprocess.Popen",
+        "subprocess.check_call",
+    }
+    offenders: list[str] = []
+    for py in sorted((PROJECT_ROOT / "scripts").rglob("*.py")):
+        tree = ast.parse(py.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            if _attribute_chain(node.func) not in text_subprocess_calls:
+                continue
+            if not (
+                _keyword_is_true(node, "text")
+                or _keyword_is_true(node, "universal_newlines")
+            ):
+                continue
+            if any(keyword.arg == "encoding" for keyword in node.keywords):
+                continue
+            offenders.append(f"{py.relative_to(PROJECT_ROOT).as_posix()}:{node.lineno}")
+    assert not offenders, (
+        "text-mode subprocess 必帶 encoding='utf-8'（避免 Windows cp950 解碼崩潰）: "
+        + "; ".join(offenders)
+    )
+
 def test_emoji_entry_points_force_utf8():
     """Any CLI entry point that prints emoji must force UTF-8 stdout/stderr.
 
