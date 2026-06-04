@@ -5,6 +5,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "scripts" / "lint" / "territory-lint.py"
 
@@ -61,3 +63,32 @@ def test_path_matches_single_star_single_layer_only() -> None:
 def test_path_matches_normalizes_windows_backslashes() -> None:
     assert territory_lint.path_matches(r"scripts\lint\territory-lint.py", "scripts/**")
     assert territory_lint.path_matches(r".github\agent-territory.json", ".github/agent-territory.json")
+
+
+def test_missing_config_exits_clearly(tmp_path, monkeypatch, capsys) -> None:
+    missing_config = tmp_path / "missing-agent-territory.json"
+    monkeypatch.setattr(territory_lint, "CONFIG_PATH", missing_config)
+
+    with pytest.raises(SystemExit) as exc_info:
+        territory_lint.load_config()
+
+    output = capsys.readouterr()
+    assert exc_info.value.code == 1
+    assert "找不到" in output.out
+    assert "Traceback" not in output.out
+    assert "Traceback" not in output.err
+
+
+def test_malformed_config_exits_clearly(tmp_path, monkeypatch, capsys) -> None:
+    malformed_config = tmp_path / "agent-territory.json"
+    malformed_config.write_text("{ bad json", encoding="utf-8")
+    monkeypatch.setattr(territory_lint, "CONFIG_PATH", malformed_config)
+
+    with pytest.raises(SystemExit) as exc_info:
+        territory_lint.load_config()
+
+    output = capsys.readouterr()
+    assert exc_info.value.code == 1
+    assert "JSON 格式錯誤" in output.out
+    assert "Traceback" not in output.out
+    assert "Traceback" not in output.err
