@@ -2,7 +2,7 @@
   "territories": {
     "codex": {
       "branch_prefixes": ["codex/"],
-      "allow": ["scripts/**", "tests/**", ".github/workflows/**", ".github/agent-territory.json"],
+      "allow": ["scripts/**", "tests/**", ".github/workflows/**", ".github/agent-territory.json", "07-changelog/**"],
       "deny": ["CLAUDE.md", "CLAUDE.local.md", ".claude/**", "docs/contracts/**", "01-data-brain/**", "data/**", "scripts/lint/rules-lint.py"]
     }
   }

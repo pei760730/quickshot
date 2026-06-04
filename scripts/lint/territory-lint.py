@@ -116,6 +116,14 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    # 強制 UTF-8 輸出：Windows / 非 UTF-8 locale 下，emoji 輸出被 pipe / CI
+    # 捕捉時，預設 locale codec（如 cp950）無法編碼 emoji → print 崩潰。
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
+
     args = parse_args()
     branch = args.branch or current_branch()
     config = load_config()

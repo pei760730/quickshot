@@ -19,6 +19,7 @@ def run_lint(*args: str) -> subprocess.CompletedProcess[str]:
         [sys.executable, str(SCRIPT_PATH), *args],
         cwd=REPO_ROOT,
         text=True,
+        encoding="utf-8",
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=False,
