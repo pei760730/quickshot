@@ -1,6 +1,5 @@
 """Tests for save_script command and backfill verifier accuracy comparison."""
 
-from pathlib import Path
 
 import pytest
 from conftest import make_video, write_sharded_pipeline
