@@ -1,6 +1,6 @@
 # 工作流程
 
-> version: 2.31 | last_updated: 2026-05-18
+> version: 2.32 | last_updated: 2026-06-04
 > 精煉版。詳細步驟按需載入 `docs/references/`。
 
 ---
@@ -146,6 +146,37 @@ mistake 發生
 - 禁令 #9「skill 不該被新增、應該被識別」+ 工作模式 W = skill 上線後 1 個月若無使用、視同未識別、降級回對話準則 / hook / command（如 Phase 6 第二輪退役對 Orientation / Distillation 的處置）
 
 **為什麼這條不寫進 CLAUDE.md 禁令**：v5.87 commit message 引述 v1.5 補注原文「不再加禁令」— 若把本規則寫成「禁令 #15」、就變成「禁令本身禁止再加禁令」自相矛盾。本規則改寫進 workflow.md §設計原則 Mode W、與 X / Y / Z 同層、是「設計原則 / 對話流程行為規則」、不是禁令、避開矛盾。
+
+---
+
+## 多代理協作（Claude × Codex / sub-agent、v2.32+）
+
+> 本 repo 同時被 Claude Code 與 Codex / sub-agent 協作時的規則。Codex 入口見根目錄 `AGENTS.md`（瘦入口、指回本段 + CLAUDE.md 完整規則）。
+> 多數情況 **Claude 是派工方、Codex / sub-agent 是執行方**；本段管「派工 → 收 PR → 驗收」這條鏈。
+
+### 領土邊界
+
+- 明確劃分各 agent 能改的**路徑白名單**、用 CI lint 硬擋越界。
+- 共享路徑（如 `docs/contracts/` 契約檔）**單向輪替**、PR body 標明 owner、不同時雙寫。
+
+### 派任務 prompt 必含
+
+- **base-check**：先取當下 `main` sha、寫進 prompt（讓 agent 從正確 base 切）。
+- **明確動作位置**：「改 X 檔第 N 行」/「開新 branch `codex/<name>`」。
+  禁寫「修一下 / 處理 / 補一行」這種模糊動詞 —— agent 會自行亂解讀（CLAUDE.md 禁令 #4 精準修改的派工版）。
+- **防 resume**：prompt 頂加隨機 `task_seed` + 「DO NOT resume any previous task」+ 全新 branch 名。
+
+### 收 agent 的 PR：第一件事查 merge-base
+
+```
+git merge-base <PR> origin/main   # 必須 = 當下 main HEAD
+```
+
+不等於 → agent 從舊 base 切出（resume 舊任務）、會重複帶已 merge 的檔 → **先重設 branch 到 main、只留 net-new**、再 review。
+
+### 不信 CI 全綠就好
+
+agent 在隔離 sandbox 跑的「測試通過」未必反映目標環境（如 Windows）；關鍵改動**本地實測**才算數（CLAUDE.md 禁令 #5 改動自驗 + 跨平台教訓）。
 
 ---
 
