@@ -156,7 +156,7 @@ mistake 發生
 
 ### 領土邊界
 
-- 明確劃分各 agent 能改的**路徑白名單**、用 CI lint 硬擋越界。
+- 明確劃分各 agent 能改的**路徑白名單**；越界應由 CI lint 擋（path-whitelist 檢查待 Codex 首次上工時再建、別預先硬化）。
 - 共享路徑（如 `docs/contracts/` 契約檔）**單向輪替**、PR body 標明 owner、不同時雙寫。
 
 ### 派任務 prompt 必含
