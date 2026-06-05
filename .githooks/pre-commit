@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 # .githooks/pre-commit — territory check (agent-agnostic、本地版)
 #
-# 來源：KaiOS-ContentSystem 雙 agent territory-lint。短期客戶 template 仍保留以便
-# Claude / Codex 分支白名單限制；CI 層的 territory-lint.yml 與 agent-collaboration.md
-# 已隨雙 agent 協作模組於 README 「砍掉的 3 大模組」一同退役。
-# 在 commit 前擋下違規、不浪費 push + CI 一輪。
+# 來源：KaiOS-ContentSystem 雙 agent territory-lint。短期客戶 template 保留以便
+# Claude / Codex 分支白名單限制；在 commit 前擋下違規、不浪費 push + CI 一輪。
+#
+# ⚠️ 現況（2026-06 更新）：CI 層的 territory-lint 已**重新引入**
+#   （.github/workflows/territory-lint.yml + .github/agent-territory.json）。
+#   舊註解曾寫「已退役」，已不正確。
+# territory canonical = .github/agent-territory.json。本檔 codex 白名單已**對齊**它
+#   （allow + deny、deny 優先）；claude 白名單為本機 local-only 守衛（CI 無 claude
+#   territory、不 gate claude/*）。改 codex territory 規則時請兩邊一起改。
 #
 # 適用場景：
 #   - Claude Code 在本機 commit（claude/* 分支）
@@ -35,24 +40,29 @@ if [[ -z "$CHANGED" ]]; then
   exit 0
 fi
 
-# 白名單（quickshot short-term template 範圍；KaiOS 專屬 engine-manifest.json /
-# HOME.md / AGENTS.md / 00-control-center/ 保留 regex 為向後相容、本 template 無對應檔不會匹配）
+# Claude 分支：本機 local-only 守衛（CI 的 .github/agent-territory.json 無 claude
+# territory、不 gate claude/*；此 regex 維持較寬鬆的本機便利白名單）。
 CLAUDE_OK='^(02-skill-factory/|\.claude/|CLAUDE\.md|CLAUDE\.local\.md|01-data-brain/|03-production-line/|07-changelog/|dashboard/|docs/|engine-manifest\.json|README\.md|HOME\.md|AGENTS\.md|\.githooks/|\.github/|00-control-center/|data/)'
-CODEX_OK='^(scripts/|tests/|data/|docs/contracts/|docs/references/|engine-manifest\.json|\.github/|AGENTS\.md|\.githooks/)'
+
+# Codex 分支：與 CI 的 .github/agent-territory.json codex territory 對齊（allow + deny、
+# deny 優先）。canonical = agent-territory.json；改 codex territory 規則時兩邊一起改。
+CODEX_ALLOW='^(scripts/|tests/|\.github/workflows/|\.github/agent-territory\.json|07-changelog/)'
+CODEX_DENY='^(CLAUDE\.md|CLAUDE\.local\.md|\.claude/|docs/contracts/|01-data-brain/|data/|scripts/lint/rules-lint\.py)'
 
 violations=""
 if [[ "$BRANCH" == claude/* ]]; then
-  ROLE="Claude"
-  PATTERN="$CLAUDE_OK"
+  ROLE="Claude"; ALLOW="$CLAUDE_OK"; DENY=""
 else
-  ROLE="Codex"
-  PATTERN="$CODEX_OK"
+  ROLE="Codex"; ALLOW="$CODEX_ALLOW"; DENY="$CODEX_DENY"
 fi
 
 while IFS= read -r f; do
   [[ -z "$f" ]] && continue
-  if ! [[ "$f" =~ $PATTERN ]]; then
-    violations="${violations}  ❌ $f"$'\n'
+  # deny 優先（與 agent-territory.json 語意一致）：先看 deny、再看 allow 是否命中
+  if [[ -n "$DENY" && "$f" =~ $DENY ]]; then
+    violations="${violations}  ❌ $f（命中 deny）"$'\n'
+  elif ! [[ "$f" =~ $ALLOW ]]; then
+    violations="${violations}  ❌ $f（allow 未命中）"$'\n'
   fi
 done <<< "$CHANGED"
 
@@ -66,7 +76,7 @@ if [[ -n "$violations" ]]; then
   echo "  1. 把越界的檔案 unstage、交給對方代理處理"
   echo "  2. 或臨時 bypass：git commit --no-verify"
   echo ""
-  echo "白名單來源：本檔內 CLAUDE_OK / CODEX_OK regex（quickshot template 已無 CI 端 territory-lint）"
+  echo "白名單來源：codex 已對齊 CI 的 .github/agent-territory.json（allow + deny）；claude 為本機 local-only 守衛、CI 無對應 territory"
   exit 1
 fi
 

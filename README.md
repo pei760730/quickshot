@@ -14,10 +14,12 @@
 | 模組 | 為何砍 |
 |------|-------|
 | **sync-engine 整套**（commands / scripts / workflows / docs） | 短期客戶不需要從主引擎拉同步、用什麼就是什麼 |
-| **雙 agent 協作**（Claude × Codex、territory-lint） | 短期客戶一個 Claude 跑通即可、不需員工分工 |
+| **雙 agent 協作**（Claude × Codex、territory-lint） | 短期客戶一個 Claude 跑通即可、不需員工分工 ↺ **已於 2026-06 重新引入**（見下方註）|
 | **Adoption-gate hook** | gate 化是為了解「警告衰退」、≤30 天客戶不會累積到那階段 |
 
 砍掉的細節見 PR #1 的 Stage 1 / Stage 2 commits。
+
+> **更新（2026-06）**：「雙 agent 協作」已以輕量形式**重新引入**本 template（實際開始用 Codex 協作）。入口 `AGENTS.md`、規則 `.claude/rules/workflow.md` §多代理協作、CI gate `.github/workflows/territory-lint.yml`（白名單 `.github/agent-territory.json`）。本列保留為歷史紀錄。
 
 ## 為短期客戶新增的
 
@@ -33,11 +35,12 @@
 quickshot/
 ├── CLAUDE.md                   # AI 開機記憶（9 條禁令 + 資料地圖）
 ├── CLAUDE.local.md             # 此 repo 品牌身份（短期客戶可自填）
+├── AGENTS.md                   # Codex / sub-agent 協作入口（指回 CLAUDE.md / workflow.md）
 ├── .claude/
-│   ├── rules/workflow.md       # 對話開頭檢查 + 設計原則 + 冷啟動萃取
+│   ├── rules/workflow.md       # 對話開頭檢查 + 設計原則 + 冷啟動萃取 + 多代理協作
 │   ├── rules/permissions.md    # 受保護路徑
 │   ├── hooks/session-start.sh  # 品牌速查注入
-│   ├── commands/{harden,scan}.md
+│   ├── commands/{check,harden,init,scan}.md
 │   └── settings.json           # deny list 保護 CLAUDE.md / .claude/**
 │
 ├── 01-data-brain/              # 品牌知識
@@ -60,7 +63,12 @@ quickshot/
 ├── docs/contracts/             # 共享 schema（pipeline / lessons / todos / ...）
 ├── scripts/                    # ops CLI + utils + lint
 ├── tests/                      # pytest suite（lint + JSON 一致性 + e2e、跑 `pytest tests/`）
-└── .github/workflows/rules-lint.yml   # Lint + pytest + validate-all
+└── .github/
+    ├── workflows/rules-lint.yml      # Lint + pytest + validate-all（主 CI）
+    ├── workflows/territory-lint.yml  # 多代理領土白名單 gate（codex/* 分支）
+    ├── workflows/sync-to-sheets.yml  # Sheets 同步
+    ├── workflows/wipe-client.yml     # 客戶資料清除
+    └── agent-territory.json          # territory 白名單定義（territory-lint 讀）
 ```
 
 ## 使用方式
@@ -101,14 +109,20 @@ quickshot/
 
 ## 測試 + CI
 
+本機驗證順序（與 CI 對齊）。先裝 dev deps：`pip install -r requirements-dev.txt`
+（若 `ruff` 不在 PATH，改用 `python -m ruff ...`）：
+
 ```bash
+ruff check --select E9,F63,F7,F82 scripts tests  # 嚴重錯誤（語法 / undefined / f-string）
 pytest tests/                                # 全部 pytest（lint + JSON + e2e）
 python scripts/lint/rules-lint.py --ci       # 跨檔 lint
 python scripts/lint/brand_ref_lint.py        # brand.md section 引用
 python scripts/ops/video-ops.py validate-all # JSON 一致性
 ```
 
-GitHub Actions：`rules-lint.yml`（lint + pytest + validate-all）— 每 PR / push 跑。
+GitHub Actions：
+- `rules-lint.yml`（ruff + rules-lint + brand-ref + pytest + validate-all）— 每 PR / push 跑。
+- `territory-lint.yml`（多代理領土白名單 gate）— 每 PR 跑、只擋 `codex/*` 分支越界（白名單 `.github/agent-territory.json`）。
 
 ## 關聯
 
