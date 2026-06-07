@@ -70,6 +70,8 @@
 
 | Reference | 關係 |
 |-----------|------|
+| `../discovery/SKILL.md` | **下游消費者**：選題第一性原則引用心法 A（選題前先答「戳中哪個沒說出口的恐懼」）|
+| `../generation/SKILL.md` | **下游消費者**：§共用協議 + 強標題優先協議步驟 0 引用心法 A（hook / 標題服務恐懼）|
 | `templates/hook-templates.md` | 心法 A 的「恐懼／驅動」對應到 6 類 hook（B1 恐懼揭秘等）的具體模板；本檔是上游心法、hook-templates 是下游執行 |
 | `title-rules.md` | 心法 A「讀出沒說出口的需求」是標題 5 類心理觸發的上游動機 |
 | `01-data-brain/brand.md` [2.5] | brand.md 存「素材」（恐懼的彈藥）、本檔存「怎麼用素材對準恐懼」的心法 |
