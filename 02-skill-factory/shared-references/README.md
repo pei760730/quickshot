@@ -1,7 +1,8 @@
 # shared-references 總索引（SSoT 層級圖）
 
-> version: 1.3 | last_updated: 2026-05-05
+> version: 1.4 | last_updated: 2026-06-07
 > 本檔目的：釐清共用規則的**SSoT 職責**與**升版順序**，避免升一份忘了同步另一份。
+> v1.4：新增 `direction-principles.md`（方向心法 SSoT、引擎層、選題與 hook 的第一性原則）。
 > v1.3：對齊 Phase 5/5b 退役後的 backlink — 修 data-brain-manifest 標註（v3.0 lint-driven 已落地）+ 修情境 6 失效鏈條（brain-interface / flow-operator 皆退役、公式 SSoT 在 persona-deviation-scoring.md）。
 
 ---
@@ -22,6 +23,7 @@
 | `blood-bag-evaluation.md` | **血包三件套（A 段落驗證）**（Phase 5 從 interview-navigator/evals 抽出）| generation skill mode=interview | — |
 | `templates/hook-templates.md` | **17 條 H/HD 三秒金句模板**（Phase 2 從 hook-killer 降級）| generation 短文案輸出 + quality phase=check | — |
 | `title-rules.md` | **5 類心理觸發 + 5 條原則 + gotcha**（Phase 2 從 title-generator 降級）| generation 短文案輸出 + quality phase=check | personas/kai.md [1] 上游對齊 |
+| `direction-principles.md` | **方向心法**（選題與 hook 的第一性原則：觀眾視角 + 肥料分工）| 選題 / hook 推理的上游心法層 | hook-templates.md / title-rules.md 上游對齊 |
 | `skill-design-principles.md` | **Skill 該不該存在 / 該長什麼樣的設計準則**（A/B/C/D/E/F 六準則） | 新增 / 重設計 skill 時的 Claude / Kai | CLAUDE.md 禁令 #8（quickshot template；對應 KaiOS 禁令 #12）+ skill-architecture-principles.md |
 
 ---
