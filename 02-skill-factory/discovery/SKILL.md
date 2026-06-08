@@ -2,7 +2,7 @@
 name: discovery
 description: 選題發現核心 skill v1.0（vNext 5 核心之一） — 整合 web 即時熱點 + 內部數據大腦 + 同業監控 + 員工 FAQ → 5-10 個選題建議 + 切角。觸發：Kai 說「下週要拍什麼」「這月該做什麼系列」「最近熱點」「什麼題目值得拍」「discovery」。
 version: 1.0
-last_updated: 2026-04-25
+last_updated: 2026-06-07
 brand-refs: [3, 4, 5, 6, 10, 11, 12]
 ---
 <!-- vNext 5 核心 skill #2（v1.3 補正新增）— 對應 docs/references/skill-architecture-principles.md v1.3 §v1.3 補丁 §1.3.4 -->
