@@ -18,7 +18,6 @@
 
 ## 🟢 低優先（錦上添花）
 
-- [ ] **Codex Round 3 Top3 補交** — sedimentation.py 用 Counter + groupby 重寫（Codex 上輪欠的）
 - [ ] **Anthropic Python SDK 遷移** — skill-creator/scripts/improve_description.py 從 subprocess 改 SDK（支援 prompt caching）
 
 ---
@@ -33,4 +32,5 @@
 | 多代理重新引入後 doc-vs-reality 對齊 | PR #28 | 2026-06-05 |
 | 方向心法 shared-reference + 接入 discovery / generation | PR #29–#31 | 2026-06-08 |
 | 第三輪架構審視（世界觀對齊 + Day-30 收尾 + stale claims 防回歸） | 本輪 | 2026-06-10 |
+| Codex Round 3 Top3 補交 — sedimentation 重複問題統計收斂為分類表 + 一趟掃描（Counter/groupby 字面方案評估後否決：groupby 需先排序、無增益） | claude/sedimentation-refactor | 2026-06-10 |
 | 腳本版本對比 — 以對話準則落地（workflow.md v2.36 §腳本版本對比）、不寫 code（禁令 #9 預測不做）；真實使用不夠再升 CLI | workflow.md v2.36 | 2026-06-10 |
