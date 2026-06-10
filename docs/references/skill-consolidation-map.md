@@ -81,7 +81,7 @@
 | **Quality** | D 驗證定義 | F5 | Generation output + verification 標準 | 修改後 artifact + verifier_scores JSON + pass/fail |
 | **Distillation** | E 經驗沉澱 | F6 | task 過程 contract 預測 vs 實際 + lessons.json | `lessons add-evidence` 呼叫 + 候選 lesson 提案 + brand 更新建議 |
 
-**邊界遵守 F**（territory）= **不是 skill**、由 (territory-lint 已退役) 守。
+**邊界遵守 F**（territory）= **不是 skill**、由 territory-lint CI 守（2026-06 輕量重新引入、見 AGENTS.md）。
 
 **流程**：Orientation → 若 task=找選題 → Discovery → Generation → Quality → Distillation。  
 若 task=拍既有選題 → 跳過 Discovery、直接 Orientation → Generation → Quality → Distillation。
@@ -115,7 +115,7 @@
 | `scripts/libs/brain_loader.py` | Orientation Skill 內部 tool（不變）|
 | `scripts/ops/video-ops.py` CLI | 4 核心 skill 都會呼叫（不變）|
 | `data/<operator>/pipeline.json` schema | 不變、繼續累積 trace / scores |
-| (territory-lint 已退役) | 守 F「邊界遵守」、4 核心 skill 不取代（不變）|
+| territory-lint CI（2026-06 輕量重新引入） | 守 F「邊界遵守」、4 核心 skill 不取代（不變）|
 | `engine-version-check` CI gate | 守版本一致（不變）|
 | `/harden` skill（v1.2）| Phase 4 併入 Distillation Skill 為 phase=harden |
 | `lesson-pressure` hook（PR #289）| Phase 4 對應 Distillation Skill 對話端 |

@@ -2,7 +2,7 @@
 
 對 quickshot template 做一輪深度掃描、找出系統級問題：壞掉的自動化 / 死引用 / 規則漂移 / 文件與實作斷裂 / lint 缺口。
 
-> KaiOS 雙 agent 協作協議（原 `docs/contracts/agent-collaboration` 規範、「責任區 / 同步委託段 / Owner 分流」）已隨 README §砍掉的 3 大模組退役、本 template 單 Claude agent 不適用。
+> KaiOS 重量級雙 agent 協作協議（原 `docs/contracts/agent-collaboration` 的「責任區 / 同步委託段 / Owner 分流」）未恢復；本 template 已有輕量 multi-agent（Claude 派工 × Codex 執行、territory-lint CI），見 `AGENTS.md` 與 `.claude/rules/workflow.md` §多代理協作。
 
 ## 執行步驟
 

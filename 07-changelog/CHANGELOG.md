@@ -8,6 +8,26 @@
 
 ---
 
+## refactor(system): 第三輪架構審視 — 世界觀對齊 + Day-30 收尾（2026-06-10）
+
+**主題：🔧 定位錯位修正（KaiOS 持續經營型殘留 vs ≤30 天驗證型定位）**
+
+第三輪架構審視（lens：定位錯位；Mode Z 批判 + 元規則 v1.6.3 合規檢查見 `docs/references/skill-architecture-principles.md` v1.8）。Kai 批准清單：A 全做 / B 授權 / C1 做 C2 刪 C3 記 todo。
+
+- **stale 敘述修復**：`skill-architecture-principles.md` 3 處「territory-lint 已退役」改為與現實一致（輕量版 2026-06 重新引入）；`.claude/commands/scan.md` 「單 Claude agent 不適用」句同步修正
+- **防回歸**：`canonical-registry.json` v2.7 新增 `deprecated_states.claims` 條目（2 條 stale 敘述）+ `tests/test_rules_lint_deprecated_claims.py`。已知範圍限制：rules-lint 不掃 `docs/references/`
+- **世界觀統一**：`workflow.md` v2.35 transcripts 沉澱門檻短期適配（≥5 → 冷啟動後 ≥2）+ 新增 §Day-30 驗證收尾（生產迴圈終點、復用既有 CLI、無新 code）
+- **ROADMAP 改寫**：移除 KaiOS 專屬項（Ann Sheets / N8N / KaiOS-Engine public）、改為 quickshot 自己的路線圖；兩個 CHANGELOG archive 檔頭標記 KaiOS lineage 唯讀
+- **CI 簡化**：`sync-to-sheets.yml` 移除 branch→main 自動同步段（單機單人無多分支並行編輯場景、且 CI bot 直接 push main 是風險點）；push 觸發收斂為 main only
+- **todo**：T-NNNN orientation/distillation stub 真退役重評（due 2026-06-29、滿 2 個月觀察期）
+
+**Mode W metric（上線日記錄、2026-07-10 檢查）**：
+- Day-30 收尾流程：下一個客戶結束時觸發次數 ≥ 1（無客戶期間凍結、時鐘從 `/init` 起算）
+- 沉澱門檻 5→2：下一個客戶 30 天內批次沉澱觸發次數 ≥ 1（原門檻在 longbro 期間為 0）
+- deprecated claims lint：CI 擋下 stale 敘述回歸次數（≥0 即可、存在即值）
+
+---
+
 ## feat(ci): 領土白名單 CI（2026-06-04）
 
 **主題：🔧 Codex territory whitelist hard gate**
