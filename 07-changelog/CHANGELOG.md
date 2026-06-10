@@ -8,6 +8,16 @@
 
 ---
 
+## feat(infra): Codex sandbox 一勞永逸配置 — repo 側（2026-06-10）
+
+**主題：🔧 Codex Cloud init script + 平台側操作手冊**
+
+- 新增 `scripts/codex/setup.sh`：裝 dev 依賴、git identity、`GITHUB_TOKEN` → credential helper（無 token 降級唯讀 + 警告、不 fail）、fail-fast 自驗（rules-lint + pytest）
+- 新增 `docs/references/codex-sandbox-setup.md`：Kai 平台側一次性步驟（fine-grained PAT 最小權限：單 repo + Contents/PR 讀寫、90 天到期）+ 第一次派工驗證清單
+- ROADMAP 該項標注「repo 側已備、剩平台側」；三項驗證通過才打勾
+
+---
+
 ## feat(rules): 腳本版本對比 — 對話準則落地（2026-06-10）
 
 **主題：🔧 ROADMAP 🟡「腳本版本對比」以 workflow.md 規則落地、不寫 code**

@@ -13,7 +13,7 @@
 
 ## 🟡 中優先（功能擴展）
 
-- [ ] **Codex sandbox 一勞永逸配置** — Codex Cloud 平台 init script + GitHub token secret，讓 Codex 能自己 push / close PR
+- [ ] **Codex sandbox 一勞永逸配置** — repo 側已備（`scripts/codex/setup.sh` + `docs/references/codex-sandbox-setup.md`、2026-06-10）；剩平台側：Kai 建 fine-grained PAT 貼進 Codex Cloud secret + setup script 欄位填 `bash scripts/codex/setup.sh`、第一次派工驗證三項通過後打勾
 - [ ] **續約升級 KaiOS 交接清單實測** — Day-30 收尾若判「續約」、驗證哪些繼承的治理機器（lessons / patterns / territory）真的被復用（餵 skill-architecture-principles.md v1.8.4 第四輪審視）
 
 ## 🟢 低優先（錦上添花）
