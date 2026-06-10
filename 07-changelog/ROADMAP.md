@@ -13,7 +13,6 @@
 
 ## 🟡 中優先（功能擴展）
 
-- [ ] **腳本版本對比** — 同一選題的 V1/V2/V3 之間的差異摘要
 - [ ] **Codex sandbox 一勞永逸配置** — Codex Cloud 平台 init script + GitHub token secret，讓 Codex 能自己 push / close PR
 - [ ] **續約升級 KaiOS 交接清單實測** — Day-30 收尾若判「續約」、驗證哪些繼承的治理機器（lessons / patterns / territory）真的被復用（餵 skill-architecture-principles.md v1.8.4 第四輪審視）
 
@@ -34,3 +33,4 @@
 | 多代理重新引入後 doc-vs-reality 對齊 | PR #28 | 2026-06-05 |
 | 方向心法 shared-reference + 接入 discovery / generation | PR #29–#31 | 2026-06-08 |
 | 第三輪架構審視（世界觀對齊 + Day-30 收尾 + stale claims 防回歸） | 本輪 | 2026-06-10 |
+| 腳本版本對比 — 以對話準則落地（workflow.md v2.36 §腳本版本對比）、不寫 code（禁令 #9 預測不做）；真實使用不夠再升 CLI | workflow.md v2.36 | 2026-06-10 |
