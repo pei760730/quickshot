@@ -8,6 +8,20 @@
 
 ---
 
+## refactor(skill-creator): improve_description.py 遷移 Anthropic SDK（2026-06-10）
+
+**主題：🔧 subprocess `claude -p` → Anthropic Python SDK + prompt caching**
+
+- **Caching 結構**：stable prefix（任務說明 + tips + SKILL.md 全文）進 `system` + `cache_control: ephemeral`、每輪變動的 eval 數據進 user turn — run_loop 多輪迭代時第 2 輪起前綴吃 cache（~0.1x input 價）
+- **超長重寫**：1024 字超限 fallback 從「重新 inline 全 prompt 的一次性呼叫」改真 multi-turn（append assistant turn + 追問）、同樣復用 cached prefix
+- **`[1m]` 後綴 normalize**：SKILL.md 指示傳 session model id、Claude Code 的 id 可能帶 `[1m]`（API 會 404）、`_normalize_model` 剝除
+- **Auth 變更（行為差異、需注意）**：原 subprocess 走 Claude Code session auth；SDK 走 `ANTHROPIC_API_KEY` / `ANTHROPIC_AUTH_TOKEN` / `ant auth login` profile。無憑證時報錯提示
+- transcript log 新增 usage 欄位（含 cache_read_input_tokens、可驗證 cache 命中）
+- `requirements-dev.txt` 加 `anthropic>=0.40`
+- 驗證：ruff ✅、py_compile ✅、import + normalize + cache placement smoke ✅、全套 pytest 579 passed ✅（live API 呼叫未測、待下次真實跑 skill-creator improve loop 驗證 — Mode W）
+
+---
+
 ## refactor(ops): sedimentation 重複問題統計收斂為分類表（2026-06-10）
 
 **主題：🔧 Codex Round 3 Top3 補交**
