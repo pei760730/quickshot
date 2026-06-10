@@ -9,6 +9,8 @@
 origin=verifier；v4.36 前舊路徑為 generation-rules.json、已合併）
 """
 
+from collections import defaultdict
+
 from . import config as _cfg
 from .config import today_str, current_operator
 from .lessons import add_lesson, load_lessons
@@ -22,6 +24,29 @@ _EMPTY_RULES = {
 # 重複次數門檻：同類問題出現 N 次以上才提議
 SEDIMENTATION_THRESHOLD = 3
 MAX_PROPOSALS_PER_BACKFILL = 2
+
+# 品質問題分類表：issue_type → (判定函式, pattern 文案, rule 文案)
+# 新增問題類型只需加一列、偵測與提案兩段共用此表
+_ISSUE_TABLE = [
+    (
+        "ai_residue",
+        lambda vs: bool(vs.get("ai_residue_count")) and vs["ai_residue_count"] > 0,
+        "存檔時 AI 味殘留反覆出現",
+        "生成腳本時加強口語化，避免書面語句式（每句≤20字，用「你」不用「我們」，避免三段式排比）",
+    ),
+    (
+        "low_conflict",
+        lambda vs: vs.get("conflict_score") is not None and vs["conflict_score"] <= 4,
+        "衝突感評分反覆偏低（≤4/10）",
+        "開頭3秒必須有衝突/損失/懸念元素，不用敘事鋪陳開場（參考 risk_patterns 中的「開場太慢」模式）",
+    ),
+    (
+        "data_inconsistency",
+        lambda vs: vs.get("data_consistency") is False,
+        "腳本數據與數據大腦不一致反覆出現",
+        "引用數字/案例前先確認在 brand.md [8][9] 中有對應記錄，無記錄則標註「⚠️ 非數據大腦素材」",
+    ),
+]
 
 
 def _sedimentation_meta(meta=None):
@@ -93,31 +118,16 @@ def propose_rules_from_verifier(pipeline_items, meta=None, operator=None):
     - proposed_rule: dict — 建議的 generation-rules 條目
     - already_exists: bool — 是否已有類似規則
     """
-    # 統計各類型品質問題
-    ai_residue_vids = []
-    low_conflict_vids = []
-    data_inconsistency_vids = []
-
+    # 一趟掃描、按 _ISSUE_TABLE 分類統計
+    vids_by_issue = defaultdict(list)
     for item in pipeline_items:
         vid = item.get("vid")
-        if not vid:
-            continue
         vs = item.get("verifier_scores")
-        if not vs:
+        if not vid or not vs:
             continue
-
-        # AI 殘留 > 0
-        if vs.get("ai_residue_count") and vs["ai_residue_count"] > 0:
-            ai_residue_vids.append(vid)
-
-        # 衝突感 <= 4（紅燈）
-        cs = vs.get("conflict_score")
-        if cs is not None and cs <= 4:
-            low_conflict_vids.append(vid)
-
-        # 數據一致性 False
-        if vs.get("data_consistency") is False:
-            data_inconsistency_vids.append(vid)
+        for issue_type, detect, _, _ in _ISSUE_TABLE:
+            if detect(vs):
+                vids_by_issue[issue_type].append(vid)
 
     # 讀取現有規則，避免重複提議
     existing_rules = load_generation_rules(operator=operator)
@@ -125,29 +135,9 @@ def propose_rules_from_verifier(pipeline_items, meta=None, operator=None):
 
     proposals = []
 
-    issue_map = [
-        (
-            "ai_residue",
-            ai_residue_vids,
-            "存檔時 AI 味殘留反覆出現",
-            "生成腳本時加強口語化，避免書面語句式（每句≤20字，用「你」不用「我們」，避免三段式排比）",
-        ),
-        (
-            "low_conflict",
-            low_conflict_vids,
-            "衝突感評分反覆偏低（≤4/10）",
-            "開頭3秒必須有衝突/損失/懸念元素，不用敘事鋪陳開場（參考 risk_patterns 中的「開場太慢」模式）",
-        ),
-        (
-            "data_inconsistency",
-            data_inconsistency_vids,
-            "腳本數據與數據大腦不一致反覆出現",
-            "引用數字/案例前先確認在 brand.md [8][9] 中有對應記錄，無記錄則標註「⚠️ 非數據大腦素材」",
-        ),
-    ]
-
     threshold = _fallback_threshold(meta)
-    for issue_type, vids, pattern_text, rule_text in issue_map:
+    for issue_type, _, pattern_text, rule_text in _ISSUE_TABLE:
+        vids = vids_by_issue[issue_type]
         if len(vids) < threshold:
             continue
         already = pattern_text in existing_patterns or any(

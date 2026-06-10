@@ -8,6 +8,16 @@
 
 ---
 
+## refactor(ops): sedimentation 重複問題統計收斂為分類表（2026-06-10）
+
+**主題：🔧 Codex Round 3 Top3 補交**
+
+- `propose_rules_from_verifier`：三條平行 list + `issue_map` 重複宣告 → `_ISSUE_TABLE` 分類表（判定函式 + 文案同處）+ 一趟掃描 `defaultdict` 分組；新增問題類型只需加一列
+- Codex 原提案的 `Counter` / `itertools.groupby` 字面方案評估後否決：groupby 需先排序、Counter 拿不到 vid 清單、兩者在此皆無增益
+- 行為不變：test_sedimentation + backfill 套件 144 passed、全套 579 passed
+
+---
+
 ## feat(infra): Codex sandbox 一勞永逸配置 — repo 側（2026-06-10）
 
 **主題：🔧 Codex Cloud init script + 平台側操作手冊**
