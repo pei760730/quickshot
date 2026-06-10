@@ -24,7 +24,6 @@ on:
   push:
     branches:
       - main
-      - 'claude/**'
     paths:
       - "data/**"
       - "03-production-line/**"
@@ -36,13 +35,9 @@ jobs:
     timeout-minutes: 15
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-python@v5
         with:
@@ -99,69 +94,8 @@ jobs:
           echo "=== Sync mode: $SYNC_MODE ==="
           python scripts/utils/sync-to-sheets.py "$SYNC_MODE"
 
-      - name: Sync data files to main
-        if: github.ref != 'refs/heads/main'
-        run: |
-          set -e
-          SOURCE_BRANCH=$(git branch --show-current)
-          echo "Syncing data from $SOURCE_BRANCH to main..."
-
-          # 記錄當前分支要同步的檔案
-          # v4.39+：todos 已從 00-control-center/todo/*.md 遷移至 data/<op>/todos.json
-          # 1. 排除 **/template/** — 共享引擎狀態、不該被 per-operator branch 覆蓋
-          # 2. 改用 branch-modified 而非 diff vs main — 只 sync branch 的 commits
-          #    真的改過的檔、避免 stale branch 拿舊狀態洗掉 main 的新狀態
-          BRANCH_BASE=$(git merge-base origin/main HEAD)
-          DATA_FILES=$(git log --name-only --pretty=format: "$BRANCH_BASE..HEAD" -- \
-            "data/" ":!data/template/**" \
-            "03-production-line/" ":!03-production-line/template/**" \
-            "01-data-brain/" ":!01-data-brain/template/**" \
-            2>/dev/null | sort -u | grep -v '^$' || echo "")
-
-          # Pipeline v2：避免 stale branch 覆蓋整份 pipeline.json，
-          # 只同步 shard（_meta + items/*）與非 pipeline data。
-          DATA_FILES=$(echo "$DATA_FILES" | grep -v '^data/.*/pipeline.json$' || true)
-
-          if [ -z "$DATA_FILES" ]; then
-            echo "No data files modified by this branch's commits, skipping"
-            exit 0
-          fi
-
-          echo "Files to sync:"
-          echo "$DATA_FILES"
-
-          # 複製到暫存
-          mkdir -p /tmp/sync-data
-          for file in $DATA_FILES; do
-            if [ -f "$file" ]; then
-              dir=$(dirname "$file")
-              mkdir -p "/tmp/sync-data/$dir"
-              cp "$file" "/tmp/sync-data/$file"
-            fi
-          done
-
-          # 切到 main 並更新
-          git checkout main
-          SYNCED=0
-          for file in $DATA_FILES; do
-            if [ -f "/tmp/sync-data/$file" ]; then
-              dir=$(dirname "$file")
-              mkdir -p "$dir"
-              cp "/tmp/sync-data/$file" "$file"
-              git add "$file"
-              SYNCED=$((SYNCED + 1))
-            fi
-          done
-
-          if git diff --cached --quiet; then
-            echo "Main already up to date"
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git commit -m "data: sync $SYNCED file(s) from $SOURCE_BRANCH [skip ci]"
-          git push origin main
-          echo "✅ Synced $SYNCED file(s) to main"
+      # v2.35（2026-06-10）：移除原「Sync data files to main」步驟（branch→main 自動同步、
+      # CI bot 直接 push main）。單機單人 template 無多分支並行編輯 data/ 場景；
+      # push 觸發已收斂為 main only。歷史實作見 git history。
 
 

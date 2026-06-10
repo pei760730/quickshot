@@ -3,6 +3,7 @@
 > 歷史條目歸檔。主檔（最新版本）見 [CHANGELOG.md](./CHANGELOG.md)。
 > v1.1（2026-02-05、系統雛型）~ v4.99（2026-04-24、Opus 4.7 全修中段）。
 > 切檔於 v5.71（2026-04-30）、原內容未動。
+> **KaiOS lineage（2026-06-10 標記）**：本檔內容為 KaiOS-ContentSystem 主引擎時期的演進歷史、quickshot 於 v7.00（2026-05-17）fork 後才開始自己的紀錄。唯讀溯源用、不代表本 template 的 roadmap 或現況。
 
 ---
 

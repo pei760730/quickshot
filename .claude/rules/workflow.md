@@ -1,6 +1,6 @@
 # 工作流程
 
-> version: 2.34 | last_updated: 2026-06-04
+> version: 2.35 | last_updated: 2026-06-10
 > 精煉版。詳細步驟按需載入 `docs/references/`。
 
 ---
@@ -10,7 +10,8 @@
 1. **回填到期**：pipeline.json 已上線 + backfill 為空 + backfill_due_date ≤ 今天 → `📊 VID-XXX 上線 N 天，回填到期`
 2. **待辦逾期**：`data/{operator}/todos.json` 中 `state=pending` 且 `due` ≤ 今天 → `📋 ⚠️「title」逾期 N 天（T-NNNN）` (v4.39+)
 3. **大腦新鮮度**：brand.md 任一 section `last_updated` > 30 天 → `🧠 [section] 已 N 天未更新`
-4. **Transcripts 沉澱門檻**（v2.5+）：`01-data-brain/transcripts/` 計數 ≥ 5 → `📚 觸發批次沉澱`；3-4 篇顯示距離門檻
+4. **Transcripts 沉澱門檻**（v2.35 短期適配）：冷啟動完成後、`01-data-brain/transcripts/` **新增**計數 ≥ 2 → `📚 觸發批次沉澱`（原 KaiOS ≥5 是持續經營型門檻、30 天客戶累積不到、形同虛設；冷啟動匯入的存量素材不計入、已在冷啟動 7 步流程中盤點過）
+5. **Day-30 收尾偵測**（v2.35+）：operator 首支影片 `publish_date` 距今 ≥ 30 天且未跑過收尾 → `🏁 客戶滿 30 天、建議跑驗證收尾`（見 §Day-30 驗證收尾；同一對話只提醒一次）
 
 Kai 忽略就不重複催促（同一對話只提醒一次）。
 
@@ -39,7 +40,7 @@ Kai 忽略就不重複催促（同一對話只提醒一次）。
 |------|------|
 | 回填累計 ≥ 5 筆未審議 | 對話中如 Claude 都沒主動提、到這個數字時強制盤點一次 |
 | brand.md 某 section `last_updated` > 30 天 | 對話開頭提醒（已實作於上節） |
-| `transcripts/` 累積 ≥ 5 篇 | 觸發批次交叉沉澱（防止對話中一篇一篇看漏整體模式） |
+| `transcripts/` 冷啟動後新增 ≥ 2 篇 | 觸發批次交叉沉澱（防止對話中一篇一篇看漏整體模式；v2.35 短期適配、原 ≥5 為 KaiOS 持續經營型門檻） |
 
 這三個門檻**只保留為安全網**：正常情況下 Claude 應在對話中先行提出，門檻不會被碰到；若門檻被觸發，代表 Claude 判斷漏了，需要補一次盤點 + 記入 lessons 當作「Claude 漏判」教訓。
 
@@ -446,6 +447,35 @@ Claude 萃取的候選 vs Kai 標 ✅ 採用的比例
 採用率 < 30% → 表示候選品質低、下次冷啟動前先讀 lessons.json `origin=cold-start-rejected` 看歷次被 Kai 否決的模式、調整萃取啟發法。
 
 1 個月後跑 metric:冷啟動觸發次數 / 完成率 / 平均 [2.5] section 填寫完成度。0 = 規則未真實上線、追行為 / 機械 / 流程三層、不再加新規則。
+
+---
+
+## Day-30 驗證收尾（短期客戶 template 原創、v2.35+）
+
+> **為什麼**：quickshot 定位是「≤30 天驗證型」、系統的終極 output 不是腳本、是**驗證結論**——這客戶值不值得續、數據說了什麼。沒有收尾流程、30 天結束時只有散落的回填數據、沒有可交付的結論。本節是生產迴圈的終點、與「冷啟動萃取」（起點）成對。
+> 全部復用既有 CLI、不新增機器。1 個月內看真實採用率（per §設計原則 Mode W、metric 與凍結規則見 CHANGELOG 2026-06-10 entry）。
+
+### 觸發
+
+- Kai 說「收尾」/「驗證結論」/「客戶結束」
+- 或對話開頭掃描第 5 項偵測到滿 30 天（見 §對話開頭）
+
+### 流程（復用既有 CLI）
+
+1. **數據盤點**：`pipeline-stats` + `analyze-deviations` + `lessons stats` + 讀 `performance-patterns.json`
+2. **產出一頁驗證結論**（對話中先展示、Kai 確認後才存檔、CLAUDE.md 禁令 #2）：
+   - 產出量：N 支腳本 / M 支上線 / 回填率
+   - 表現：win patterns（哪類 hook / 題材有效）、失敗模式、與 brand.md 假設的偏差
+   - **續約判斷建議**：續（理由 + 下一步）/ 不續（理由）/ 數據不足（缺什麼、需再幾天）
+   - 若建議續約 → 附升級 KaiOS 交接清單（brand.md、lessons、performance-patterns、pipeline 帶走；治理機器原地復用）
+3. **強制總沉澱一次**：transcripts + lessons + 回填洞察總盤點（取代持續經營型的節奏式沉澱、這是短期客戶唯一一次全量盤點）
+4. **終態分流**：客戶結束 → `wipe-client`（見 `docs/references/wipe-client-sop.md`）；續約 → 交接清單執行
+
+### Claude 絕對不可做
+
+- ❌ 用不完整數據硬給「續 / 不續」結論（回填率 < 50% 必標「數據不足」、列缺口）
+- ❌ 跳過 Kai 確認直接把結論存檔或外發
+- ❌ 收尾報告寫成長篇分析（一頁、Kai 能直接轉述給客戶的密度）
 
 ---
 
