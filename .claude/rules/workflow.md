@@ -1,6 +1,6 @@
 # 工作流程
 
-> version: 2.35 | last_updated: 2026-06-10
+> version: 2.36 | last_updated: 2026-06-10
 > 精煉版。詳細步驟按需載入 `docs/references/`。
 
 ---
@@ -521,6 +521,21 @@ Claude 萃取的候選 vs Kai 標 ✅ 採用的比例
 - 代號 Kai 真的不記得 → 列 B1-B3/D1-D5 定義提示（不要擅自猜）
 - 寫入後不做其他副作用（不動 status / publish_date / 其他欄位）
 
+### 腳本版本對比（v2.36+、對話準則、不寫 code）
+
+> ROADMAP 🟡「腳本版本對比」以對話準則落地。0 支真實腳本下寫 feature code 違反 CLAUDE.md 禁令 #9「預測 → 不做」；語意差異摘要本身需要 AI 判斷、Claude 對話中直接做即可。若真實使用中出現對話層不夠的場景（如跨 10+ 版本批量對比）、再依準則 F 退場測試評估升 CLI。
+
+觸發：`對比版本：VID-NNN` 或 `對比：[主題關鍵字]`
+
+1. **找檔**：`video-ops.py get VID-NNN` 取 `script_path`、或用主題關鍵字 glob `03-production-line/**/[*]_主題_腳本_V*.md`；找到的所有版本全部讀入
+2. **僅 1 個版本** → 回「只有 V1、無可對比」、停（不幻覺生成不存在的版本）
+3. **輸出結構化差異摘要**（對話中展示、不存檔）：
+   - **Hook 變化**：hook_type / 開場句差異
+   - **結構變化**：段落增刪、CTA 位置 / 強度
+   - **語氣變化**：人設偏移、AI 殘留增減
+   - **建議**：哪版建議拍 + 一句理由（含 verifier 分數若 pipeline 有記錄）
+4. 對比後 Kai 若做出取捨決策（如「以後都用 V2 的開場」）→ 依 §對話期間的進化提案 判斷是否提沉澱
+
 ### 多步流程追蹤
 
 進入完整路線（`確認要拍` 10 步、`回填` 含洞察分析、`掃描 全修` 等）時，Claude 建立 TodoWrite 追蹤每一步。Kai 隨時看進度、Claude 不跳步。單步快速動作（`丟靈感`、`看待辦`、`同步`）不用。
@@ -545,6 +560,7 @@ Claude 萃取的候選 vs Kai 標 ✅ 採用的比例
 | `標題：XXX` | quality skill template + `02-skill-factory/shared-references/title-rules.md` v1.0+ |
 | `金句：XXX` | quality skill template + `02-skill-factory/shared-references/templates/hook-templates.md` v1.0+ |
 | `驗證：[腳本]` | quality skill phase=check（5 項驗證）|
+| `對比版本：VID-NNN` / `對比：[主題]` | **v2.36+**：同主題 V1/V2/V3 腳本差異摘要（見 §腳本版本對比、對話準則不寫 code）|
 | `語音筆記` | 附音檔 → 自動分流（→ `production-details.md`） |
 | `複製贏家：VID-NNN` | 高表現公式複製（→ `production-details.md`） |
 | `看漏斗` | pipeline-stats |
