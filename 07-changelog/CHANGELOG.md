@@ -8,6 +8,18 @@
 
 ---
 
+## chore(infra): Python 升級 3.14 + video-ops 入口版本守衛（2026-06-12）
+
+**主題：🔧 直譯器環境對齊 + 錯誤訊息硬化**
+
+- `.venv` 重建：uv cpython 3.11.15 → **3.14.5**（最新穩定版；3.15 仍 beta 不採）、依賴自 `requirements-dev.txt` 重裝
+- CI 四 workflows（rules-lint / territory-lint / sync-to-sheets / wipe-client）`python-version` 3.11 → 3.14、與本機 venv 對齊、消除版本漂移
+- `video-ops.py` 入口加版本守衛：`sys.version_info < (3, 10)` 直接退出並指路 `.venv/bin/python` — lib/ 用 `Path | None` 等 3.10+ 語法、用系統 python3（3.9）跑會炸難解 `TypeError`（2026-06-12 巡檢實踩）
+- `AI_SYSTEM_UPGRADE_REPORT.md` 內「CI 用 3.11」字樣屬歷史快照（2026-06-05 Sleep Mode 第五輪）、依該檔自述保留不改
+- 驗證：3.14 下全套 pytest 579 passed、rules-lint 0 issues、ruff E9/F63/F7/F82 ✅、compileall ✅；3.9 守衛訊息實測觸發
+
+---
+
 ## refactor(skill-creator): improve_description.py 遷移 Anthropic SDK（2026-06-10）
 
 **主題：🔧 subprocess `claude -p` → Anthropic Python SDK + prompt caching**
