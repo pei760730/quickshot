@@ -59,6 +59,11 @@ import glob
 import copy
 import json
 import sys
+
+# lib/ 使用 3.10+ 語法（如 `Path | None`）、系統 python3 (3.9) 會炸出難解 TypeError
+if sys.version_info < (3, 10):
+    sys.exit("video-ops.py 需要 Python 3.10+，請改用 repo venv 執行：.venv/bin/python scripts/ops/video-ops.py")
+
 from datetime import datetime, timedelta
 from pathlib import Path
 
