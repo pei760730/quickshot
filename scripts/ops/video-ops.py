@@ -81,6 +81,7 @@ from lib.config import (
 from lib.pipeline import (
     load_tracking,
     save_tracking,
+    resolve_within_repo,
     find_video,
     next_vid,
     add_video,
@@ -471,9 +472,10 @@ def _cmd_delete(ctx):
     sp = (video.get("script_path") or "").strip()
     removed_script = None
     if sp and sp != "系統前上線":
-        script_file = Path(sp)
-        abs_script = PROJECT_ROOT / script_file
-        if abs_script.exists():
+        abs_script = resolve_within_repo(sp)
+        if abs_script is None:
+            print(f"⚠️ {vid} script_path 越界 repo（{sp}），拒絕刪除檔案")
+        elif abs_script.exists():
             if purge:
                 abs_script.unlink()
                 removed_script = sp
