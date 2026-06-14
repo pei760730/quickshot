@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 學習沉澱：從 verifier_scores 自動偵測重複問題，產出 rule 提案（需 Kai 確認後才寫入）。
-（註：本模組只讀 verifier_scores；generation_trace 目前無任何 code 消費者。）
+（註：本模組只讀 verifier_scores。）
 
 資料來源：pipeline.json 各影片的 verifier_scores 欄位
 輸出：rule_proposals list（由 Claude 展示給 Kai，確認後寫入 lessons.json

@@ -102,8 +102,6 @@ from lib.pipeline import (
     classify_idea_freshness,
     pipeline_stats,
     set_hook_type,
-    set_trace,
-    validate_generation_trace,
 )
 from lib.backfill import (
     backfill_video,
@@ -169,46 +167,6 @@ def _argv_without_flags(argv, flags):
     return [arg for arg in argv if arg not in flag_set]
 
 
-def _trace_required_statuses(ctx):
-    return set(ctx["data"].get("_meta", {}).get("trace_required_statuses") or [])
-
-
-def _manual_backfill_trace(reason):
-    return {"skill_used": "manual_backfill", "reason": reason}
-
-
-def _parse_and_validate_trace(raw_trace, meta):
-    if not raw_trace:
-        return None
-    try:
-        parsed = json.loads(raw_trace)
-    except json.JSONDecodeError as e:
-        print(f"❌ --trace 不是合法 JSON：{e}")
-        sys.exit(1)
-    if not isinstance(parsed, dict):
-        print("❌ --trace 必須是 JSON object")
-        sys.exit(1)
-    ok, msg, warnings, normalized = validate_generation_trace(parsed, meta=meta)
-    if not ok:
-        print(f"❌ generation_trace 驗證失敗：{msg}")
-        sys.exit(1)
-    for warning in warnings:
-        print(f"⚠️ {warning}", file=sys.stderr)
-    return normalized
-
-
-def _print_missing_trace_error(command, status):
-    print(f"❌ 此狀態（{status}）需提供 generation_trace：缺少 --trace")
-    print(
-        f"提示：video-ops.py {command} ... --status {status} "
-        '--trace \'{"skill_used":"...","mode":"..."}\''
-    )
-    print(
-        "或加 --allow-missing-trace flag"
-        '（補登舊影片用、會在 trace 寫入 {"skill_used":"manual_backfill"}）'
-    )
-
-
 def _format_scalar(value):
     if value is None or value == "":
         return "N/A"
@@ -217,50 +175,21 @@ def _format_scalar(value):
     return str(value)
 
 
-def _format_title_candidates(trace, video):
-    candidates = (
-        trace.get("title_candidates")
-        or trace.get("title_candidate")
-        or trace.get("titles")
-    )
-    if isinstance(candidates, list):
-        text = " / ".join(str(x).strip() for x in candidates if str(x).strip())
-        return text or _format_scalar(video.get("title"))
-    if candidates:
-        return str(candidates).strip()
-    return _format_scalar(video.get("title"))
-
-
-def _save_quality_snapshot(trace):
-    patterns = trace.get("patterns_injected")
-    risks = trace.get("risk_patterns_avoided")
-    patterns_count = len(patterns) if isinstance(patterns, list) else 0
-    risks_count = len(risks) if isinstance(risks, list) else 0
-    persona = trace.get("persona_deviation_score")
-    prediction = trace.get("verifier_prediction")
-    return (
-        f"patterns={patterns_count} / risk_avoided={risks_count} / "
-        f"persona_deviation={_format_scalar(persona)} / verifier_prediction={_format_scalar(prediction)}"
-    )
-
-
-def _print_save_stdout_summary(video, trace, kv, msg):
-    skill = trace.get("skill_used") or kv.get("skill")
-    skill_version = trace.get("skill_version")
-    skill_text = (
-        f"{skill}@{skill_version}" if skill and skill_version else _format_scalar(skill)
-    )
-    mode = trace.get("mode") or kv.get("mode")
+def _print_save_stdout_summary(video, kv, msg):
+    skill = kv.get("skill")
+    mode = kv.get("mode")
     print(f"✅ {msg}")
     print(f"VID：{video.get('vid', 'N/A')}")
     print(f"主題：{_format_scalar(video.get('topic'))}")
-    print(f"skill：{skill_text}")
+    print(f"skill：{_format_scalar(skill)}")
     print(f"mode：{_format_scalar(mode)}")
     print(
-        f"hook_type：{_format_scalar(video.get('hook_type') or trace.get('hook_type') or kv.get('hook_type'))}"
+        f"hook_type：{_format_scalar(video.get('hook_type') or kv.get('hook_type'))}"
     )
-    print(f"title 候選：{_format_title_candidates(trace, video)}")
-    print(f"品質快照：{_save_quality_snapshot(trace)}")
+    print(f"title 候選：{_format_scalar(video.get('title'))}")
+    print(
+        f"品質快照：verifier_prediction={_format_scalar(video.get('verifier_prediction'))}"
+    )
 
 
 def _verifier_recommendation(scores):
@@ -421,11 +350,10 @@ def _cmd_add(ctx):
 def _cmd_transition(ctx):
     if len(sys.argv) < 3:
         print(
-            "用法：video-ops.py transition VID-NNN 新狀態 或 transition VID-NNN --to 新狀態 [--allow-missing-trace]"
+            "用法：video-ops.py transition VID-NNN 新狀態 或 transition VID-NNN --to 新狀態"
         )
         sys.exit(1)
-    allow_missing_trace = "--allow-missing-trace" in sys.argv[3:]
-    argv = _argv_without_flags(sys.argv, {"--allow-missing-trace"})
+    argv = sys.argv
     vid = argv[2]
     kv = _parse_kv_args(argv, start=3)
     if kv.get("to"):
@@ -434,22 +362,11 @@ def _cmd_transition(ctx):
     else:
         if len(argv) < 4:
             print(
-                "用法：video-ops.py transition VID-NNN 新狀態 或 transition VID-NNN --to 新狀態 [--allow-missing-trace]"
+                "用法：video-ops.py transition VID-NNN 新狀態 或 transition VID-NNN --to 新狀態"
             )
             sys.exit(1)
         new_status = argv[3]
         reason = argv[4] if len(argv) > 4 else None
-
-    if new_status in _trace_required_statuses(ctx):
-        _idx, video = find_video(ctx["data"], vid)
-        if video is None:
-            print(f"❌ 找不到 {vid}")
-            sys.exit(1)
-        if not video.get("generation_trace"):
-            if not allow_missing_trace:
-                _print_missing_trace_error("transition", new_status)
-                sys.exit(1)
-            video["generation_trace"] = _manual_backfill_trace("transition bypass")
 
     ok, msg = transition(ctx["data"], vid, new_status, reason)
     print(f"{'✅' if ok else '❌'} {msg}")
@@ -586,42 +503,6 @@ def _cmd_set_hook_type(ctx):
         sys.exit(1)
 
 
-def _cmd_set_trace(ctx):
-    kv = _parse_kv_args(sys.argv)
-    if len(sys.argv) < 3 or not sys.argv[2].startswith("VID-"):
-        print(
-            '用法：video-ops.py set-trace VID-NNN --trace \'{"skill_used":"generation","mode":"dual-track",...}\' [--no-overwrite]'
-        )
-        sys.exit(1)
-    vid = sys.argv[2]
-    raw_trace = kv.get("trace")
-    if not raw_trace:
-        print("❌ 缺少 --trace（必須為 JSON object）")
-        sys.exit(1)
-    try:
-        trace_dict = json.loads(raw_trace)
-    except json.JSONDecodeError as e:
-        print(f"❌ --trace 不是合法 JSON：{e}")
-        sys.exit(1)
-    if not isinstance(trace_dict, dict):
-        print("❌ --trace 必須是 JSON object")
-        sys.exit(1)
-    meta = ctx["data"].get("_meta", {})
-    ok_v, msg_v, warnings, _normalized = validate_generation_trace(
-        trace_dict, meta=meta
-    )
-    if not ok_v:
-        print(f"❌ {msg_v}")
-        sys.exit(1)
-    for warning in warnings:
-        print(f"⚠️ {warning}", file=sys.stderr)
-    no_overwrite = "--no-overwrite" in sys.argv[3:]
-    ok, msg = set_trace(ctx["data"], vid, trace_dict, no_overwrite=no_overwrite)
-    print(f"{'✅' if ok else '❌'} {msg}")
-    if not ok:
-        sys.exit(1)
-
-
 def _cmd_add_transcript(ctx):
     if len(sys.argv) < 4:
         print(
@@ -651,15 +532,13 @@ def _cmd_add_transcript(ctx):
 
 
 def _cmd_quick_add(ctx):
-    allow_missing_trace = "--allow-missing-trace" in sys.argv[2:]
-    argv = _argv_without_flags(sys.argv, {"--allow-missing-trace"})
-    kv = _parse_kv_args(argv)
+    kv = _parse_kv_args(sys.argv)
     topic = kv.get("topic")
     tag = kv.get("tag")
     title = kv.get("title")
     if not topic or not tag or not title:
         print(
-            '用法：video-ops.py quick-add --topic "主題" --tag "標籤" --title "標題" [--status 待拍|剪輯中|已上線] [--initial-status 待拍|剪輯中|已上線] [--hook-type B1|B2|B3|D1|D2|D3|D4|D5] [--trace \'{...}\'] [--allow-missing-trace] [--notes 備註]'
+            '用法：video-ops.py quick-add --topic "主題" --tag "標籤" --title "標題" [--status 待拍|剪輯中|已上線] [--initial-status 待拍|剪輯中|已上線] [--hook-type B1|B2|B3|D1|D2|D3|D4|D5] [--notes 備註]'
         )
         sys.exit(1)
     initial_status = kv.get("initial_status") or kv.get("status", "剪輯中")
@@ -672,19 +551,6 @@ def _cmd_quick_add(ctx):
             f"❌ quick-add 只允許 --status/--initial-status {', '.join(sorted(allowed_statuses))}（收到：{initial_status}）"
         )
         sys.exit(1)
-
-    generation_trace = None
-    if initial_status in _trace_required_statuses(ctx):
-        raw_trace = kv.get("trace") or kv.get("generation_trace")
-        if raw_trace:
-            generation_trace = _parse_and_validate_trace(
-                raw_trace, ctx["data"].get("_meta", {})
-            )
-        elif allow_missing_trace:
-            generation_trace = _manual_backfill_trace("quick-add bypass")
-        else:
-            _print_missing_trace_error("quick-add", initial_status)
-            sys.exit(1)
 
     hook_type = kv.get("hook_type")
     try:
@@ -701,12 +567,6 @@ def _cmd_quick_add(ctx):
             vid_prefix=ctx["op_paths"].get("vid_prefix", "VID"),
             hook_type=hook_type,
         )
-        if generation_trace is not None:
-            _idx, video = find_video(ctx["data"], vid)
-            video["generation_trace"] = generation_trace
-            save_tracking(
-                ctx["data"], pipeline_json=ctx.get("op_paths", {}).get("pipeline_json")
-            )
         status_icon = {"待拍": "🎬", "剪輯中": "✂️", "已上線": "✅"}.get(
             initial_status, "🎬"
         )
@@ -905,7 +765,7 @@ def _cmd_save(ctx):
     argv = _argv_without_flags(sys.argv, ["--quiet"])
     if len(argv) < 3:
         print(
-            "用法：video-ops.py save VID-NNN --script-path PATH --title-type T1 --hook-type B2 --version B2 --verifier-prediction high --trace JSON [--quiet]"
+            "用法：video-ops.py save VID-NNN --script-path PATH --title-type T1 --hook-type B2 --version B2 --verifier-prediction high [--quiet]"
         )
         sys.exit(1)
     vid = argv[2]
@@ -921,38 +781,12 @@ def _cmd_save(ctx):
     if missing:
         print(f"❌ 缺少必填參數：{', '.join(missing)}")
         sys.exit(1)
-    raw_generation_trace = kv.get("trace") or kv.get("generation_trace")
-    if "--trace-from-stdin" in sys.argv:
-        stdin_payload = _load_json_object_from_stdin("--trace-from-stdin")
-        raw_generation_trace = json.dumps(stdin_payload, ensure_ascii=False)
-    if not raw_generation_trace:
-        print("❌ trace 必填、見 generation SKILL.md §Output Contract")
-        sys.exit(1)
     _, current_video = find_video(ctx["data"], vid)
     if current_video is None:
         print(f"❌ 找不到 {vid}")
         sys.exit(1)
-    generation_trace = None
     verifier_scores = None
     before_save_snapshot = None
-    try:
-        parsed = json.loads(raw_generation_trace)
-    except json.JSONDecodeError as e:
-        flag = "--trace" if kv.get("trace") else "--generation-trace"
-        print(f"❌ {flag} 不是合法 JSON：{e}")
-        sys.exit(1)
-    if not isinstance(parsed, dict):
-        flag = "--trace" if kv.get("trace") else "--generation-trace"
-        print(f"❌ {flag} 必須是 JSON object")
-        sys.exit(1)
-    meta = ctx["data"].get("_meta", {})
-    ok_gt, msg_gt, warnings, normalized = validate_generation_trace(parsed, meta=meta)
-    if not ok_gt:
-        print(f"❌ {msg_gt}")
-        sys.exit(1)
-    for warning in warnings:
-        print(f"⚠️ {warning}", file=sys.stderr)
-    generation_trace = normalized
     raw_verifier_scores = kv.get("verifier_scores")
     if raw_verifier_scores:
         try:
@@ -979,7 +813,6 @@ def _cmd_save(ctx):
         hook_type=kv["hook_type"],
         version=kv["version"],
         verifier_prediction=kv["verifier_prediction"],
-        generation_trace=generation_trace,
         skill_used=kv.get("skill"),
     )
     if not ok:
@@ -999,9 +832,7 @@ def _cmd_save(ctx):
                 sys.exit(1)
             if not quiet:
                 _, saved_video = find_video(ctx["data"], vid)
-                _print_save_stdout_summary(
-                    saved_video or {"vid": vid}, generation_trace, kv, msg
-                )
+                _print_save_stdout_summary(saved_video or {"vid": vid}, kv, msg)
                 _print_verifier_stdout_summary(vid, verifier_scores, msg_vs)
         except Exception as e:
             _rollback_save_after_verifier_failure(
@@ -1012,25 +843,11 @@ def _cmd_save(ctx):
         return
     _, saved_video = find_video(ctx["data"], vid)
     if not quiet:
-        _print_save_stdout_summary(
-            saved_video or {"vid": vid}, generation_trace, kv, msg
-        )
+        _print_save_stdout_summary(saved_video or {"vid": vid}, kv, msg)
         if saved_video is not None and not saved_video.get("verifier_scores"):
             print(
                 "提醒：尚未記錄 verifier_scores；請執行 record-verifier-scores 完成體檢摘要。"
             )
-
-
-def _extract_fenced_json_from_stdin(stdin_text):
-    stripped = stdin_text.strip()
-    if stripped.startswith("```"):
-        lines = stripped.splitlines()
-        if len(lines) < 3:
-            raise ValueError("fenced JSON block 格式不完整")
-        if not lines[-1].strip().startswith("```"):
-            raise ValueError("fenced JSON block 缺少結尾 ```")
-        return "\n".join(lines[1:-1]).strip()
-    return stripped
 
 
 def _load_json_object_from_stdin(flag_name):
@@ -1047,44 +864,6 @@ def _load_json_object_from_stdin(flag_name):
         print("❌ stdin JSON 必須是 JSON object")
         sys.exit(1)
     return payload
-
-
-def _cmd_save_with_trace_from_stdin(ctx):
-    if len(sys.argv) < 3:
-        print(
-            '用法：video-ops.py save-with-trace-from-stdin VID-NNN --script-path "路徑" --title-type T1 --hook-type B2 --version B2 --verifier-prediction high'
-        )
-        sys.exit(1)
-    raw = sys.stdin.read()
-    if not raw.strip():
-        print("❌ stdin 為空，請提供 fenced JSON 或純 JSON")
-        sys.exit(1)
-    try:
-        json_text = _extract_fenced_json_from_stdin(raw)
-        payload = json.loads(json_text)
-    except json.JSONDecodeError as e:
-        print(f"❌ 無法解析 stdin JSON：{e}")
-        sys.exit(1)
-    except ValueError as e:
-        print(f"❌ {e}")
-        sys.exit(1)
-    if not isinstance(payload, dict):
-        print("❌ stdin JSON 必須是 object")
-        sys.exit(1)
-    generation_trace = payload.get("generation_trace")
-    if not isinstance(generation_trace, dict):
-        print("❌ stdin JSON 需包含 generation_trace object")
-        sys.exit(1)
-    compact_trace = json.dumps(generation_trace, ensure_ascii=False)
-    sys.argv = [
-        sys.argv[0],
-        "save",
-        sys.argv[2],
-        *sys.argv[3:],
-        "--trace",
-        compact_trace,
-    ]
-    _cmd_save(ctx)
 
 
 def _load_vid_inference_entries(log_path: Path):
@@ -1163,7 +942,6 @@ def _cmd_adoption_stats(ctx):
     print(f"📊 adoption-stats（已上線近 {recent_n} 支）")
     for label, key in [
         ("hook_type", "hook_type"),
-        ("generation_trace", "generation_trace"),
         ("verifier_scores", "verifier_scores"),
     ]:
         pct, hit, total = _coverage(subset, key)
@@ -1184,7 +962,6 @@ def _cmd_adoption_stats(ctx):
         print(f"\n📈 {days} 日趨勢（{since} ~ {today}）")
         for label, key in [
             ("hook_type", "hook_type"),
-            ("generation_trace", "generation_trace"),
             ("verifier_scores", "verifier_scores"),
         ]:
             pct, hit, total = _coverage(window, key)
@@ -1942,7 +1719,6 @@ SIMPLE_COMMAND_HANDLERS = {
     "list-orphans": _cmd_list_orphans,
     "update-date": _cmd_update_date,
     "set-hook-type": _cmd_set_hook_type,
-    "set-trace": _cmd_set_trace,
     "add-transcript": _cmd_add_transcript,
     "quick-add": _cmd_quick_add,
     "batch-quick-add": _cmd_batch_quick_add,
@@ -1952,7 +1728,6 @@ SIMPLE_COMMAND_HANDLERS = {
     "transition-idea": _cmd_transition_idea,
     "confirm": _cmd_confirm,
     "save": _cmd_save,
-    "save-with-trace-from-stdin": _cmd_save_with_trace_from_stdin,
     "adoption-stats": _cmd_adoption_stats,
     "convert-idea": _cmd_convert_idea,
     "backfill": _cmd_backfill,

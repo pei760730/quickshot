@@ -349,23 +349,6 @@ def _bump_next_vid(data, vid):
 # ── 靈感時效性 ────────────────────────────────────────────
 VALID_SHELF_LIVES = {"evergreen", "timely", "trending"}
 
-GEN_TRACE_REQUIRED_FIELDS = [
-    "skill_used",
-    "skill_version",
-    "generated_at",
-    "title_type",
-    "hook_type",
-    "version_chosen",
-]
-GEN_TRACE_OPTIONAL_FIELDS = [
-    "patterns_injected",
-    "risk_patterns_avoided",
-    "persona_deviation_score",
-    "verifier_prediction",
-    "lessons_referenced",
-]
-GEN_TRACE_ALLOWED_FIELDS = set(GEN_TRACE_REQUIRED_FIELDS + GEN_TRACE_OPTIONAL_FIELDS)
-
 
 def classify_idea_freshness(item, thresholds, today=None):
     """判斷靈感新鮮度，回傳 (label, sort_key)。
@@ -647,98 +630,6 @@ def set_hook_type(data, vid, hook_type, pipeline_json=None):
         raise
     msg_prev = f"（原 {prev}）" if prev else "（原未設）"
     return True, f"{vid} hook_type = {hook_type}{msg_prev}"
-
-
-def validate_generation_trace(trace_dict, meta=None):
-    """驗證 generation_trace（Learning Loop Contract v1.4）.
-
-    回傳 (success, msg, warnings, normalized_dict)。
-    """
-    if not isinstance(trace_dict, dict):
-        return False, "trace 必須是 JSON object", [], None
-
-    missing = [k for k in GEN_TRACE_REQUIRED_FIELDS if k not in trace_dict]
-    if missing:
-        return False, f"缺少 required：{', '.join(missing)}", [], None
-
-    normalized = dict(trace_dict)
-    if not isinstance(normalized.get("skill_used"), str) or not normalized["skill_used"].strip():
-        return False, "skill_used 必須為非空字串", [], None
-    if not isinstance(normalized.get("skill_version"), str) or not normalized["skill_version"].strip():
-        return False, "skill_version 必須為非空字串", [], None
-    if not isinstance(normalized.get("generated_at"), str):
-        return False, "generated_at 必須為 ISO 日期字串（YYYY-MM-DD）", [], None
-    try:
-        datetime.strptime(normalized["generated_at"], "%Y-%m-%d")
-    except ValueError:
-        return False, "generated_at 必須為 ISO 日期字串（YYYY-MM-DD）", [], None
-    if not isinstance(normalized.get("title_type"), str) or not normalized["title_type"].strip():
-        return False, "title_type 必須為非空字串", [], None
-    if not isinstance(normalized.get("hook_type"), str) or not normalized["hook_type"].strip():
-        return False, "hook_type 必須為非空字串", [], None
-    if not isinstance(normalized.get("version_chosen"), str) or normalized["version_chosen"] not in {"A", "B", "C", "D"}:
-        return False, "version_chosen 必須為 A/B/C/D", [], None
-
-    if "patterns_injected" in normalized:
-        val = normalized["patterns_injected"]
-        if not isinstance(val, list) or any(not isinstance(x, str) for x in val):
-            return False, "patterns_injected 必須為字串陣列", [], None
-    if "risk_patterns_avoided" in normalized:
-        val = normalized["risk_patterns_avoided"]
-        if not isinstance(val, list) or any(not isinstance(x, str) for x in val):
-            return False, "risk_patterns_avoided 必須為字串陣列", [], None
-    if "persona_deviation_score" in normalized:
-        val = normalized["persona_deviation_score"]
-        if not isinstance(val, (int, float)) or isinstance(val, bool):
-            return False, "persona_deviation_score 必須為數字", [], None
-        normalized["persona_deviation_score"] = float(val)
-    if "verifier_prediction" in normalized:
-        val = normalized["verifier_prediction"]
-        if val not in {"high", "normal", "low"}:
-            return False, "verifier_prediction 必須為 high/normal/low", [], None
-    if "lessons_referenced" in normalized:
-        val = normalized["lessons_referenced"]
-        if not isinstance(val, list) or any(not isinstance(x, str) for x in val):
-            return False, "lessons_referenced 必須為字串陣列", [], None
-
-    meta = meta or {}
-    valid_ht = meta.get("valid_hook_types", [])
-    if valid_ht and normalized.get("hook_type") not in valid_ht:
-        return False, f"非法 hook_type：{normalized.get('hook_type')}（合法值：{', '.join(valid_ht)}）", [], None
-    valid_tt = meta.get("valid_title_types", [])
-    if valid_tt and normalized.get("title_type") not in valid_tt:
-        return False, f"非法 title_type：{normalized.get('title_type')}（合法值：{', '.join(valid_tt)}）", [], None
-
-    unknown = sorted(k for k in normalized.keys() if k not in GEN_TRACE_ALLOWED_FIELDS)
-    warnings = [f"未知欄位（已接受）：{k}" for k in unknown]
-    return True, "ok", warnings, normalized
-
-
-def set_trace(data, vid, trace_dict, pipeline_json=None, no_overwrite=False):
-    """回填既有影片的 generation_trace（Learning Loop Contract）。"""
-    _, video = find_video(data, vid)
-    if video is None:
-        return False, f"找不到 {vid}"
-    if no_overwrite and video.get("generation_trace") is not None:
-        return False, f"{vid} 已有 generation_trace（--no-overwrite）"
-
-    pipeline_data = data.get("_pipeline_ref", data)
-    meta = pipeline_data.get("_meta", {})
-    ok, msg, _warnings, normalized = validate_generation_trace(trace_dict, meta=meta)
-    if not ok:
-        return False, msg
-
-    prev = video.get("generation_trace")
-    video["generation_trace"] = normalized
-    try:
-        save_tracking(data, pipeline_json=pipeline_json)
-    except Exception:
-        if prev is None:
-            video.pop("generation_trace", None)
-        else:
-            video["generation_trace"] = prev
-        raise
-    return True, f"{vid} trace 已記錄 (skill={normalized['skill_used']} v={normalized['skill_version']})"
 
 
 # ── 影片 CRUD（原 video.py）────────────────────────────────
@@ -1084,15 +975,10 @@ def renumber_videos(data, vid_prefix=None, pipeline_json=None, dry_run=False):
 
 
 def save_script(data, vid, script_path, title_type, hook_type, version,
-                verifier_prediction, generation_trace=None, pipeline_json=None, skill_used=None):
-    """腳本存檔：記錄偏好 + verifier 預測 + 生成追蹤到 pipeline.json。
+                verifier_prediction, pipeline_json=None, skill_used=None):
+    """腳本存檔：記錄偏好 + verifier 預測到 pipeline.json。
 
     在 Kai 說「存檔」時由 Claude 呼叫。所有參數皆必填（quick-shot 豁免）。
-    generation_trace (dict, optional): Skill 生成過程的關鍵信號，如：
-      - patterns_injected: list[str] — 注入的 proven patterns
-      - risk_patterns_avoided: list[str] — 迴避的 risk patterns
-      - degradation_used: str | None — 觸發的降級路徑
-      - persona_deviation_score: int | None — 偏離度分數
     回傳 (success, message)。
     """
     idx, video = find_video(data, vid)
@@ -1129,12 +1015,6 @@ def save_script(data, vid, script_path, title_type, hook_type, version,
     video["save_date"] = today_str()
     if skill_used:
         video["skill_used"] = skill_used
-
-    if generation_trace is not None:
-        ok, msg, _warnings, normalized = validate_generation_trace(generation_trace, meta=meta)
-        if not ok:
-            return False, f"generation_trace 驗證失敗：{msg}"
-        video["generation_trace"] = normalized
 
     data["videos"][idx] = video
     save_tracking(data, pipeline_json=pipeline_json)

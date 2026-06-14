@@ -26,11 +26,10 @@
    - (c) 能用 **schema 欄位**約束嗎？
    - 三層都不行才寫 feature code。三層模糊不清 → 先列方案問 Kai。
    - 背景：「代碼免費、prompt + guardrail 才是王道」。每次發現錯誤要先問「能不能只寫規則擋」、寫 code 是最後手段。
-7. **Skill 採用閉環強制（v4.19+、對應 `docs/contracts/skill-io-schema.md` v2.2 §Learning Loop Contract）** — 任何生成型 skill 完成輸出後、必呼叫對應 CLI 把 trace / scores 寫入 pipeline.json：
-    - **Generation Skill**（mode=dual-track / variant / series / interview / viral）→ 存檔時走 `video-ops.py save VID-NNN ... --skill generation --mode <mode> --title-type ... --hook-type ... --version ... --trace '{...}'`
-    - **Quality Skill phase=check** → 跑完必呼叫 `video-ops.py record-verifier-scores VID-NNN --conflict-score N --retention-prediction LEVEL --ai-residue-count N --data-consistency true/false --format-complete true/false --pass-count "N/5"`
-    - 缺寫入 = skill 沒完成、不算「存檔」、Claude 對話中需主動補
-    - 例外：generation mode=viral 一次性實驗腳本可在對話中標「no-trace: <原因>」豁免、需 Kai 確認
+7. **Quality Skill 採用閉環（v5.x「縮」、對應 `docs/contracts/skill-io-schema.md` §verifier_scores）** — Quality Skill phase=check 跑完必呼叫 CLI 把 verifier_scores 寫入 pipeline：
+    - `video-ops.py record-verifier-scores VID-NNN --conflict-score N --retention-prediction LEVEL --ai-residue-count N --data-consistency true/false --format-complete true/false --pass-count "N/5"`（或 `save` 時一併帶 `--verifier-scores '{...}'`）
+    - 缺寫入 = 體檢未完成、Claude 對話中需主動補
+    - **背景（v5.x「縮」移除 generation_trace 閉環）**：原 v4.19 此禁令還含 Generation Skill 的 `generation_trace` 強制寫入、用於「跨影片自我學習」。但 trace 上線 30 天零消費（無任何 code 讀它做決策、見 workflow.md §Mode W「trace 0/30」）。短期客戶（≤30 天驗證型）不需要自我進化 forensic、整套 trace 機器已移除。**只保留真實在運作的 verifier_scores**（每支品質回饋 → `performance-patterns.json` → brain_loader 注入 → 下一支更好、=「讓客戶拿到更高成效」的實際迴路）。
 8. **新增 skill 前必過「skill 成立 10 條件」（對應 `02-skill-factory/shared-references/skill-design-principles.md` v1.2 準則 E）** — 一個能力同時符合以下 10 條才得正式進入 `02-skill-factory/<name>/SKILL.md`：
     1. 來自 Claude Code 的本質任務（task → 安全可驗證變更 → 經驗回流）
     2. 對應**高風險失敗模式**（F1-F6、見 `docs/references/skill-architecture-principles.md` v1.2 §First-Principles）

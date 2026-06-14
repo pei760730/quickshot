@@ -6,9 +6,9 @@ import sys
 import pytest
 
 from lib.pipeline import (
-    load_tracking, add_video, query_pending_scripts, set_hook_type, set_trace,
+    load_tracking, add_video, query_pending_scripts, set_hook_type,
 )
-from path_bootstrap import load_video_ops_module, video_ops_script_path
+from path_bootstrap import video_ops_script_path
 from timeouts import PROCESS_TIMEOUT_SEC
 
 
@@ -139,155 +139,6 @@ class TestSetHookType:
         assert ok is False
         assert "非法 hook_type" in msg
         assert "hook_type" not in data["videos"][0]
-
-
-class TestSetTrace:
-    def _seed_valid_meta(self, data):
-        pipeline_data = data.get("_pipeline_ref", data)
-        meta = pipeline_data.setdefault("_meta", {})
-        meta["valid_hook_types"] = ["B1", "B2", "B3", "D1", "D2", "D3", "D4", "D5"]
-        meta.setdefault("valid_title_types", ["T1", "T2", "T3", "T4", "T5"])
-
-    def test_set_trace_success(self, patch_paths):
-        data = load_tracking()
-        self._seed_valid_meta(data)
-        add_video(
-            data, "trace 主題", "生活", title="trace",
-            source="quick-shot", initial_status="已上線", script_status="待補",
-        )
-        trace = {
-            "skill_used": "generation",
-            "skill_version": "1.44",
-            "generated_at": "2026-04-24",
-            "title_type": "T2",
-            "hook_type": "B2",
-            "version_chosen": "D",
-        }
-        ok, msg = set_trace(data, "VID-001", trace)
-        assert ok is True
-        assert "trace 已記錄" in msg
-        assert data["videos"][0]["generation_trace"]["skill_used"] == "generation"
-
-    def test_set_trace_missing_required(self, patch_paths):
-        data = load_tracking()
-        self._seed_valid_meta(data)
-        add_video(
-            data, "trace 主題", "生活", title="trace",
-            source="quick-shot", initial_status="已上線", script_status="待補",
-        )
-        trace = {
-            "skill_used": "generation",
-            "skill_version": "1.44",
-            "generated_at": "2026-04-24",
-            "title_type": "T2",
-            "hook_type": "B2",
-        }
-        ok, msg = set_trace(data, "VID-001", trace)
-        assert ok is False
-        assert "缺少 required" in msg
-        assert "version_chosen" in msg
-
-    def test_set_trace_invalid_hook_type(self, patch_paths):
-        data = load_tracking()
-        self._seed_valid_meta(data)
-        add_video(
-            data, "trace 主題", "生活", title="trace",
-            source="quick-shot", initial_status="已上線", script_status="待補",
-        )
-        trace = {
-            "skill_used": "generation",
-            "skill_version": "1.44",
-            "generated_at": "2026-04-24",
-            "title_type": "T2",
-            "hook_type": "ZZ99",
-            "version_chosen": "D",
-        }
-        ok, msg = set_trace(data, "VID-001", trace)
-        assert ok is False
-        assert "非法 hook_type" in msg
-
-    def test_set_trace_not_found(self, patch_paths):
-        data = load_tracking()
-        trace = {
-            "skill_used": "generation",
-            "skill_version": "1.44",
-            "generated_at": "2026-04-24",
-            "title_type": "T2",
-            "hook_type": "B2",
-            "version_chosen": "D",
-        }
-        ok, msg = set_trace(data, "VID-999", trace)
-        assert ok is False
-        assert "找不到 VID-999" in msg
-
-
-class TestSetTraceCLI:
-    def _seed_valid_meta(self, data):
-        pipeline_data = data.get("_pipeline_ref", data)
-        meta = pipeline_data.setdefault("_meta", {})
-        meta["valid_hook_types"] = ["B1", "B2", "B3", "D1", "D2", "D3", "D4", "D5"]
-        meta["valid_title_types"] = ["T1", "T2", "T3", "T4", "T5"]
-
-    def test_set_trace_cli_success(self, monkeypatch, patch_paths):
-        video_ops = load_video_ops_module()
-        data = load_tracking()
-        self._seed_valid_meta(data)
-        add_video(data, "trace", "tag", title="t", source="quick-shot", initial_status="已上線", script_status="待補")
-        ctx = {"data": data, "op_paths": {"operator": "kai"}}
-        monkeypatch.setattr(
-            video_ops.sys,
-            "argv",
-            [
-                "video-ops.py", "set-trace", "VID-001", "--trace",
-                '{"skill_used":"generation","skill_version":"1.50","generated_at":"2026-04-25","title_type":"T2","hook_type":"B2","version_chosen":"D"}',
-            ],
-        )
-        video_ops._cmd_set_trace(ctx)
-        assert data["videos"][0]["generation_trace"]["skill_version"] == "1.50"
-
-    def test_set_trace_cli_json_parse_error(self, monkeypatch, patch_paths):
-        video_ops = load_video_ops_module()
-        ctx = {"data": load_tracking(), "op_paths": {"operator": "kai"}}
-        monkeypatch.setattr(video_ops.sys, "argv", ["video-ops.py", "set-trace", "VID-001", "--trace", "{bad-json"])
-        with pytest.raises(SystemExit) as exc:
-            video_ops._cmd_set_trace(ctx)
-        assert exc.value.code == 1
-
-    def test_set_trace_cli_missing_required(self, monkeypatch, patch_paths):
-        video_ops = load_video_ops_module()
-        data = load_tracking()
-        self._seed_valid_meta(data)
-        add_video(data, "trace", "tag", title="t", source="quick-shot", initial_status="已上線", script_status="待補")
-        ctx = {"data": data, "op_paths": {"operator": "kai"}}
-        monkeypatch.setattr(
-            video_ops.sys,
-            "argv",
-            [
-                "video-ops.py", "set-trace", "VID-001", "--trace",
-                '{"skill_used":"generation","skill_version":"1.50","generated_at":"2026-04-25","title_type":"T2","hook_type":"B2"}',
-            ],
-        )
-        with pytest.raises(SystemExit) as exc:
-            video_ops._cmd_set_trace(ctx)
-        assert exc.value.code == 1
-
-    def test_set_trace_cli_invalid_hook_type(self, monkeypatch, patch_paths):
-        video_ops = load_video_ops_module()
-        data = load_tracking()
-        self._seed_valid_meta(data)
-        add_video(data, "trace", "tag", title="t", source="quick-shot", initial_status="已上線", script_status="待補")
-        ctx = {"data": data, "op_paths": {"operator": "kai"}}
-        monkeypatch.setattr(
-            video_ops.sys,
-            "argv",
-            [
-                "video-ops.py", "set-trace", "VID-001", "--trace",
-                '{"skill_used":"generation","skill_version":"1.50","generated_at":"2026-04-25","title_type":"T2","hook_type":"ZZ99","version_chosen":"D"}',
-            ],
-        )
-        with pytest.raises(SystemExit) as exc:
-            video_ops._cmd_set_trace(ctx)
-        assert exc.value.code == 1
 
 
 class TestBatchQuickAdd:
