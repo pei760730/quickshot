@@ -136,7 +136,7 @@ def test_add_without_tag_warn_and_exit_zero(monkeypatch, patch_paths, capsys):
 
 def test_set_hook_type_runtime(monkeypatch, patch_paths, capsys):
     video_ops = load_video_ops_module()
-    ctx = {"data": {"videos": []}, "op_paths": {"tracking_json": "data/kai/tracking.json"}}
+    ctx = {"data": {"videos": []}, "op_paths": {"pipeline_json": "data/kai/tracking.json"}}
     monkeypatch.setattr(video_ops, "set_hook_type", lambda *_args, **_kwargs: (True, "VID-001 hook_type = B2（原未設）"))
     monkeypatch.setattr(video_ops.sys, "argv", ["video-ops.py", "set-hook-type", "VID-001", "--hook-type", "B2"])
     video_ops._cmd_set_hook_type(ctx)
@@ -446,7 +446,7 @@ def test_save_with_verifier_scores_failure_rolls_back(monkeypatch, patch_paths, 
     video_ops = load_video_ops_module()
     ctx = {
         "data": {"videos": [{"vid": "VID-001", "state": "before"}]},
-        "op_paths": {"operator": "kai", "tracking_json": "data/kai/tracking.json"},
+        "op_paths": {"operator": "kai", "pipeline_json": "data/kai/tracking.json"},
     }
     save_tracking_called = {"called": False}
 
@@ -457,7 +457,7 @@ def test_save_with_verifier_scores_failure_rolls_back(monkeypatch, patch_paths, 
     def _fake_save_tracking(data, *_args, **kwargs):
         save_tracking_called["called"] = True
         assert data["videos"][0]["state"] == "before"
-        assert kwargs.get("tracking_json") == "data/kai/tracking.json"
+        assert kwargs.get("pipeline_json") == "data/kai/tracking.json"
 
     monkeypatch.setattr(video_ops, "save_script", _fake_save_script)
     monkeypatch.setattr(video_ops, "record_verifier_scores", lambda *_args, **_kwargs: (False, "驗證失敗"))
@@ -499,7 +499,7 @@ def test_save_with_verifier_scores_exception_rolls_back(monkeypatch, patch_paths
     video_ops = load_video_ops_module()
     ctx = {
         "data": {"videos": [{"vid": "VID-001", "state": "before"}]},
-        "op_paths": {"operator": "kai", "tracking_json": "data/kai/tracking.json"},
+        "op_paths": {"operator": "kai", "pipeline_json": "data/kai/tracking.json"},
     }
     save_tracking_called = {"called": False}
 
@@ -510,7 +510,7 @@ def test_save_with_verifier_scores_exception_rolls_back(monkeypatch, patch_paths
     def _fake_save_tracking(data, *_args, **kwargs):
         save_tracking_called["called"] = True
         assert data["videos"][0]["state"] == "before"
-        assert kwargs.get("tracking_json") == "data/kai/tracking.json"
+        assert kwargs.get("pipeline_json") == "data/kai/tracking.json"
 
     def _boom(*_args, **_kwargs):
         raise RuntimeError("boom")

@@ -558,7 +558,7 @@ def pipeline_stats(data):
 
 # ── 向後相容別名 ─────────────────────────────────────────────
 
-def load_tracking(tracking_json=None):
+def load_tracking(pipeline_json=None):
     """向後相容：載入 pipeline.json 並回傳含 ``videos`` 鍵的視圖。
 
     ``data["videos"]`` 是一個 *引用* 列表，指向 ``data["items"]``
@@ -568,7 +568,7 @@ def load_tracking(tracking_json=None):
     為保持最小改動，每個影片 dict 也帶有 ``tag`` 鍵（指向 ``tags``
     的值），透過 ``_VideoView`` 包裝。
     """
-    pipeline_data = load_pipeline(pipeline_json=tracking_json)
+    pipeline_data = load_pipeline(pipeline_json=pipeline_json)
     videos = [item for item in pipeline_data.get("items", []) if item.get("vid")]
     return {
         "_meta": pipeline_data.get("_meta", {}),
@@ -578,14 +578,14 @@ def load_tracking(tracking_json=None):
     }
 
 
-def save_tracking(data, skip_validate=False, tracking_json=None):
+def save_tracking(data, skip_validate=False, pipeline_json=None):
     """向後相容：儲存（實際寫 pipeline.json）。"""
     # 如果 data 本身就是 pipeline 格式（有 items，沒有 _pipeline_ref），直接存
     pipeline_data = data.get("_pipeline_ref", data)
     # 同步 _meta
     if "_meta" in data and pipeline_data is not data:
         pipeline_data["_meta"] = data["_meta"]
-    save_pipeline(pipeline_data, skip_validate=skip_validate, pipeline_json=tracking_json)
+    save_pipeline(pipeline_data, skip_validate=skip_validate, pipeline_json=pipeline_json)
 
 
 def find_video(data, vid):
@@ -601,7 +601,7 @@ def find_video(data, vid):
     return None, None
 
 
-def set_hook_type(data, vid, hook_type, tracking_json=None):
+def set_hook_type(data, vid, hook_type, pipeline_json=None):
     """回填既有影片的 hook_type（quick-shot 存量補齊用）。
 
     回傳 ``(success, message)``。若 ``_meta.valid_hook_types`` 存在
@@ -617,7 +617,7 @@ def set_hook_type(data, vid, hook_type, tracking_json=None):
     prev = video.get("hook_type")
     video["hook_type"] = hook_type
     try:
-        save_tracking(data, tracking_json=tracking_json)
+        save_tracking(data, pipeline_json=pipeline_json)
     except Exception:
         if prev is None:
             video.pop("hook_type", None)
@@ -693,7 +693,7 @@ def validate_generation_trace(trace_dict, meta=None):
     return True, "ok", warnings, normalized
 
 
-def set_trace(data, vid, trace_dict, tracking_json=None, no_overwrite=False):
+def set_trace(data, vid, trace_dict, pipeline_json=None, no_overwrite=False):
     """回填既有影片的 generation_trace（Learning Loop Contract）。"""
     _, video = find_video(data, vid)
     if video is None:
@@ -710,7 +710,7 @@ def set_trace(data, vid, trace_dict, tracking_json=None, no_overwrite=False):
     prev = video.get("generation_trace")
     video["generation_trace"] = normalized
     try:
-        save_tracking(data, tracking_json=tracking_json)
+        save_tracking(data, pipeline_json=pipeline_json)
     except Exception:
         if prev is None:
             video.pop("generation_trace", None)
@@ -725,7 +725,7 @@ def set_trace(data, vid, trace_dict, tracking_json=None, no_overwrite=False):
 def add_video(data, topic, tag, source_inspiration=None, script_path=None,
               notes=None, source="pipeline", initial_status="待拍",
               script_status=None, skill_used=None, title=None,
-              vid_prefix=None, tracking_json=None, persist=True,
+              vid_prefix=None, pipeline_json=None, persist=True,
               hook_type=None):
     """新增一支影片到 pipeline，回傳新 VID。"""
     if initial_status not in _get_vid_assignment_statuses(data):
@@ -793,7 +793,7 @@ def add_video(data, topic, tag, source_inspiration=None, script_path=None,
         data["videos"].append(video)
     if persist:
         try:
-            save_tracking(data, tracking_json=tracking_json)
+            save_tracking(data, pipeline_json=pipeline_json)
         except Exception:
             pipeline_data["items"].pop()
             if "videos" in data and data is not pipeline_data and data["videos"] and data["videos"][-1] is video:
@@ -806,7 +806,7 @@ def add_video(data, topic, tag, source_inspiration=None, script_path=None,
     return vid
 
 
-def transition(data, vid, new_status, reason=None, tracking_json=None):
+def transition(data, vid, new_status, reason=None, pipeline_json=None):
     """影片狀態轉換（含腳本搬移），回傳 (success, message)。"""
     idx, video = find_video(data, vid)
     if video is None:
@@ -884,11 +884,11 @@ def transition(data, vid, new_status, reason=None, tracking_json=None):
             video["backfill_due_date"] = None
 
     # video dict 是 items 中的同一引用，不需要額外賦值
-    save_tracking(data, tracking_json=tracking_json)
+    save_tracking(data, pipeline_json=pipeline_json)
     return True, f"{vid}：{current} → {new_status}"
 
 
-def update_publish_date(data, vid, new_date, tracking_json=None):
+def update_publish_date(data, vid, new_date, pipeline_json=None):
     """更新上片日並自動重命名腳本檔案。
     回傳 (success, message, renamed_from, renamed_to)。"""
     idx, video = find_video(data, vid)
@@ -944,7 +944,7 @@ def update_publish_date(data, vid, new_date, tracking_json=None):
                     renamed_to = new_sp
                     video["script_path"] = new_sp
 
-    save_tracking(data, tracking_json=tracking_json)
+    save_tracking(data, pipeline_json=pipeline_json)
 
     if renamed_from:
         return True, f"{vid}：publish_date {old_date} → {new_date}，腳本已重命名", renamed_from, renamed_to
@@ -952,7 +952,7 @@ def update_publish_date(data, vid, new_date, tracking_json=None):
         return True, f"{vid}：publish_date {old_date} → {new_date}", None, None
 
 
-def renumber_videos(data, vid_prefix=None, tracking_json=None, dry_run=False):
+def renumber_videos(data, vid_prefix=None, pipeline_json=None, dry_run=False):
     """依 publish_date 排序後重新編號所有 VID。
     Phase 1: pre-check；Phase 2: execute（依靠 storage 原子寫入）。"""
     prefix = vid_prefix or _cfg.get_operator_paths().get("vid_prefix", "VID")
@@ -1032,7 +1032,7 @@ def renumber_videos(data, vid_prefix=None, tracking_json=None, dry_run=False):
 
         pipeline_data = data.get("_pipeline_ref", data)
         pipeline_data.setdefault("_meta", {})["next_vid"] = len(sorted_videos) + 1
-        save_tracking(data, tracking_json=tracking_json)
+        save_tracking(data, pipeline_json=pipeline_json)
 
         # 更新 performance-patterns.json（若存在）
         if pp_path.exists():
@@ -1059,7 +1059,7 @@ def renumber_videos(data, vid_prefix=None, tracking_json=None, dry_run=False):
 
 
 def save_script(data, vid, script_path, title_type, hook_type, version,
-                verifier_prediction, generation_trace=None, tracking_json=None, skill_used=None):
+                verifier_prediction, generation_trace=None, pipeline_json=None, skill_used=None):
     """腳本存檔：記錄偏好 + verifier 預測 + 生成追蹤到 pipeline.json。
 
     在 Kai 說「存檔」時由 Claude 呼叫。所有參數皆必填（quick-shot 豁免）。
@@ -1112,11 +1112,11 @@ def save_script(data, vid, script_path, title_type, hook_type, version,
         video["generation_trace"] = normalized
 
     data["videos"][idx] = video
-    save_tracking(data, tracking_json=tracking_json)
+    save_tracking(data, pipeline_json=pipeline_json)
     return True, f"{vid} 已存檔（版本={version} 標題={title_type} hook={hook_type} 預測={verifier_prediction}）"
 
 
-def bind_script_path(data, vid, script_path, force=False, tracking_json=None):
+def bind_script_path(data, vid, script_path, force=False, pipeline_json=None):
     """僅綁定 script_path，不修改其他欄位。"""
     idx, video = find_video(data, vid)
     if video is None:
@@ -1136,13 +1136,13 @@ def bind_script_path(data, vid, script_path, force=False, tracking_json=None):
 
     video["script_path"] = sp
     data["videos"][idx] = video
-    save_tracking(data, tracking_json=tracking_json)
+    save_tracking(data, pipeline_json=pipeline_json)
     if current and force:
         return True, f"{vid} script_path 已覆寫：{current} → {sp}"
     return True, f"{vid} script_path 已綁定：{sp}"
 
 
-def delete_video(data, vid, tracking_json=None):
+def delete_video(data, vid, pipeline_json=None):
     """刪除指定 VID（僅刪資料，不動磁碟檔案）。"""
     _idx, video = find_video(data, vid)
     if video is None:
@@ -1161,11 +1161,11 @@ def delete_video(data, vid, tracking_json=None):
     if "videos" in data:
         data["videos"] = [v for v in data["videos"] if v.get("vid") != vid]
 
-    save_tracking(data, tracking_json=tracking_json)
+    save_tracking(data, pipeline_json=pipeline_json)
     return True, f"{vid} 已刪除", removed
 
 
-def record_verifier_scores(data, vid, scores, tracking_json=None):
+def record_verifier_scores(data, vid, scores, pipeline_json=None):
     """記錄 script-verifier 的細項分數到 pipeline.json。
 
     scores 為 dict，預期鍵：
@@ -1193,7 +1193,7 @@ def record_verifier_scores(data, vid, scores, tracking_json=None):
         "date": today_str(),
     }
     video["verifier_scores"] = entry
-    save_tracking(data, tracking_json=tracking_json)
+    save_tracking(data, pipeline_json=pipeline_json)
     return True, f"{vid} verifier_scores 已記錄（{entry['pass_count']}）"
 
 
@@ -1253,7 +1253,7 @@ def validate_verifier_scores(scores):
     }
 
 
-def add_transcript(data, vid, transcript_text, tracking_json=None):
+def add_transcript(data, vid, transcript_text, pipeline_json=None):
     """為已上線影片補錄口播逐字稿。回傳 (success, message)。"""
     idx, video = find_video(data, vid)
     if video is None:
@@ -1267,7 +1267,7 @@ def add_transcript(data, vid, transcript_text, tracking_json=None):
     was_pending = video.get("script_status") == "待補"
     if was_pending:
         video["script_status"] = None
-    save_tracking(data, tracking_json=tracking_json)
+    save_tracking(data, pipeline_json=pipeline_json)
     char_count = len(video["transcript"])
     cleared_msg = "，script_status 已從「待補」清除" if was_pending else ""
     return True, f"{vid} 逐字稿已儲存（{char_count} 字{cleared_msg}）"
