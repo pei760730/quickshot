@@ -56,8 +56,9 @@ def diagnose_video(backfill_data, performance_patterns=None):
     if performance_patterns is None:
         performance_patterns = load_performance_patterns()
 
-    retention_3s = backfill_data.get("retention_3s", 0)
-    completion_rate = backfill_data.get("completion_rate", 0)
+    # L-0024：retention/completion 可能為 null（來源無資料）、不能直接比大小 → coerce 0
+    retention_3s = backfill_data.get("retention_3s") or 0
+    completion_rate = backfill_data.get("completion_rate") or 0
     engagement_rate = backfill_data.get("engagement_rate")
     likes = backfill_data.get("likes")
     shares = backfill_data.get("shares")

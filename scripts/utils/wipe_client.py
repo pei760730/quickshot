@@ -20,6 +20,15 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
+
+def _atomic_write_text(path: Path, text: str) -> None:
+    """原子寫入：先寫 temp 再 replace，避免 wipe teardown 中途崩潰留下半寫壞檔
+    （lessons.json 是要保留的引擎記憶、.operators.json 是註冊表，最不該半寫）。"""
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(text, encoding="utf-8")
+    tmp.replace(path)
+
+
 # Brand brain files reset from 01-data-brain/template/
 BRAIN_RESET_FROM_TEMPLATE = ["brand.md", "cases.md"]
 
@@ -320,16 +329,16 @@ def execute_wipe(project_root, operator, dry_run, tag=None):
     if lessons_path.exists():
         ld = json.loads(lessons_path.read_text(encoding="utf-8"))
         filter_lessons(ld, operator, brand_name)
-        lessons_path.write_text(
+        _atomic_write_text(
+            lessons_path,
             json.dumps(ld, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
         )
 
     # 9. Remove operator from .operators.json
     operators["operators"].pop(operator, None)
-    (project_root / "data" / ".operators.json").write_text(
+    _atomic_write_text(
+        project_root / "data" / ".operators.json",
         json.dumps(operators, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
     )
 
     # 10. CHANGELOG entry (only if tag provided)
