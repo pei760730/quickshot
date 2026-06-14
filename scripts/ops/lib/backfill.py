@@ -380,8 +380,11 @@ def backfill_video(data, vid, views, retention_3s, completion_rate,
         if g3:
             result["lite_g3"] = g3
 
-    # 自動學習提取（高/低表現 + 有腳本時自動觸發）
-    pattern_data = load_performance_patterns() if level in ("high", "low") else None
+    # 自動學習提取 + 統計重算共用同一份 in-memory pattern data。
+    # （修既有 bug：原本 auto-learning 改 pattern_data、卻在另一份 freshly-load 的 pdata 上
+    #   算 stats 並先存，最後再存 pattern_data 覆蓋掉 → 含新 pattern 但 win_rate/confidence
+    #   是上一輪的舊值。統一成一份、算完一次存，避免 stats 落後一個回填週期。）
+    pattern_data = load_performance_patterns()
     auto_learn = _try_auto_learning(data, vid, video, level, diag, pdata=pattern_data)
     if auto_learn:
         result["auto_learning"] = auto_learn
@@ -391,11 +394,10 @@ def backfill_video(data, vid, views, retention_3s, completion_rate,
         if auto_learn.get("partial"):
             result["warnings"].append(auto_learn["partial"])
 
-    # 每次回填後重新計算 pattern 統計（win_rate/confidence）
-    pdata = load_performance_patterns()
-    stats_updated = compute_pattern_stats(pdata, data.get("items", data.get("videos", [])))
-    if stats_updated:
-        save_performance_patterns(pdata)
+    # 每次回填後在「含本輪新學習 pattern 的同一份」上重算統計（win_rate/confidence）
+    stats_updated = compute_pattern_stats(pattern_data, data.get("items", data.get("videos", [])))
+    if stats_updated or (auto_learn and auto_learn.get("patterns_changed")):
+        save_performance_patterns(pattern_data)
 
     # verifier 預測 vs 實際表現自動比對
     vp = video.get("verifier_prediction")
@@ -410,8 +412,6 @@ def backfill_video(data, vid, views, retention_3s, completion_rate,
 
     data["videos"][idx] = video
     save_tracking(data)
-    if auto_learn and auto_learn.get("patterns_changed") and pattern_data is not None:
-        save_performance_patterns(pattern_data)
 
     return True, f"{vid} 回填完成：{level}（{reason}）", result
 
