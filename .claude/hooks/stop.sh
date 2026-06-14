@@ -47,7 +47,11 @@ fi
 
 if [ -n "$HAS_TRACE" ]; then
   TRACE_JSON="$($PYTHON_BIN -c 'import json,sys;print(json.dumps(json.loads(sys.argv[1])["payload"]["generation_trace"], ensure_ascii=False))' "$EXTRACTED_JSON")"
-  printf '%s' "$TRACE_JSON" | "$PYTHON_BIN" "$VIDEO_OPS" save "$VID" --script-path "auto/hook-stop.md" --title-type T1 --hook-type B1 --version B1 --verifier-prediction normal --trace-from-stdin >/dev/null 2>&1 || log "stop-hook: trace write failed for $VID"
+  # set-trace 只寫 generation_trace、不碰 video 頂層 metadata。原本走 save 必填
+  # --title-type/--hook-type/--version/--verifier-prediction，硬塞 T1/B1/B1/normal
+  # 佔位符會污染 win_rate / verifier 統計（餵假資料給學習）。trace 內已含真實值。
+  # 需 VID 已存在；不存在或 trace 不合法 → log 略過，不建 ghost。
+  "$PYTHON_BIN" "$VIDEO_OPS" set-trace "$VID" --trace "$TRACE_JSON" >/dev/null 2>&1 || log "stop-hook: trace write failed for $VID（VID 不存在或 trace 不合法）"
 fi
 
 if [ -n "$HAS_SCORES" ]; then
