@@ -91,8 +91,10 @@ if sys.stdout.encoding != "utf-8":
 if sys.stderr.encoding != "utf-8":
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
-# ── 表現分類（SSoT 在 ops/lib/config.py + ops/lib/backfill.py）──
-# 從 ops 導入，確保門檻定義只有一份。
+# ── 表現分類 ──
+# 門檻 SSoT 在 pipeline _meta.thresholds.performance；本檔讀 caller 傳入的 thresholds、
+# 缺漏時 fallback 預設值（high_A 70/40、high_B 300k/40、low 40/15、見 _resolve_performance_thresholds）。
+# ⚠️ 本檔並未 import ops、是獨立的 fallback 副本 —— fallback 數值須與 _meta + ops/lib/config.py 一致。
 
 
 def _resolve_performance_thresholds(thresholds=None):
