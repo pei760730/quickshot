@@ -289,7 +289,8 @@ def validate_all(video_data):
 
         if bf and "views" in bf and "retention_3s" in bf and "completion_rate" in bf:
             recalc_level, _, _ = classify_performance(
-                bf["views"], bf["retention_3s"], bf["completion_rate"]
+                bf["views"], bf["retention_3s"], bf["completion_rate"],
+                meta=video_data.get("_meta"),
             )
             stored_level = bf.get("performance")
             if recalc_level != stored_level:

@@ -36,9 +36,45 @@ from .backfill_report import performance_report, query_unextracted  # noqa: F401
 
 # ── 表現分類 ─────────────────────────────────────────────
 
-def classify_performance(views, retention_3s, completion_rate):
-    """根據門檻自動分類表現等級，回傳 (level, path, reason)。"""
-    th = PERFORMANCE_THRESHOLDS
+def resolve_performance_thresholds(meta=None):
+    """從 pipeline _meta.thresholds.performance 解析 ops 格式門檻；缺漏 / 格式不符 fallback 常數。
+
+    _meta 是門檻 SSoT（data/*/pipeline/_meta.json）。讓存檔分類能跟著 _meta 走、不寫死。
+    display helper（無 data context）仍用 PERFORMANCE_THRESHOLDS 常數、該常數已硬性要求與
+    _meta 一致（見 config.py 註解 + test_classify_performance_display_ssot）。
+    """
+    perf = ((meta or {}).get("thresholds") or {}).get("performance")
+    if not isinstance(perf, dict):
+        return PERFORMANCE_THRESHOLDS
+    try:
+        ha, hb, lo = perf["high_A"], perf["high_B"], perf["low"]
+        return {
+            "high": {
+                "path_A": {
+                    "retention_3s_min": ha["retention_3s"],
+                    "completion_rate_min": ha["completion_rate"],
+                },
+                "path_B": {
+                    "views_min": hb["views"],
+                    "completion_rate_min": hb["completion_rate"],
+                },
+            },
+            "low": {
+                "retention_3s_max": lo["retention_3s_below"],
+                "completion_rate_max": lo["completion_rate_below"],
+            },
+        }
+    except (KeyError, TypeError):
+        return PERFORMANCE_THRESHOLDS
+
+
+def classify_performance(views, retention_3s, completion_rate, meta=None):
+    """根據門檻自動分類表現等級，回傳 (level, path, reason)。
+
+    meta=None 時用 PERFORMANCE_THRESHOLDS 常數（display helper 等無 data context 路徑）；
+    存檔 / 驗證 / 遷移路徑傳 pipeline _meta、門檻跟著 SSoT 走（Bounded：只存檔相關路徑讀 _meta）。
+    """
+    th = resolve_performance_thresholds(meta)
     ha = th["high"]["path_A"]
     hb = th["high"]["path_B"]
     # L-0024 hardened：retention/completion 為 None 代表「來源無資料」、需 fall through 不可參與比較。
@@ -266,7 +302,9 @@ def backfill_video(data, vid, views, retention_3s, completion_rate,
     elif ss == "待補":
         backfill_warnings.append(f"{vid} 腳本待補（quick-shot 尚未提供腳本）")
 
-    level, path, reason = classify_performance(views, retention_3s, completion_rate)
+    level, path, reason = classify_performance(
+        views, retention_3s, completion_rate, meta=data.get("_meta")
+    )
 
     bf = {
         "backfilled_date": today_str(),
