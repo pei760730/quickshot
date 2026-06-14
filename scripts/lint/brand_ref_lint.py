@@ -14,7 +14,9 @@ from typing import Iterable
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 BRAND_PATH = REPO_ROOT / "01-data-brain" / "brand.md"
 BRAND_SECTION_RE = re.compile(r"^##\s*\[(\d+)\]", re.MULTILINE)
-INLINE_REF_RE = re.compile(r"brand\.md\s*\[(\d+)\]")
+# 容忍 `brand.md` [N]（反引號包裹後接空格）這種格式 —— 否則含反引號的引用會逃過偵測，
+# 像 generation/SKILL.md 曾殘留的幽靈 [13]。`?\s* 吃掉收尾反引號 + 空白。
+INLINE_REF_RE = re.compile(r"brand\.md`?\s*\[(\d+)\]")
 
 
 def _scan_targets(repo_root: Path) -> list[Path]:

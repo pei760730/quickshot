@@ -202,14 +202,17 @@ REQUIRED_FIELDS_BY_SOURCE = {
 }
 
 # ── 表現門檻 ─────────────────────────────────────────────
+# ⚠️ SSoT 在 pipeline _meta.thresholds.performance（data/*/pipeline/_meta.json）。
+# 此常數為 _meta 缺漏時的 fallback、數值必須與 _meta 一致（high_A 70/40、high_B 300k/40、low 40/15）。
+# 改門檻時兩處一起改，否則存檔分類與 Sheets 顯示會分歧（見 test_classify_performance_display_ssot）。
 PERFORMANCE_THRESHOLDS = {
     "high": {
         "path_A": {"retention_3s_min": 70, "completion_rate_min": 40},
         "path_B": {"views_min": 300000, "completion_rate_min": 40},
     },
     "low": {
-        "retention_3s_max": 50,
-        "completion_rate_max": 25,
+        "retention_3s_max": 40,
+        "completion_rate_max": 15,
     },
 }
 
