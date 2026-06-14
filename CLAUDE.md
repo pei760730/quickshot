@@ -26,7 +26,7 @@
    - (c) 能用 **schema 欄位**約束嗎？
    - 三層都不行才寫 feature code。三層模糊不清 → 先列方案問 Kai。
    - 背景：「代碼免費、prompt + guardrail 才是王道」。每次發現錯誤要先問「能不能只寫規則擋」、寫 code 是最後手段。
-7. **Skill 採用閉環強制（v4.19+、對應 `docs/contracts/skill-io-schema.md` v2.0 §Learning Loop Contract）** — 任何生成型 skill 完成輸出後、必呼叫對應 CLI 把 trace / scores 寫入 pipeline.json：
+7. **Skill 採用閉環強制（v4.19+、對應 `docs/contracts/skill-io-schema.md` v2.2 §Learning Loop Contract）** — 任何生成型 skill 完成輸出後、必呼叫對應 CLI 把 trace / scores 寫入 pipeline.json：
     - **Generation Skill**（mode=dual-track / variant / series / interview / viral）→ 存檔時走 `video-ops.py save VID-NNN ... --skill generation --mode <mode> --title-type ... --hook-type ... --version ... --trace '{...}'`
     - **Quality Skill phase=check** → 跑完必呼叫 `video-ops.py record-verifier-scores VID-NNN --conflict-score N --retention-prediction LEVEL --ai-residue-count N --data-consistency true/false --format-complete true/false --pass-count "N/5"`
     - 缺寫入 = skill 沒完成、不算「存檔」、Claude 對話中需主動補
