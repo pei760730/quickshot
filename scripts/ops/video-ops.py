@@ -1279,7 +1279,7 @@ def _cmd_backfill(ctx):
                 print(f"⚠️ {al['msg']}")
         elif r["level"] == "high":
             print(
-                f'→ 建議執行：video-ops.py auto-extract {vid}（自動解析）或 extract-learning {vid} --opening CODE --cta CODE --formula "..."'
+                f'→ 建議執行：video-ops.py extract-learning {vid} --opening CODE --cta CODE --formula "..."'
             )
         elif r["level"] == "low":
             print(

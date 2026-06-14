@@ -24,7 +24,7 @@ def test_migrate_file_dry_run_does_not_write(tmp_path):
                 "vid": "VID-001",
                 "backfill": {
                     "views": 1000,
-                    "retention_3s": 49.4,
+                    "retention_3s": 38.0,
                     "completion_rate": 44.35,
                     "performance": "normal",
                 },
@@ -50,7 +50,7 @@ def test_migrate_file_apply_updates_performance(tmp_path):
                 "vid": "VID-001",
                 "backfill": {
                     "views": 1000,
-                    "retention_3s": 49.4,
+                    "retention_3s": 38.0,
                     "completion_rate": 44.35,
                     "performance": "normal",
                 },

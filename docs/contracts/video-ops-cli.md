@@ -1,6 +1,6 @@
 # video-ops.py CLI Contract
 
-> version: 1.16 | last_updated: 2026-05-08
+> version: 1.17 | last_updated: 2026-06-14
 > 角色：Claude (caller) × CLI 層 (implementer)
 
 入口：`python scripts/ops/video-ops.py [--operator <代號>] <command> [args]`
@@ -40,7 +40,7 @@
 | `next-vid` | `next-vid` | 查詢下一個可用 VID 編號 |
 | `add` | `add --topic "主題" [--tag "標籤"] --title "標題" [--source pipeline\|quick-shot] [--initial-status STATUS]` | 新增影片（未帶 tag 會警告並用預設值） |
 | `transition` | `transition VID-NNN STATUS / transition VID-NNN --to STATUS` | 影片狀態轉移（相容位置參數 + flag 形式） |
-| `update-date` | `update-date VID-NNN --publish-date YYYY-MM-DD` | 更新上線日期 |
+| `update-date` | `update-date VID-NNN YYYY-MM-DD` | 更新上線日期（位置參數；同時自動重命名腳本檔）|
 | `set-hook-type` | `set-hook-type VID-NNN --hook-type B1\|B2\|B3\|D1\|D2\|D3\|D4\|D5` | 回填既有影片的 hook_type（v1.11+、Wave 2 存量補齊用；合法值讀 `_meta.valid_hook_types`） |
 | `set-trace` | `set-trace VID-NNN --trace '{...}' [--no-overwrite]` | 回填既有影片的 generation_trace（v1.12+、Learning-loop 契約；`--no-overwrite` 在既有 trace 時會拒絕覆寫並 exit 1；schema 見 `docs/contracts/skill-io-schema.md §Learning Loop Contract`） |
 | `add-transcript` | `add-transcript VID-NNN --text "逐字稿"` | 新增逐字稿 |
