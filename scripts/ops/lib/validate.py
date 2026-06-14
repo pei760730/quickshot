@@ -316,6 +316,24 @@ def validate_all(video_data):
             if not full_path.exists():
                 warnings.append(f"{v['vid']}：script_path 指向 {sp}，但檔案不存在")
 
+    # ── counter 漂移：next_vid <= 現有最大 VID 號 → 下次配號撞號會蓋掉舊影片 ──
+    meta = video_data.get("_meta", {})
+    next_vid_val = meta.get("next_vid")
+    if isinstance(next_vid_val, int):
+        max_vid_num = 0
+        for v in video_data.get("videos", []):
+            val = v.get("vid")
+            if isinstance(val, str) and val.startswith("VID-"):
+                try:
+                    max_vid_num = max(max_vid_num, int(val.split("-", 1)[1]))
+                except ValueError:
+                    pass
+        if next_vid_val <= max_vid_num:
+            errors.append(
+                f"_meta.next_vid={next_vid_val} ≤ 現有最大 VID-{max_vid_num:03d}，"
+                f"下次配號會撞號蓋掉舊影片（修：_meta.next_vid 設為 {max_vid_num + 1}）"
+            )
+
     # ── migrate 建議偵測 ──
     migrate_candidates = check_migrate_needed(video_data)
 

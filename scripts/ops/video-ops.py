@@ -81,6 +81,7 @@ from lib.config import (
 from lib.pipeline import (
     load_tracking,
     save_tracking,
+    resolve_within_repo,
     find_video,
     next_vid,
     add_video,
@@ -471,9 +472,10 @@ def _cmd_delete(ctx):
     sp = (video.get("script_path") or "").strip()
     removed_script = None
     if sp and sp != "系統前上線":
-        script_file = Path(sp)
-        abs_script = PROJECT_ROOT / script_file
-        if abs_script.exists():
+        abs_script = resolve_within_repo(sp)
+        if abs_script is None:
+            print(f"⚠️ {vid} script_path 越界 repo（{sp}），拒絕刪除檔案")
+        elif abs_script.exists():
             if purge:
                 abs_script.unlink()
                 removed_script = sp
@@ -1143,7 +1145,11 @@ def _cmd_adoption_stats(ctx):
     if "vid_inference" in kv:
         _cmd_vid_inference_stats()
         return
-    recent_n = int(kv.get("n", 30))
+    try:
+        recent_n = int(kv.get("n", 30))
+    except (ValueError, TypeError):
+        print("❌ --n 需為整數")
+        sys.exit(1)
     videos = [v for v in ctx["data"].get("videos", []) if v.get("status") == "已上線"]
     videos.sort(key=lambda v: v.get("publish_date") or "", reverse=True)
     subset = videos[:recent_n]
@@ -1848,7 +1854,11 @@ def _cmd_retrieval(ctx):
         sys.exit(1)
     vid = sys.argv[3]
     kv = _parse_kv_args(sys.argv, start=4)
-    limit = int(kv.get("limit", 5))
+    try:
+        limit = int(kv.get("limit", 5))
+    except (ValueError, TypeError):
+        print("❌ --limit 需為整數")
+        sys.exit(1)
     include_fields = [
         x.strip()
         for x in kv.get(

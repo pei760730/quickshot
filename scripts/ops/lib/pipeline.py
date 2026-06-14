@@ -37,6 +37,21 @@ def _item_key(item):
     return item.get("vid") or item.get("idea_id") or ""
 
 
+def resolve_within_repo(script_path, root=None):
+    """把 script_path 解析為 repo 內絕對路徑；越界（絕對路徑或 .. 逃出 repo）回 None。
+
+    安全相關：防 script_path 被植入 `../..` 或絕對路徑後，destructive 檔案操作
+    （delete --purge 的 unlink / 狀態轉移與改日期的 shutil.move）碰到 repo 外的檔案
+    （任意刪除 / 覆寫）。呼叫端拿到 None 必須拒絕該檔案操作。
+    """
+    base = (root or PROJECT_ROOT).resolve()
+    try:
+        candidate = (base / script_path).resolve()
+    except (OSError, ValueError):
+        return None
+    return candidate if candidate.is_relative_to(base) else None
+
+
 def _read_pipeline_sharded(pipeline_json=None):
     legacy, _, meta_path, items_dir = _pipeline_paths(pipeline_json)
     if not meta_path.exists() or not items_dir.exists():
@@ -44,7 +59,13 @@ def _read_pipeline_sharded(pipeline_json=None):
     meta = load_json(str(meta_path), {}, str(meta_path))
     items = []
     for p in sorted(items_dir.glob("*.json")):
-        item = load_json(str(p), {}, str(p))
+        try:
+            item = json.loads(p.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as e:
+            # 單一 shard 損壞（crash 半寫最易發生）不該拒絕全部存取；skip + warn、其餘照載，
+            # 而非沿用 load_json 的 SystemExit 把唯讀指令（list/health）也一起打死。
+            print(f"⚠️ 跳過損壞的 pipeline shard {p.name}（{e}）—— 其餘 items 照常載入")
+            continue
         if isinstance(item, dict) and item.get("idea_id"):
             items.append(item)
     items.sort(key=_item_key)
@@ -843,9 +864,11 @@ def transition(data, vid, new_status, reason=None, pipeline_json=None):
         sp = video.get("script_path") or ""
         new_sp = _remap_script_stage_path(sp, new_stage)
         if new_sp and new_sp != sp:
-            src = PROJECT_ROOT / sp
-            dst = PROJECT_ROOT / new_sp
-            if src.exists():
+            src = resolve_within_repo(sp)
+            dst = resolve_within_repo(new_sp)
+            if src is None or dst is None:
+                print(f"⚠️ script_path 越界 repo，跳過搬移（{sp}）")
+            elif src.exists():
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 try:
                     shutil.move(str(src), str(dst))
@@ -926,9 +949,11 @@ def update_publish_date(data, vid, new_date, pipeline_json=None):
             new_sp = f"{dirname}/{new_filename}"
 
             if new_sp != sp:
-                src = PROJECT_ROOT / sp
-                dst = PROJECT_ROOT / new_sp
-                if src.exists():
+                src = resolve_within_repo(sp)
+                dst = resolve_within_repo(new_sp)
+                if src is None or dst is None:
+                    print(f"⚠️ script_path 越界 repo，跳過重命名（{sp}）")
+                elif src.exists():
                     dst.parent.mkdir(parents=True, exist_ok=True)
                     shutil.move(str(src), str(dst))
                     renamed_from = sp
