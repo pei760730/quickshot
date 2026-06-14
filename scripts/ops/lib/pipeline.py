@@ -44,7 +44,13 @@ def _read_pipeline_sharded(pipeline_json=None):
     meta = load_json(str(meta_path), {}, str(meta_path))
     items = []
     for p in sorted(items_dir.glob("*.json")):
-        item = load_json(str(p), {}, str(p))
+        try:
+            item = json.loads(p.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as e:
+            # 單一 shard 損壞（crash 半寫最易發生）不該拒絕全部存取；skip + warn、其餘照載，
+            # 而非沿用 load_json 的 SystemExit 把唯讀指令（list/health）也一起打死。
+            print(f"⚠️ 跳過損壞的 pipeline shard {p.name}（{e}）—— 其餘 items 照常載入")
+            continue
         if isinstance(item, dict) and item.get("idea_id"):
             items.append(item)
     items.sort(key=_item_key)
