@@ -18,7 +18,7 @@ from scripts.ops.lib.config import get_operator_paths
 def _resolve_patterns_path(operator: str | None = None, path: Path | None = None) -> Path:
     if path is not None:
         return path
-    return get_operator_paths(operator)["performance_patterns"]
+    return get_operator_paths(operator)["performance_patterns_json"]
 
 
 def load_aggregate_context(path: Path | None = None, operator: str | None = None) -> dict[str, Any]:

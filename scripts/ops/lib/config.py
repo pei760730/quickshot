@@ -131,9 +131,7 @@ def get_operator_paths(operator=None):
     data_dir = cfg["data_dir"]
     return {
         "pipeline_json": data_dir / "pipeline.json",
-        "pipeline": data_dir / "pipeline.json",
         "performance_patterns_json": data_dir / "performance-patterns.json",
-        "performance_patterns": data_dir / "performance-patterns.json",
         "brand_monitor": data_dir / "brand-monitor.json",
         "todos": data_dir / "todos.json",
         "data_dir": data_dir,

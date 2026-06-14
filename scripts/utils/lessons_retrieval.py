@@ -20,7 +20,7 @@ from scripts.ops.lib.pipeline import get_pipeline_data
 def _resolve_pipeline_path(operator: str | None = None, pipeline_path: Path | None = None) -> Path:
     if pipeline_path is not None:
         return pipeline_path
-    return get_operator_paths(operator)["pipeline"]
+    return get_operator_paths(operator)["pipeline_json"]
 
 
 def _parse_date(raw: Any) -> date | None:
