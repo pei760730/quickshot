@@ -26,7 +26,7 @@ def _pipeline_paths(repo_root: Path) -> list[Path]:
     return [p for p in paths if p.exists()]
 
 
-def _classify_item(item: dict) -> tuple[str | None, str | None]:
+def _classify_item(item: dict, meta: dict | None = None) -> tuple[str | None, str | None]:
     bf = item.get("backfill") or {}
     if not all(k in bf for k in ("views", "retention_3s", "completion_rate")):
         return None, None
@@ -34,6 +34,7 @@ def _classify_item(item: dict) -> tuple[str | None, str | None]:
         bf.get("views", 0),
         bf.get("retention_3s", 0),
         bf.get("completion_rate", 0),
+        meta=meta,
     )
     before = bf.get("performance")
     return before, level
@@ -41,11 +42,12 @@ def _classify_item(item: dict) -> tuple[str | None, str | None]:
 
 def reclassify_pipeline(data: dict) -> tuple[list[dict], int, int]:
     items = data.get("items", [])
+    meta = data.get("_meta")
     changes: list[dict] = []
     eligible = 0
     low_count = 0
     for item in items:
-        before, after = _classify_item(item)
+        before, after = _classify_item(item, meta)
         if after is None:
             continue
         eligible += 1
