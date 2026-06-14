@@ -37,27 +37,17 @@ if [ -z "$VID" ]; then
   exit 0
 fi
 
-HAS_TRACE="$($PYTHON_BIN -c 'import json,sys;print("1" if isinstance(json.loads(sys.argv[1]).get("payload",{}).get("generation_trace"),dict) else "")' "$EXTRACTED_JSON")"
 HAS_SCORES="$($PYTHON_BIN -c 'import json,sys;print("1" if isinstance(json.loads(sys.argv[1]).get("payload",{}).get("verifier_scores"),dict) else "")' "$EXTRACTED_JSON")"
 
-if [ -z "$HAS_TRACE" ] && [ -z "$HAS_SCORES" ]; then
-  log "stop-hook: skip ($VID no trace/scores)"
+# v5.x「縮」：generation_trace 自動捕獲已移除（trace 30 天零消費、短期客戶不需自我進化 forensic）。
+# 本 hook 只保留 verifier_scores 捕獲（每支品質回饋 → performance-patterns → 下一支更好）。
+if [ -z "$HAS_SCORES" ]; then
+  log "stop-hook: skip ($VID no scores)"
   exit 0
 fi
 
-if [ -n "$HAS_TRACE" ]; then
-  TRACE_JSON="$($PYTHON_BIN -c 'import json,sys;print(json.dumps(json.loads(sys.argv[1])["payload"]["generation_trace"], ensure_ascii=False))' "$EXTRACTED_JSON")"
-  # set-trace 只寫 generation_trace、不碰 video 頂層 metadata。原本走 save 必填
-  # --title-type/--hook-type/--version/--verifier-prediction，硬塞 T1/B1/B1/normal
-  # 佔位符會污染 win_rate / verifier 統計（餵假資料給學習）。trace 內已含真實值。
-  # 需 VID 已存在；不存在或 trace 不合法 → log 略過，不建 ghost。
-  "$PYTHON_BIN" "$VIDEO_OPS" set-trace "$VID" --trace "$TRACE_JSON" >/dev/null 2>&1 || log "stop-hook: trace write failed for $VID（VID 不存在或 trace 不合法）"
-fi
+SCORES_JSON="$($PYTHON_BIN -c 'import json,sys;print(json.dumps(json.loads(sys.argv[1])["payload"]["verifier_scores"], ensure_ascii=False))' "$EXTRACTED_JSON")"
+printf '%s' "$SCORES_JSON" | "$PYTHON_BIN" "$VIDEO_OPS" record-verifier-scores "$VID" --from-stdin 1 >/dev/null 2>&1 || log "stop-hook: scores write failed for $VID"
 
-if [ -n "$HAS_SCORES" ]; then
-  SCORES_JSON="$($PYTHON_BIN -c 'import json,sys;print(json.dumps(json.loads(sys.argv[1])["payload"]["verifier_scores"], ensure_ascii=False))' "$EXTRACTED_JSON")"
-  printf '%s' "$SCORES_JSON" | "$PYTHON_BIN" "$VIDEO_OPS" record-verifier-scores "$VID" --from-stdin 1 >/dev/null 2>&1 || log "stop-hook: scores write failed for $VID"
-fi
-
-log "stop-hook: done ($VID trace=$HAS_TRACE scores=$HAS_SCORES)"
+log "stop-hook: done ($VID scores=$HAS_SCORES)"
 exit 0
