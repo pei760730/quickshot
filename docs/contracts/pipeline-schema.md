@@ -1,7 +1,8 @@
 # Pipeline Schema Contract
 
-> version: 2.2 | last_updated: 2026-06-14
+> version: 2.3 | last_updated: 2026-06-15
 > 角色：Claude (prompt/skill) × CLI 層 (backend/infra)
+> 🚨 field-removal: v2.3（「縮」follow-up、移除 `_meta.sedimentation.fallback_threshold`、隨 `propose_rules_from_verifier` 自動提案迴圈退役而成孤兒 config、code 已不讀）
 > 🚨 field-removal: v2.2（engine「縮」、移除 `generation_trace` 欄位 + `_meta.trace_required_statuses`、trace 上線 30 天零消費、整套機器退役；保留 verifier_scores / verifier_accuracy）
 > 🚨 schema-migration: v2.1（engine v5.97、Issue #438、整層退役 legacy `pipeline.json`、純 sharded SSoT、`.gitignore` 防誤建）
 > 🚨 schema-migration（歷史）: v2.0（engine v4.x、pipeline 改為 sharded storage、legacy `pipeline.json` 仍為相容輸出）
@@ -37,8 +38,7 @@ Python 的狀態機、驗證、門檻全部從 `_meta` 讀取，不硬編碼。
 | `thresholds.stale_days` | dict[str, int] | 各狀態卡關天數 | Claude 提醒用 |
 | `thresholds.backfill_due_days` | int | 上線後幾天需回填 | Claude 回填提醒 |
 | `thresholds.performance` | dict | 高/低表現門檻 | backfill.py `classify_performance()` |
-| `_meta.sedimentation.max_proposals_per_backfill` | int | 每次 backfill 最多提出幾條規則建議（建議值 2） | Claude 主動沉澱 |
-| `_meta.sedimentation.fallback_threshold` | int | fallback 規則提案門檻（對齊舊版 3） | sedimentation.py fallback |
+| `_meta.sedimentation.max_proposals_per_backfill` | int | 回填後 sedimentation context 最多請 Claude 考慮幾條手動沉澱提示（建議值 2） | `get_sedimentation_context` limits |
 | `_meta.quality.levels` | dict | L0/L1/L2 機器可讀品質分級條件 | Claude / CLI 共用 |
 | `_meta.verifier.checks` | dict | 5 項 verifier 檢查門檻（衝突感、AI 殘留等） | save/verifier/scoring |
 | `thresholds.shelf_life_stale_days` | dict | timely/trending 過期天數 | `classify_idea_freshness()` |

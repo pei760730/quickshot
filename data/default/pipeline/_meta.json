@@ -78,8 +78,7 @@
     }
   },
   "sedimentation": {
-    "max_proposals_per_backfill": 2,
-    "fallback_threshold": 3
+    "max_proposals_per_backfill": 2
   },
   "quality": {
     "levels": {
