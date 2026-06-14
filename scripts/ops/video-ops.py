@@ -119,7 +119,7 @@ from lib.deviations import (
     auto_diff_and_record,
 )
 from lib.mistakes import record_mistake
-from lib.sedimentation import get_sedimentation_context, propose_rules_from_verifier
+from lib.sedimentation import get_sedimentation_context
 from lib.lessons import (
     add_lesson,
     add_evidence as add_lesson_evidence,
@@ -1097,17 +1097,6 @@ def _cmd_backfill(ctx):
             operator=ctx["op_paths"]["label"].lower(),
             meta=ctx["data"].get("_meta"),
         )
-        proposals = propose_rules_from_verifier(
-            ctx["data"].get("items", ctx["data"].get("videos", [])),
-            meta=ctx["data"].get("_meta"),
-            operator=ctx["op_paths"]["operator"],
-        )
-        max_proposals = (
-            context.get("limits", {}).get("max_proposals", 2)
-            if isinstance(context, dict)
-            else 2
-        )
-        pending = [p for p in proposals if not p.get("already_exists")][:max_proposals]
         cache_dir = PROJECT_ROOT / "data" / ".cache"
         cache_dir.mkdir(parents=True, exist_ok=True)
         cache_path = cache_dir / "last-backfill-context.json"
@@ -1117,17 +1106,11 @@ def _cmd_backfill(ctx):
         print(
             f"🧠 sedimentation context 已準備（cache: {cache_path.relative_to(PROJECT_ROOT)}）"
         )
-        # 雙路徑交棒：cache 保留機讀；stdout 提供 Claude 當前對話可直接吸收
+        # 雙路徑交棒：cache 保留機讀；stdout 提供 Claude 當前對話直接吸收
+        # （v5.x「縮」：自動提案 propose_rules_from_verifier 已移除；Claude 看脈絡手動判斷是否記 lesson）
         print(
             f"🧠 sedimentation_context_json={json.dumps(context, ensure_ascii=False)}"
         )
-        if pending:
-            print(f"🧪 sedimentation proposals（待確認 {len(pending)} 條）：")
-            for p in pending:
-                pr = p.get("proposed_rule") or {}
-                print(f"  • {p.get('issue_type')}: {pr.get('pattern', '')}")
-        else:
-            print("🧪 sedimentation proposals：目前無新增提案")
     else:
         print(f"❌ {msg}")
         sys.exit(1)
