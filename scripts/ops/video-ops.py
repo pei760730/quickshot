@@ -308,7 +308,7 @@ def _rollback_save_after_verifier_failure(ctx, before_save_snapshot, reason):
     ctx["data"].clear()
     ctx["data"].update(before_save_snapshot)
     op_paths = ctx.get("op_paths", {})
-    save_tracking(ctx["data"], tracking_json=op_paths.get("tracking_json"))
+    save_tracking(ctx["data"], pipeline_json=op_paths.get("pipeline_json"))
     print(f"↩️ 已回滾 save 變更（因 {reason}）")
 
 
@@ -703,7 +703,7 @@ def _cmd_quick_add(ctx):
             _idx, video = find_video(ctx["data"], vid)
             video["generation_trace"] = generation_trace
             save_tracking(
-                ctx["data"], tracking_json=ctx.get("op_paths", {}).get("tracking_json")
+                ctx["data"], pipeline_json=ctx.get("op_paths", {}).get("pipeline_json")
             )
         status_icon = {"待拍": "🎬", "剪輯中": "✂️", "已上線": "✅"}.get(
             initial_status, "🎬"
