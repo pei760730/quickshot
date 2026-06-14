@@ -188,12 +188,11 @@ def patch_paths(tmp_project, operator_fixture):
         yield tmp_project
 
 
-def write_sharded_pipeline(data_dir, data, write_legacy=False):
+def write_sharded_pipeline(data_dir, data):
     """Write pipeline test fixture in sharded layout.
 
     ``data_dir`` is an operator/template data directory (for example
-    ``tmp/data/kai``). Legacy pipeline.json is optional and only used by tests
-    that explicitly exercise backward-compat behaviour.
+    ``tmp/data/kai``).
     """
     data_dir = Path(data_dir)
     items_dir = data_dir / "pipeline" / "items"
@@ -211,11 +210,6 @@ def write_sharded_pipeline(data_dir, data, write_legacy=False):
         key = item.get("vid") or item.get("idea_id") or f"item-{idx:03d}"
         (items_dir / f"{key}.json").write_text(
             json.dumps(item, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
-    if write_legacy:
-        (data_dir / "pipeline.json").write_text(
-            json.dumps(data, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
 
