@@ -29,7 +29,7 @@ Python 的狀態機、驗證、門檻全部從 `_meta` 讀取，不硬編碼。
 | `last_updated` | string | `YYYY-MM-DD`（TW UTC+8） | 參考用 |
 | `next_idea_id` | int | 下一個 IDEA 編號 | pipeline.py `add_item()` |
 | `next_vid` | int | 下一個 VID 編號 | pipeline.py `add_video()` |
-| `statuses.idea` | string[] | 合法靈感狀態 | `["inbox", "selected", "cooldown"]` |
+| `statuses.idea` | string[] | 合法靈感狀態 | `["inbox", "selected", "cooldown", "archived"]` |
 | `statuses.video` | string[] | 合法影片狀態 | `["待拍", "剪輯中", "已上線"]` |
 | `statuses.terminal` | string[] | 終端狀態 | `["archived"]` |
 | `transitions` | dict[str, str[]] | 合法狀態轉移圖 | pipeline.py `transition_item()` |
@@ -46,6 +46,7 @@ Python 的狀態機、驗證、門檻全部從 `_meta` 讀取，不硬編碼。
 | `valid_hook_types` | string[] | 合法開場類型 | `save_script()` 驗證 |
 | `valid_versions` | string[] | 合法腳本版本 | `save_script()` 驗證 |
 | `valid_verifier_predictions` | string[] | 合法預測值 | `save_script()` 驗證 |
+| `trace_required_statuses` | string[] | 哪些狀態存檔時強制 `--trace`（`["剪輯中", "已上線"]`） | video-ops.py save / set-trace 守門 |
 
 ### transitions 狀態圖
 

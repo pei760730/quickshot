@@ -33,7 +33,7 @@
 
 ```
 quickshot/
-├── CLAUDE.md                   # AI 開機記憶（9 條禁令 + 資料地圖）
+├── CLAUDE.md                   # AI 開機記憶（9 條禁令、含 3.5 共 10 項 + 資料地圖）
 ├── CLAUDE.local.md             # 此 repo 品牌身份（短期客戶可自填）
 ├── AGENTS.md                   # Codex / sub-agent 協作入口（指回 CLAUDE.md / workflow.md）
 ├── .claude/
@@ -109,7 +109,7 @@ quickshot/
 
 ## 測試 + CI
 
-本機驗證順序（與 CI 對齊）。先裝 dev deps：`pip install -r requirements-dev.txt`
+本機驗證順序（與 CI 跑同一組檢查、順序略有不同）。先裝 dev deps：`pip install -r requirements-dev.txt`
 （若 `ruff` 不在 PATH，改用 `python -m ruff ...`）：
 
 ```bash
