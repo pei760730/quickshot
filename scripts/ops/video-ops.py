@@ -1861,9 +1861,9 @@ def _cmd_retrieval(ctx):
             vid=vid,
             limit=limit,
             include_fields=include_fields,
-            pipeline_path=ctx["op_paths"]["tracking_json"],
+            operator=ctx["op_paths"]["operator"],
         )
-    except ValueError as e:
+    except (ValueError, FileNotFoundError) as e:
         print(f"❌ {e}")
         sys.exit(1)
     print(json.dumps(rows, ensure_ascii=False, indent=2))
