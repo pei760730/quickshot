@@ -1,7 +1,8 @@
 # Pipeline Schema Contract
 
-> version: 2.1 | last_updated: 2026-05-15
+> version: 2.2 | last_updated: 2026-06-14
 > 角色：Claude (prompt/skill) × CLI 層 (backend/infra)
+> 🚨 field-removal: v2.2（engine「縮」、移除 `generation_trace` 欄位 + `_meta.trace_required_statuses`、trace 上線 30 天零消費、整套機器退役；保留 verifier_scores / verifier_accuracy）
 > 🚨 schema-migration: v2.1（engine v5.97、Issue #438、整層退役 legacy `pipeline.json`、純 sharded SSoT、`.gitignore` 防誤建）
 > 🚨 schema-migration（歷史）: v2.0（engine v4.x、pipeline 改為 sharded storage、legacy `pipeline.json` 仍為相容輸出）
 
@@ -46,7 +47,6 @@ Python 的狀態機、驗證、門檻全部從 `_meta` 讀取，不硬編碼。
 | `valid_hook_types` | string[] | 合法開場類型 | `save_script()` 驗證 |
 | `valid_versions` | string[] | 合法腳本版本 | `save_script()` 驗證 |
 | `valid_verifier_predictions` | string[] | 合法預測值 | `save_script()` 驗證 |
-| `trace_required_statuses` | string[] | 哪些狀態存檔時強制 `--trace`（`["剪輯中", "已上線"]`） | video-ops.py save / set-trace 守門 |
 
 ### transitions 狀態圖
 
@@ -145,16 +145,6 @@ archived → inbox
 | `version` | string | A1-D5（見 _meta.valid_versions） | save |
 | `verifier_prediction` | string | high/normal/low | save |
 | `save_date` | string | `YYYY-MM-DD` | save |
-
-### generation_trace（可選，save 時寫入）
-
-| 欄位 | 型別 | 說明 |
-|------|------|------|
-| `date` | string | `YYYY-MM-DD` |
-| `patterns_injected` | string[] | 注入的 proven patterns（如 `["B2", "D3"]`） |
-| `risk_patterns_avoided` | string[] | 迴避的 risk patterns |
-| `degradation_used` | string \| null | 觸發的降級路徑（如 `"D1→D4"`) |
-| `persona_deviation_score` | int \| null | 偏離度分數（0-10+） |
 
 ### verifier_scores（save 時自動寫入）
 

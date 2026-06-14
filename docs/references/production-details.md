@@ -24,7 +24,7 @@
 ## 存檔
 
 1. 寫入 `03-production-line/02-ready-to-shoot/YYYY-MM-DD_主題_腳本_V1.md`
-2. `video-ops.py save VID-NNN --script-path "路徑" --title-type T? --hook-type B?/D? --version B2 --verifier-prediction high/normal/low [--patterns-injected "B2,D3" --risk-patterns-avoided "開場太慢" --persona-deviation-score N]`（前 5 項必填，generation_trace 可選）
+2. `video-ops.py save VID-NNN --script-path "路徑" --title-type T? --hook-type B?/D? --version B2 --verifier-prediction high/normal/low [--skill generation --mode dual-track]`（前 5 項必填）
    > 合法 enum 值以 `pipeline.json _meta.valid_*` 為 SSoT（見 `docs/contracts/pipeline-schema.md`）。
 3. 品質細項存檔：`video-ops.py record-verifier-scores VID-NNN --conflict-score N --retention-prediction LEVEL --ai-residue-count N --data-consistency true|false --format-complete true|false --pass-count "N/5"`（存檔時自動執行）
 4. **生成規則自動沉澱**：`record-verifier-scores` 累積後，`propose_rules_from_verifier()` 自動偵測重複品質問題（AI 殘留 ≥3 次 / 衝突感 ≤4 分 ≥3 次 / 數據不一致 ≥3 次）→ 提議寫入 `data/[operator]/lessons.json`（`origin=verifier`、Kai 確認才寫入；v4.36 前舊路徑為 `generation-rules.json`）

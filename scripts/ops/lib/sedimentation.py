@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-學習沉澱：從 verifier_scores 自動偵測重複問題，產出 rule 提案（需 Kai 確認後才寫入）。
-（註：本模組只讀 verifier_scores；generation_trace 目前無任何 code 消費者。）
+學習沉澱（v5.x「縮」後）：只負責組裝「回填後的歷史脈絡」供 Claude 在對話中
+**手動**判斷是否需要記一條 lesson。
 
-資料來源：pipeline.json 各影片的 verifier_scores 欄位
-輸出：rule_proposals list（由 Claude 展示給 Kai，確認後寫入 lessons.json
-origin=verifier；v4.36 前舊路徑為 generation-rules.json、已合併）
+v5.x 砍除「自動從 verifier_scores 偵測重複問題 → 自動產出 rule 提案」那條
+自動迴圈（propose_rules_from_verifier / apply_proposed_rule）—— 它屬於短期客戶
+不需要的跨時間自我進化機器、且實務上從未真正被採用。改由 Claude 看 context
+自己判斷、要記就走手動 `記錯` / `/harden`。
+
+資料來源：pipeline.json 各影片的 verifier_scores / backfill 欄位
+輸出：get_sedimentation_context() 的結構化脈絡（similar videos + avoid_patterns
++ risk_patterns + ungraduated_mistakes），純供 Claude 對話參考。
 """
 
 from collections import defaultdict
@@ -21,44 +26,13 @@ _EMPTY_RULES = {
     "avoid_patterns": [],
 }
 
-# 重複次數門檻：同類問題出現 N 次以上才提議
-SEDIMENTATION_THRESHOLD = 3
+# 同一次回填最多請 Claude 考慮的歷史脈絡提示數（手動判斷用、非自動提案）
 MAX_PROPOSALS_PER_BACKFILL = 2
-
-# 品質問題分類表：issue_type → (判定函式, pattern 文案, rule 文案)
-# 新增問題類型只需加一列、偵測與提案兩段共用此表
-_ISSUE_TABLE = [
-    (
-        "ai_residue",
-        lambda vs: bool(vs.get("ai_residue_count")) and vs["ai_residue_count"] > 0,
-        "存檔時 AI 味殘留反覆出現",
-        "生成腳本時加強口語化，避免書面語句式（每句≤20字，用「你」不用「我們」，避免三段式排比）",
-    ),
-    (
-        "low_conflict",
-        lambda vs: vs.get("conflict_score") is not None and vs["conflict_score"] <= 4,
-        "衝突感評分反覆偏低（≤4/10）",
-        "開頭3秒必須有衝突/損失/懸念元素，不用敘事鋪陳開場（參考 risk_patterns 中的「開場太慢」模式）",
-    ),
-    (
-        "data_inconsistency",
-        lambda vs: vs.get("data_consistency") is False,
-        "腳本數據與數據大腦不一致反覆出現",
-        "引用數字/案例前先確認在 brand.md [8][9] 中有對應記錄，無記錄則標註「⚠️ 非數據大腦素材」",
-    ),
-]
 
 
 def _sedimentation_meta(meta=None):
     meta = meta or {}
     return (meta.get("sedimentation") or {}) if isinstance(meta, dict) else {}
-
-
-def _fallback_threshold(meta=None):
-    value = _sedimentation_meta(meta).get("fallback_threshold")
-    if isinstance(value, int) and value > 0:
-        return value
-    return SEDIMENTATION_THRESHOLD
 
 
 def _max_proposals(meta=None):
@@ -108,58 +82,11 @@ def save_generation_rules(data, operator=None):
         )
 
 
-def propose_rules_from_verifier(pipeline_items, meta=None, operator=None):
-    """分析所有影片的 verifier_scores，偵測重複品質問題。
-
-    回傳 list[dict]，每個 dict:
-    - issue_type: str (ai_residue / low_conflict / data_inconsistency)
-    - count: int — 出現次數
-    - vids: list[str] — 相關影片
-    - proposed_rule: dict — 建議的 generation-rules 條目
-    - already_exists: bool — 是否已有類似規則
-    """
-    # 一趟掃描、按 _ISSUE_TABLE 分類統計
-    vids_by_issue = defaultdict(list)
-    for item in pipeline_items:
-        vid = item.get("vid")
-        vs = item.get("verifier_scores")
-        if not vid or not vs:
-            continue
-        for issue_type, detect, _, _ in _ISSUE_TABLE:
-            if detect(vs):
-                vids_by_issue[issue_type].append(vid)
-
-    # 讀取現有規則，避免重複提議
-    existing_rules = load_generation_rules(operator=operator)
-    existing_patterns = {r.get("pattern", "") for r in existing_rules.get("avoid_patterns", [])}
-
-    proposals = []
-
-    threshold = _fallback_threshold(meta)
-    for issue_type, _, pattern_text, rule_text in _ISSUE_TABLE:
-        vids = vids_by_issue[issue_type]
-        if len(vids) < threshold:
-            continue
-        already = pattern_text in existing_patterns or any(
-            pattern_text[:20] in p for p in existing_patterns
-        )
-        proposals.append({
-            "issue_type": issue_type,
-            "count": len(vids),
-            "vids": vids[:10],
-            "proposed_rule": {
-                "pattern": pattern_text,
-                "rule": rule_text,
-                "source": f"verifier_scores sedimentation {today_str()}（{len(vids)} 支影片）",
-            },
-            "already_exists": already,
-        })
-
-    return proposals
-
-
 def get_sedimentation_context(pipeline_items, vid, operator, meta=None):
-    """組裝「回填後主動沉澱」上下文，供 Claude 端判斷是否提案。
+    """組裝「回填後的歷史脈絡」供 Claude 在對話中**手動**判斷是否需記 lesson。
+
+    （v5.x「縮」：原本還搭配 propose_rules_from_verifier 自動提案、已移除。
+    本函式純提供脈絡、不再驅動自動規則生成。）
 
     回傳 dict：
     - target_video: 本次 VID 的核心資料
@@ -251,28 +178,3 @@ def get_sedimentation_context(pipeline_items, vid, operator, meta=None):
         "risk_patterns": pp.get("risk_patterns", []),
         "ungraduated_mistakes": active_mistakes,
     }
-
-
-def apply_proposed_rule(rule_dict, operator=None):
-    """將確認後的規則寫入 lessons.json（origin=verifier、stage=soft）。
-
-    rule_dict: 應為 propose_rules_from_verifier 回傳的 proposed_rule 欄位。
-    v4.36 前寫入 generation-rules.json、合併後改走 add_lesson()。
-    回傳 (ok, msg)。
-    """
-    operator = operator or current_operator()
-    existing = {r.get("pattern", "") for r in load_generation_rules(operator=operator).get("avoid_patterns", [])}
-    if rule_dict.get("pattern") in existing:
-        return False, f"規則已存在：{rule_dict['pattern'][:30]}..."
-    add_lesson(
-        operator=operator,
-        origin="verifier",
-        pattern=rule_dict.get("pattern"),
-        counter_pattern=rule_dict.get("rule"),
-        evidence=[],
-        scope=[],
-        stage="soft",
-        source_note=rule_dict.get("source"),
-    )
-    total = len(load_generation_rules(operator=operator).get("avoid_patterns", []))
-    return True, f"已寫入 lessons.json（共 {total} 條規則）"

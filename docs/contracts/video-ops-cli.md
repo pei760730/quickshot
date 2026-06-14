@@ -1,7 +1,8 @@
 # video-ops.py CLI Contract
 
-> version: 1.17 | last_updated: 2026-06-14
+> version: 1.18 | last_updated: 2026-06-14
 > 角色：Claude (caller) × CLI 層 (implementer)
+> 🚨 v1.18（「縮」）：移除 `set-trace` / `save-with-trace-from-stdin` 命令 + `save` 的 `--trace` / `--trace-from-stdin` 與 `transition`/`quick-add` 的 `--allow-missing-trace` flag。generation_trace 整套機器退役（30 天零消費）。保留 verifier_scores 路徑。
 
 入口：`python scripts/ops/video-ops.py [--operator <代號>] <command> [args]`
 
@@ -42,7 +43,6 @@
 | `transition` | `transition VID-NNN STATUS / transition VID-NNN --to STATUS` | 影片狀態轉移（相容位置參數 + flag 形式） |
 | `update-date` | `update-date VID-NNN YYYY-MM-DD` | 更新上線日期（位置參數；同時自動重命名腳本檔）|
 | `set-hook-type` | `set-hook-type VID-NNN --hook-type B1\|B2\|B3\|D1\|D2\|D3\|D4\|D5` | 回填既有影片的 hook_type（v1.11+、Wave 2 存量補齊用；合法值讀 `_meta.valid_hook_types`） |
-| `set-trace` | `set-trace VID-NNN --trace '{...}' [--no-overwrite]` | 回填既有影片的 generation_trace（v1.12+、Learning-loop 契約；`--no-overwrite` 在既有 trace 時會拒絕覆寫並 exit 1；schema 見 `docs/contracts/skill-io-schema.md §Learning Loop Contract`） |
 | `add-transcript` | `add-transcript VID-NNN --text "逐字稿"` | 新增逐字稿 |
 
 ### Quick-shot
@@ -57,7 +57,7 @@
 
 | 命令 | 用法 | 說明 |
 |------|------|------|
-| `save` | `save VID-NNN --script-path "路徑" --title-type T? --hook-type B?/D? --version V? --verifier-prediction high/normal/low --trace '{...}' [--verifier-scores '{"conflict_score":8,"retention_prediction":"A","ai_residue_count":0,"data_consistency":true,"format_complete":true,"pass_count":"5/5"}'] [--patterns-injected "B2,D3"] [--risk-patterns-avoided "開場太慢"] [--persona-deviation-score N]` | 存檔（必填前 6 項；§10.1 規格要求 `--trace` 永遠必填，CLI 會在缺少時 exit 1；`--trace` 接受完整 generation_trace JSON 並依 Learning-loop schema 驗證；若提供 `--verifier-scores` 會同回合記錄，否則在缺少時提示補記） |
+| `save` | `save VID-NNN --script-path "路徑" --title-type T? --hook-type B?/D? --version V? --verifier-prediction high/normal/low [--skill generation] [--mode dual-track] [--verifier-scores '{"conflict_score":8,"retention_prediction":"A","ai_residue_count":0,"data_consistency":true,"format_complete":true,"pass_count":"5/5"}']` | 存檔（必填前 5 項；若提供 `--verifier-scores` 會同回合記錄，否則在缺少時提示補記） |
 | `record-verifier-scores` | `record-verifier-scores VID-NNN --conflict-score N --retention-prediction LEVEL --ai-residue-count N --data-consistency true/false --format-complete true/false --pass-count "N/5"` | 記錄品質細項（六欄皆必填；`conflict-score` 0~10、`ai-residue-count` ≥0、`pass-count` 需符合 `N/5` 且 N=0~5） |
 
 ### 回填 + 學習

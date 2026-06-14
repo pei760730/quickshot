@@ -1,6 +1,6 @@
 # 工作流程
 
-> version: 2.36 | last_updated: 2026-06-10
+> version: 2.37 | last_updated: 2026-06-15
 > 精煉版。詳細步驟按需載入 `docs/references/`。
 
 ---
@@ -117,36 +117,17 @@ mistake 發生
 
 **為什麼**：4.7 視角下、4.6 慣性容易看見（「拆細以求穩定」「食譜化」明顯）；但 4.7 自己的初期慣性（升級 skill / 線性 pipeline / 過度形式化）需要 mature 視角才看見。沒這條規則、下次審視會重複「在自己 paradigm 裡優化」、進化迴路斷。
 
-### 工作模式 W：1 個月 metric 驗證原則（v2.30+、對應 v5.87 trace/verifier 0/30 教訓）
+### 工作模式 W：規則上線後看真實 metric（0 = 未上線）
 
-**規則**：任何禁令 / 準則 / 契約 / SKILL.md §Output Contract 上線後 1 個月、必看實際 metric。若 metric 為 0 或顯著低於預期、視同**未真實上線**、**追根因到行為層機制**（CLI / hook / schema / SKILL.md 動詞）、**不再加新禁令 / 新準則**作為應對。
+**規則**：任何禁令 / 準則 / 契約 / SKILL.md §Output Contract 上線後、隔一段時間看實際採用 metric。若為 0 或顯著低於預期、視同**未真實上線**、追根因到三層之一、**不再加新禁令 / 新準則**作為應對：
 
-**禁止**：對「規則寫了但沒人動」這類採用閉環失敗、用「再加一條禁令」「再寫一條準則」回應。這條路已被 v1.5 PR #348（CLI 強制）+ v5.87 行為層硬化兩輪證明：每次「加規則修規則」是同一陷阱的下一層、不是解。
+1. **行為層**：SKILL.md 動詞夠不夠硬？（「呼叫 / 遵守」會被慣性退化為「展示 / 建議」）
+2. **機械層**：CLI / hook / schema 有沒有強制？還是強制了被別的路徑繞過？
+3. **流程層**：Kai 的真實工作流走不走這條路？還是這條路是預設的、不是真實使用的？
 
-**檢查節奏**：
-- 上線當天記錄目標 metric 與閾值（寫進 CHANGELOG / 對應 SKILL.md 版本歷史）
-- 1 個月後跑 `adoption-stats` 或對應 metric CLI、對比閾值
-- 不到閾值 → 不加新規則、改追下列三層之一：
-  1. **行為層**：SKILL.md 動詞夠不夠硬？「呼叫 / 推薦 / 遵守」是模糊動詞、會被 4.6 慣性退化為「展示 / 建議 / 參考」
-  2. **機械層**：CLI / hook / schema 有沒有強制？或強制了但被別的路徑繞過（如 quick-add 不收 --trace）？
-  3. **流程層**：Kai 的真實工作流走不走這條路？或這條路根本是 Claude / Kai 預設的、不是 Kai 真實使用的？
+**禁止**：對「規則寫了沒人動」用「再加一條規則」回應 —— 那是同一陷阱的下一層。
 
-**反例記憶錨**：
-- v1.5 PR #348（CLI 強制）+ v5.87（SKILL.md 動詞硬化）：trace 0/30 over 30 days、規則寫了 30+ 天、行為仍 0。每升一層規則、下層的「行為退化」就跑到下下層。
-- v4.21 owner 分流（原 KaiOS 禁令 #11、quickshot template 未保留；對應原則合併進本檔 §設計原則 Mode Y 警告四階段）：B1-B5 + T1 + M1 警告印出無人動、加 owner 分流是治標、根因在「員工事卡 Kai」這個流程層問題、不是規則層問題。
-- v5.87 path coverage 發現：trace 0/61 真實主因是 quick-add path bypass + 大量舊存量繞過 generation skill、不是 §Output Contract 動詞模糊。動詞硬化只覆蓋 path A、是治表的 follow-up。
-
-**與工作模式 X / Y 的關係**：
-- 工作模式 X「Lesson 先行」：規則為硬化結果、不該繞過 lesson 層
-- 工作模式 Y「警告→自動修復→通知→才是 gate」：警告類 hook 必走完四階段、不能跳到 gate
-- **工作模式 W**：規則 / 警告 / 契約上線後 1 個月看真實 metric、0 = 未上線、追行為 / 機械 / 流程三層、不再加規則
-- X 管「規則前怎麼累積證據」、Y 管「警告型治理怎麼設計」、**W 管「規則上線後怎麼驗證有效」**
-
-**與工作模式 Y、禁令 #9 的關係**：
-- 工作模式 Y「警告 → 自動修復 → 通知 → gate 四階段」（原 KaiOS 禁令 #11、quickshot 未保留、概念合併進本檔 §Mode Y）+ 工作模式 W = 警告類機制必同時有「四階段 + 1 個月 metric 驗證」、缺一不可
-- 禁令 #9「skill 不該被新增、應該被識別」+ 工作模式 W = skill 上線後 1 個月若無使用、視同未識別、降級回對話準則 / hook / command（如 Phase 6 第二輪退役對 Orientation / Distillation 的處置）
-
-**為什麼這條不寫進 CLAUDE.md 禁令**：v5.87 commit message 引述 v1.5 補注原文「不再加禁令」— 若把本規則寫成「禁令 #15」、就變成「禁令本身禁止再加禁令」自相矛盾。本規則改寫進 workflow.md §設計原則 Mode W、與 X / Y / Z 同層、是「設計原則 / 對話流程行為規則」、不是禁令、避開矛盾。
+**反例記憶錨（v5.x 已用「縮」處置）**：`generation_trace` 閉環寫了 30+ 天、行為 0/30。兩輪「加規則逼採用」（v1.5 CLI 強制 + v5.87 動詞硬化）都沒解。最終正解不是再補強、是**承認短期客戶根本不需要這套跨時間自我進化機器、整套移除**（見 CLAUDE.md 禁令 #7 背景）。這就是 Mode W 的歸宿：metric 長期為 0 → 通常不是補強、是刪。
 
 ---
 
@@ -192,22 +173,15 @@ agent 在隔離 sandbox 跑的「測試通過」未必反映目標環境（如 W
 >
 > **v2.9 改動**（保留）：移除「Hit 後置檢查強制」+「hit_count ≥ 3 門檻觸發」。schema 降維至 v2.0、Claude 對話中主動判斷何時提議硬化、不靠計數。
 
-### 對話中累積 evidence（v2.10 新增、配 P2 hook）
+### 對話中累積 evidence（v5.x 改手動、不自動迴圈）
 
 Claude 在生成腳本 / humanize 等流程中、若**真的**因某條 soft lesson 改寫或避開、**有 VID 上下文時**：
 
-1. 回覆末尾用一句話標出（同 v2.9）：
+1. 回覆末尾用一句話標出：
    > ✓ 本次避開了 L-0023 的破折號殘留模式、L-0017 不適用（主題無關）
-2. **同時**Claude **使用 Bash tool 直接執行**（v2.10 新增、v2.30+ 動詞硬化）：
-   ```
-   video-ops.py lessons add-evidence L-0023 --vid VID-NNN
-   ```
-   **禁止印命令給 Kai 看再等 Kai 觸發** — 同 v5.87 SKILL.md §Output Contract §1 動詞硬化、適用同樣 4.6 慣性退化、是 evidence 採用率 11.7%（4/34）的根因。
-   （此 CLI 已實作、見下方 §evidence 累積 CLI）
+2. 判斷值得追蹤就記一筆 evidence：`video-ops.py lessons add-evidence L-XXXX --vid VID-NNN`（CLI 見下方 §evidence 累積 CLI）。
 
-evidence 累積到 ≥3 → P2 hook（session-start）下次自動印「💡 L-XXXX 候選硬化（已跨 N 支觸發）」、Claude 看到再驅動 `/harden`。
-
-**為什麼**：Claude 不跨會話、無法主動觀察。靠 evidence list 持久化跨 session、把「跨對話反覆」這個訊號從「Claude 記憶」（不存在）轉成「資料層計數」（可靠）。
+**v5.x「縮」**：原 v2.10 把第 2 步寫成「強迫每次自動跑 add-evidence + session-start hook 自動印『候選硬化』」的**自動迴圈**、目標是讓系統跨 session 自我累積證據鏈、自動升硬化。短期客戶（≤30 天）不需要這條跨時間自我進化迴圈、且實測採用率本就低（11.7%）。改為**手動、Claude 判斷後記**；要不要硬化由 Claude 對話中主動提（見下方 §硬化提議）、Kai 確認走 `/harden`（手動工具仍保留）。
 
 ### 硬化提議（對話中主動、不靠門檻）
 

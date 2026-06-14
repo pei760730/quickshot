@@ -1,6 +1,7 @@
-# Skill IO Schema v2.2
+# Skill IO Schema v2.3
 
-> version: 2.2 | last_updated: 2026-04-30 | status: **stable**
+> version: 2.3 | last_updated: 2026-06-14 | status: **stable**
+> 🚨 v2.3（「縮」）：移除 generation_trace 契約（trace 上線 30 天零消費、整套機器退役）。保留 verifier_scores 契約 + VID Inference Stats 不動。
 
 ## 目的
 
@@ -74,27 +75,7 @@ phase: check
 
 ---
 
-## Learning Loop Contract
-
-### generation_trace
-
-```yaml
-generation_trace:
-  required:
-    - skill_used
-    - skill_version
-    - generated_at
-    - title_type
-    - hook_type
-    - version_chosen
-  optional:
-    - mode
-    - patterns_injected
-    - risk_patterns_avoided
-    - persona_deviation_score
-    - verifier_prediction
-    - lessons_referenced
-```
+## Quality Feedback Contract
 
 ### verifier_scores（quality phase=check）
 
@@ -126,7 +107,7 @@ verifier_scores:
 
 ### 為什麼
 
-`generation_trace` 6 欄位 + `verifier_scores` 6 欄位是給 `adoption-stats` 累積分析的、對 user 當下決策無 actionable value。把它們當對話主視覺、user 看完不知道要不要改稿、回到 0/61 採用率根因。本 spec 強制：人話層先、機器層後。
+`verifier_scores` 6 欄位是給 `adoption-stats` 累積分析的、對 user 當下決策無 actionable value。把它們當對話主視覺、user 看完不知道要不要改稿、回到 0/61 採用率根因。本 spec 強制：人話層先、機器層後。
 
 ### 規範
 

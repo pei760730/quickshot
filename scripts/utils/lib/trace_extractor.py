@@ -25,7 +25,7 @@ VID_INFERENCE_LOG = ADOPTION_STATS_DIR / "vid_inference.jsonl"
 
 
 def extract_trace_payload(text: str) -> dict[str, Any] | None:
-    """Return first merged payload containing generation_trace/verifier_scores from fenced JSON blocks."""
+    """Return first merged payload containing verifier_scores from fenced JSON blocks."""
     if not text:
         return None
     merged: dict[str, Any] = {}
@@ -40,9 +40,6 @@ def extract_trace_payload(text: str) -> dict[str, Any] | None:
             continue
         if not isinstance(obj, dict):
             continue
-        if isinstance(obj.get("generation_trace"), dict):
-            merged["generation_trace"] = obj["generation_trace"]
-            found = True
         if isinstance(obj.get("verifier_scores"), dict):
             merged["verifier_scores"] = obj["verifier_scores"]
             found = True
