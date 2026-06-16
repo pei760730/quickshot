@@ -126,7 +126,6 @@ def _load_meta(data):
 
     meta.setdefault("sedimentation", {
         "max_proposals_per_backfill": 2,
-        "fallback_threshold": 3,
     })
     meta.setdefault("quality", {
         "levels": {

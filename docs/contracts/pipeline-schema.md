@@ -1,9 +1,10 @@
 # Pipeline Schema Contract
 
-> version: 2.3 | last_updated: 2026-06-15
+> version: 2.4 | last_updated: 2026-06-15
 > 角色：Claude (prompt/skill) × CLI 層 (backend/infra)
+> 🚨 field-removal: v2.4（移除 `verifier_accuracy` 欄位 + `skill_effectiveness()` — producer 有、唯一 consumer skill_effectiveness 從未被呼叫、零消費假迴圈）
 > 🚨 field-removal: v2.3（「縮」follow-up、移除 `_meta.sedimentation.fallback_threshold`、隨 `propose_rules_from_verifier` 自動提案迴圈退役而成孤兒 config、code 已不讀）
-> 🚨 field-removal: v2.2（engine「縮」、移除 `generation_trace` 欄位 + `_meta.trace_required_statuses`、trace 上線 30 天零消費、整套機器退役；保留 verifier_scores / verifier_accuracy）
+> 🚨 field-removal: v2.2（engine「縮」、移除 `generation_trace` 欄位 + `_meta.trace_required_statuses`、trace 上線 30 天零消費、整套機器退役；保留 verifier_scores）
 > 🚨 schema-migration: v2.1（engine v5.97、Issue #438、整層退役 legacy `pipeline.json`、純 sharded SSoT、`.gitignore` 防誤建）
 > 🚨 schema-migration（歷史）: v2.0（engine v4.x、pipeline 改為 sharded storage、legacy `pipeline.json` 仍為相容輸出）
 
@@ -79,8 +80,7 @@ archived → inbox
 {
   "_meta": {
     "sedimentation": {
-      "max_proposals_per_backfill": 2,
-      "fallback_threshold": 3
+      "max_proposals_per_backfill": 2
     },
     "quality": {
       "levels": {
@@ -157,14 +157,6 @@ archived → inbox
 | `format_complete` | bool | 格式完整性 |
 | `pass_count` | string | 如 `"5/5"` |
 | `date` | string | `YYYY-MM-DD` |
-
-### verifier_accuracy（backfill 時自動寫入）
-
-| 欄位 | 型別 | 說明 |
-|------|------|------|
-| `predicted` | string | save 時的 verifier_prediction |
-| `actual` | string | backfill 判定的 performance |
-| `match` | bool | predicted == actual |
 
 ### backfill 段
 

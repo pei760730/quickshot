@@ -916,7 +916,7 @@ def _cmd_vid_inference_stats():
 
     _fenced30, _inferred30, miss30 = _window(30)
     if miss30 > 10.0:
-        print("alert: ⚠️ miss_rate > 10% (last 30d) — consider making VID required")
+        print("alert: ⚠️ miss_rate > 10% (last 30d) — stop-hook 常推不出 VID、verifier_scores 可能漏抓（檢查腳本/對話有無帶 VID-NNN）")
 
 
 def _cmd_adoption_stats(ctx):

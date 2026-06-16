@@ -23,7 +23,7 @@ from .patterns import (  # noqa: F401
     _check_pattern_decay, _add_vid_evidence,
     _remove_vid_from_patterns, _remove_vid_from_low_evidence,
     cleanup_unverified_formulas, compute_pattern_stats,
-    cross_dimensional_stats, skill_effectiveness,
+    cross_dimensional_stats,
 )
 from .diagnosis import diagnose_video, _classify_post_type  # noqa: F401
 from .auto_extract import (  # noqa: F401
@@ -398,17 +398,6 @@ def backfill_video(data, vid, views, retention_3s, completion_rate,
     stats_updated = compute_pattern_stats(pattern_data, data.get("items", data.get("videos", [])))
     if stats_updated or (auto_learn and auto_learn.get("patterns_changed")):
         save_performance_patterns(pattern_data)
-
-    # verifier 預測 vs 實際表現自動比對
-    vp = video.get("verifier_prediction")
-    if vp:
-        match = (vp == level)
-        video["verifier_accuracy"] = {
-            "predicted": vp,
-            "actual": level,
-            "match": match,
-        }
-        result["verifier_accuracy"] = video["verifier_accuracy"]
 
     data["videos"][idx] = video
     save_tracking(data)
