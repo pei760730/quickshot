@@ -35,7 +35,6 @@
 
 Kai 提供 IG 截圖 → 讀數字 → **列出所有讀到的數字讓 Kai 確認**（防止 OCR 誤讀污染數據）→ 確認後 `video-ops.py backfill` → 高/低表現自動提取學習到 performance-patterns.json → 回填後自動執行：
 
-- 若該影片有 `verifier_prediction`：自動比對預測 vs 實際表現，寫入 `verifier_accuracy`（由 backfill 命令自動執行）
 - **拍攝偏差自動比對**：問 Kai「字幕文字方便貼一下嗎？」→ `video-ops.py diff-script VID-NNN --subtitle '字幕全文'`（Kai 不想貼就跳過）
 - **單支快速診斷**（每次回填後自動）：判定表現等級 → 交叉比對同類 → 一句話歸因 → `📊 快速診斷：[一句話]`（同類不足 3 支標註「樣本不足」）
 - **回填即洞察**：勝敗模式比對 + 趨勢一句話（對話中 Claude 主動判斷、非自動 cron）

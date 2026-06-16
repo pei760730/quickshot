@@ -1,8 +1,9 @@
 # performance-patterns.json Schema Contract
 
-> version: 1.1 | last_updated: 2026-05-17
+> version: 1.2 | last_updated: 2026-06-15
 > 角色：Claude (reader/injector) × CLI 層 (writer/computer)
 >
+> **v1.2**：移除 `skill_effectiveness()` 計算項（producer 有、唯一 consumer 從未被呼叫、零消費假迴圈、整套移除）
 > **v1.1**：執行者欄位從「Codex」改稱「CLI 層」(雙 agent 拆分退役後、概念合併、IO 契約不變)
 
 SSoT 檔案：`data/[operator]/performance-patterns.json`
@@ -127,7 +128,6 @@ SSoT 檔案：`data/[operator]/performance-patterns.json`
 | 計算 stats | CLI 層 | `compute_pattern_stats()` |
 | 衰減檢查 | CLI 層 | `_check_pattern_decay()` |
 | 交叉分析 | CLI 層 | `cross_dimensional_stats()` |
-| Skill 效能 | CLI 層 | `skill_effectiveness()` |
 
 ## 修改規則
 

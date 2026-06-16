@@ -9,7 +9,7 @@ from lib.backfill import (
     _best_match, _OPENING_PATTERNS, _CTA_PATTERNS,
     auto_extract_from_script,
     PATTERN_KEYS, win_rate_note, compute_pattern_stats,
-    cross_dimensional_stats, skill_effectiveness,
+    cross_dimensional_stats,
 )
 from lib.pipeline import load_tracking, add_video, save_tracking
 
@@ -1082,59 +1082,3 @@ class TestCrossDimensionalStats:
         items = [{"vid": "VID-001", "hook_type": "D3", "backfill": None}]
         stats = cross_dimensional_stats(items)
         assert stats["by_hook_type"] == {}
-
-
-class TestSkillEffectiveness:
-    """Test per-skill effectiveness computation."""
-
-    def test_basic(self):
-        items = [
-            {"vid": "VID-001", "skill_used": "flow-operator", "version": "B2",
-             "backfill": {"views": 500, "retention_3s": 70, "completion_rate": 50,
-                          "performance": "high", "backfilled_date": "2026-01-01"}},
-            {"vid": "VID-002", "skill_used": "flow-operator", "version": "A1",
-             "backfill": {"views": 100, "retention_3s": 50, "completion_rate": 25,
-                          "performance": "normal", "backfilled_date": "2026-01-02"}},
-            {"vid": "VID-003", "skill_used": "interview-navigator", "version": "B1",
-             "backfill": {"views": 300, "retention_3s": 80, "completion_rate": 60,
-                          "performance": "high", "backfilled_date": "2026-01-03"}},
-        ]
-        results = skill_effectiveness(items)
-        assert len(results) == 2
-
-        # Sorted by win_rate descending
-        assert results[0]["skill"] == "interview-navigator"
-        assert results[0]["win_rate"] == 1.0
-        assert results[0]["total"] == 1
-
-        fo = results[1]
-        assert fo["skill"] == "flow-operator"
-        assert fo["total"] == 2
-        assert fo["win_rate"] == 0.5
-        assert fo["avg_retention"] == 60.0
-        assert fo["versions_used"] == {"B2": 1, "A1": 1}
-
-    def test_empty(self):
-        assert skill_effectiveness([]) == []
-
-    def test_verifier_accuracy(self):
-        items = [
-            {"vid": "VID-001", "skill_used": "flow-operator",
-             "verifier_accuracy": {"predicted": "high", "actual": "high", "match": True},
-             "backfill": {"views": 500, "retention_3s": 70, "completion_rate": 50,
-                          "performance": "high", "backfilled_date": "2026-01-01"}},
-            {"vid": "VID-002", "skill_used": "flow-operator",
-             "verifier_accuracy": {"predicted": "high", "actual": "low", "match": False},
-             "backfill": {"views": 50, "retention_3s": 30, "completion_rate": 10,
-                          "performance": "low", "backfilled_date": "2026-01-02"}},
-        ]
-        results = skill_effectiveness(items)
-        assert results[0]["avg_verifier_accuracy"] == 0.5
-
-    def test_skips_no_skill(self):
-        items = [
-            {"vid": "VID-001", "skill_used": "",
-             "backfill": {"views": 100, "retention_3s": 50, "completion_rate": 25,
-                          "performance": "normal", "backfilled_date": "2026-01-01"}},
-        ]
-        assert skill_effectiveness(items) == []
