@@ -117,6 +117,8 @@ def _validate_references(data):
         sh = v.get("status_history")
         if not sh or not isinstance(sh, list):
             errors.append(f"{vid}：缺少 status_history")
+        elif not all(isinstance(e, dict) for e in sh):
+            errors.append(f"{vid}：status_history 含非物件項目（每筆需為 {{status, date}}）")
         else:
             if sh[-1].get("status") != status:
                 errors.append(f"{vid}：status_history 最後一筆 '{sh[-1].get('status')}' 與 status '{status}' 不一致")

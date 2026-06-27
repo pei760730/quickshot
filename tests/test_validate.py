@@ -232,6 +232,14 @@ class TestStatusHistoryChronology:
         errors = validate({"videos": [v]})
         assert any("日期格式無效" in e for e in errors)
 
+    def test_non_dict_history_entry_reported_not_crash(self):
+        # 損壞資料：status_history 含字串而非物件。
+        # validator 應回報錯誤，而非 AttributeError 整個崩潰。
+        v = make_video(status="待拍")
+        v["status_history"] = ["待拍 2026-03-01"]
+        errors = validate({"videos": [v]})
+        assert any("非物件項目" in e for e in errors)
+
 
 class TestBackfillRangeValidation:
     """backfill 數值範圍驗證。"""
